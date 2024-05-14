@@ -1,8 +1,0 @@
-<RCC>
-    <qresource prefix="/">
-        <file alias="default.cfg">res/cfg/config_default.cfg</file>
-        <file alias="b4nny.cfg">res/cfg/b4nny_config.cfg</file>
-        <file alias="b4nny_defbinds.cfg">res/cfg/b4nny_defbinds.cfg</file>
-        <file alias="b4nny_nobinds.cfg">res/cfg/b4nny_nobinds.cfg</file>
-    </qresource>
-</RCC>

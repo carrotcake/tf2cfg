@@ -8,20 +8,29 @@ CONFIG += c++17
 # In order to do so, uncomment the following line.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
+VPATH += ./src
+
+INCLUDEPATH += ./src
+
 SOURCES += \
-    configlexer.cpp \
-    gameconfig.cpp \
+    gamecfg/configlexer.cpp \
+    gamecfg/gameconfig.cpp \
     main.cpp \
-    startwindow.cpp
+    ui/editwindow.cpp \
+    ui/keybform.cpp \
+    ui/startwindow.cpp
 
 HEADERS += \
-    configlexer.h \
-    gameconfig.h \
-    keyb.h \
-    startwindow.h
+    gamecfg/configlexer.h \
+    gamecfg/gameconfig.h \
+    ui/editwindow.h \
+    ui/keybform.h \
+    ui/startwindow.h
 
 FORMS += \
-    startwindow.ui
+    ui/editwindow.ui \
+    ui/keybform.ui \
+    ui/startwindow.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -31,4 +40,4 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 STATECHARTS +=
 
 RESOURCES += \
-    cfg_resources.qrc
+    res/cfg_resources.qrc

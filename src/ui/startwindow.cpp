@@ -1,5 +1,5 @@
 #include "startwindow.h"
-#include "gameconfig.h"
+#include "gamecfg/gameconfig.h"
 #include "ui_startwindow.h"
 
 StartWindow::StartWindow(QWidget *parent)
@@ -47,7 +47,7 @@ void StartWindow::on_startGoButton_clicked()
     GameCfg config(ui->cfgPathEdit->text());
     config.print_config();
     //create main window
-
-    this->destroy();
+    //this->setHidden(true);
+    //this->destroy();
     // delete this;
 }

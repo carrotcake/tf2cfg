@@ -1,23 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>KeyboardForm</class>
- <widget class="QWidget" name="KeyboardForm">
-  <property name="enabled">
-   <bool>true</bool>
-  </property>
+ <class>KeybForm</class>
+ <widget class="QWidget" name="KeybForm">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1594</width>
-    <height>581</height>
+    <width>1560</width>
+    <height>480</height>
    </rect>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>1560</width>
+    <height>480</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
-   <item>
+  <layout class="QGridLayout" name="gridLayout_4">
+   <item row="0" column="0">
     <widget class="QFrame" name="KeybFrame">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -26,10 +29,10 @@
       </sizepolicy>
      </property>
      <property name="frameShape">
-      <enum>QFrame::NoFrame</enum>
+      <enum>QFrame::Shape::NoFrame</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Plain</enum>
+      <enum>QFrame::Shadow::Plain</enum>
      </property>
      <layout class="QGridLayout" name="gridLayout_3">
       <item row="0" column="0">
@@ -41,10 +44,10 @@
          </sizepolicy>
         </property>
         <property name="frameShape">
-         <enum>QFrame::NoFrame</enum>
+         <enum>QFrame::Shape::NoFrame</enum>
         </property>
         <property name="frameShadow">
-         <enum>QFrame::Plain</enum>
+         <enum>QFrame::Shadow::Plain</enum>
         </property>
         <property name="widgetResizable">
          <bool>true</bool>
@@ -54,8 +57,8 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>1570</width>
-           <height>557</height>
+           <width>1524</width>
+           <height>444</height>
           </rect>
          </property>
          <property name="sizePolicy">
@@ -66,7 +69,7 @@
          </property>
          <layout class="QGridLayout" name="gridLayout" rowstretch="0,0" columnstretch="0">
           <property name="sizeConstraint">
-           <enum>QLayout::SetDefaultConstraint</enum>
+           <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
           </property>
           <property name="leftMargin">
            <number>0</number>
@@ -92,14 +95,14 @@
              </sizepolicy>
             </property>
             <property name="frameShape">
-             <enum>QFrame::StyledPanel</enum>
+             <enum>QFrame::Shape::StyledPanel</enum>
             </property>
             <property name="frameShadow">
-             <enum>QFrame::Raised</enum>
+             <enum>QFrame::Shadow::Raised</enum>
             </property>
             <layout class="QGridLayout" name="gridLayout_2">
              <property name="sizeConstraint">
-              <enum>QLayout::SetDefaultConstraint</enum>
+              <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
              </property>
              <property name="bottomMargin">
               <number>6</number>
@@ -119,10 +122,10 @@
                 </sizepolicy>
                </property>
                <property name="frameShape">
-                <enum>QFrame::StyledPanel</enum>
+                <enum>QFrame::Shape::StyledPanel</enum>
                </property>
                <property name="frameShadow">
-                <enum>QFrame::Sunken</enum>
+                <enum>QFrame::Shadow::Sunken</enum>
                </property>
                <layout class="QHBoxLayout" name="horizontalLayout_25">
                 <property name="spacing">
@@ -141,7 +144,7 @@
                  <number>0</number>
                 </property>
                 <item>
-                 <widget class="QPushButton" name="pushButton_51">
+                 <widget class="QPushButton" name="btn_esc">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                     <horstretch>0</horstretch>
@@ -163,7 +166,6 @@
                   <property name="font">
                    <font>
                     <family>TF2 Build</family>
-                    <weight>50</weight>
                     <italic>false</italic>
                     <bold>false</bold>
                     <stylestrategy>PreferDefault</stylestrategy>
@@ -178,15 +180,18 @@
                   <property name="autoRepeat">
                    <bool>false</bool>
                   </property>
+                  <attribute name="buttonGroup">
+                   <string notr="true">keybButtons</string>
+                  </attribute>
                  </widget>
                 </item>
                 <item>
                  <spacer name="horizontalSpacer_2">
                   <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
+                   <enum>Qt::Orientation::Horizontal</enum>
                   </property>
                   <property name="sizeType">
-                   <enum>QSizePolicy::Fixed</enum>
+                   <enum>QSizePolicy::Policy::Fixed</enum>
                   </property>
                   <property name="sizeHint" stdset="0">
                    <size>
@@ -197,7 +202,7 @@
                  </spacer>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="pushButton_52">
+                 <widget class="QPushButton" name="btn_f1">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                     <horstretch>0</horstretch>
@@ -219,7 +224,6 @@
                   <property name="font">
                    <font>
                     <family>TF2 Build</family>
-                    <weight>50</weight>
                     <italic>false</italic>
                     <bold>false</bold>
                     <stylestrategy>PreferDefault</stylestrategy>
@@ -234,10 +238,13 @@
                   <property name="autoRepeat">
                    <bool>false</bool>
                   </property>
+                  <attribute name="buttonGroup">
+                   <string notr="true">keybButtons</string>
+                  </attribute>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="pushButton_53">
+                 <widget class="QPushButton" name="btn_f2">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                     <horstretch>0</horstretch>
@@ -259,7 +266,6 @@
                   <property name="font">
                    <font>
                     <family>TF2 Build</family>
-                    <weight>50</weight>
                     <italic>false</italic>
                     <bold>false</bold>
                     <stylestrategy>PreferDefault</stylestrategy>
@@ -274,10 +280,13 @@
                   <property name="autoRepeat">
                    <bool>false</bool>
                   </property>
+                  <attribute name="buttonGroup">
+                   <string notr="true">keybButtons</string>
+                  </attribute>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="pushButton_54">
+                 <widget class="QPushButton" name="btn_f3">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                     <horstretch>0</horstretch>
@@ -299,7 +308,6 @@
                   <property name="font">
                    <font>
                     <family>TF2 Build</family>
-                    <weight>50</weight>
                     <italic>false</italic>
                     <bold>false</bold>
                     <stylestrategy>PreferDefault</stylestrategy>
@@ -314,10 +322,13 @@
                   <property name="autoRepeat">
                    <bool>false</bool>
                   </property>
+                  <attribute name="buttonGroup">
+                   <string notr="true">keybButtons</string>
+                  </attribute>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="pushButton_55">
+                 <widget class="QPushButton" name="btn_f4">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                     <horstretch>0</horstretch>
@@ -339,7 +350,6 @@
                   <property name="font">
                    <font>
                     <family>TF2 Build</family>
-                    <weight>50</weight>
                     <italic>false</italic>
                     <bold>false</bold>
                     <stylestrategy>PreferDefault</stylestrategy>
@@ -354,15 +364,18 @@
                   <property name="autoRepeat">
                    <bool>false</bool>
                   </property>
+                  <attribute name="buttonGroup">
+                   <string notr="true">keybButtons</string>
+                  </attribute>
                  </widget>
                 </item>
                 <item>
                  <spacer name="horizontalSpacer_3">
                   <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
+                   <enum>Qt::Orientation::Horizontal</enum>
                   </property>
                   <property name="sizeType">
-                   <enum>QSizePolicy::Fixed</enum>
+                   <enum>QSizePolicy::Policy::Fixed</enum>
                   </property>
                   <property name="sizeHint" stdset="0">
                    <size>
@@ -373,7 +386,7 @@
                  </spacer>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="pushButton_56">
+                 <widget class="QPushButton" name="btn_f5">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                     <horstretch>0</horstretch>
@@ -395,7 +408,6 @@
                   <property name="font">
                    <font>
                     <family>TF2 Build</family>
-                    <weight>50</weight>
                     <italic>false</italic>
                     <bold>false</bold>
                     <stylestrategy>PreferDefault</stylestrategy>
@@ -410,10 +422,13 @@
                   <property name="autoRepeat">
                    <bool>false</bool>
                   </property>
+                  <attribute name="buttonGroup">
+                   <string notr="true">keybButtons</string>
+                  </attribute>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="pushButton_57">
+                 <widget class="QPushButton" name="btn_f6">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                     <horstretch>0</horstretch>
@@ -435,7 +450,6 @@
                   <property name="font">
                    <font>
                     <family>TF2 Build</family>
-                    <weight>50</weight>
                     <italic>false</italic>
                     <bold>false</bold>
                     <stylestrategy>PreferDefault</stylestrategy>
@@ -450,10 +464,13 @@
                   <property name="autoRepeat">
                    <bool>false</bool>
                   </property>
+                  <attribute name="buttonGroup">
+                   <string notr="true">keybButtons</string>
+                  </attribute>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="pushButton_58">
+                 <widget class="QPushButton" name="btn_f7">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                     <horstretch>0</horstretch>
@@ -475,7 +492,6 @@
                   <property name="font">
                    <font>
                     <family>TF2 Build</family>
-                    <weight>50</weight>
                     <italic>false</italic>
                     <bold>false</bold>
                     <stylestrategy>PreferDefault</stylestrategy>
@@ -490,10 +506,13 @@
                   <property name="autoRepeat">
                    <bool>false</bool>
                   </property>
+                  <attribute name="buttonGroup">
+                   <string notr="true">keybButtons</string>
+                  </attribute>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="pushButton_59">
+                 <widget class="QPushButton" name="btn_f8">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                     <horstretch>0</horstretch>
@@ -515,7 +534,6 @@
                   <property name="font">
                    <font>
                     <family>TF2 Build</family>
-                    <weight>50</weight>
                     <italic>false</italic>
                     <bold>false</bold>
                     <stylestrategy>PreferDefault</stylestrategy>
@@ -530,15 +548,18 @@
                   <property name="autoRepeat">
                    <bool>false</bool>
                   </property>
+                  <attribute name="buttonGroup">
+                   <string notr="true">keybButtons</string>
+                  </attribute>
                  </widget>
                 </item>
                 <item>
                  <spacer name="horizontalSpacer_4">
                   <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
+                   <enum>Qt::Orientation::Horizontal</enum>
                   </property>
                   <property name="sizeType">
-                   <enum>QSizePolicy::Fixed</enum>
+                   <enum>QSizePolicy::Policy::Fixed</enum>
                   </property>
                   <property name="sizeHint" stdset="0">
                    <size>
@@ -549,7 +570,7 @@
                  </spacer>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="pushButton_60">
+                 <widget class="QPushButton" name="btn_f9">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                     <horstretch>0</horstretch>
@@ -571,7 +592,6 @@
                   <property name="font">
                    <font>
                     <family>TF2 Build</family>
-                    <weight>50</weight>
                     <italic>false</italic>
                     <bold>false</bold>
                     <stylestrategy>PreferDefault</stylestrategy>
@@ -586,10 +606,13 @@
                   <property name="autoRepeat">
                    <bool>false</bool>
                   </property>
+                  <attribute name="buttonGroup">
+                   <string notr="true">keybButtons</string>
+                  </attribute>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="pushButton_61">
+                 <widget class="QPushButton" name="btn_f10">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                     <horstretch>0</horstretch>
@@ -611,7 +634,6 @@
                   <property name="font">
                    <font>
                     <family>TF2 Build</family>
-                    <weight>50</weight>
                     <italic>false</italic>
                     <bold>false</bold>
                     <stylestrategy>PreferDefault</stylestrategy>
@@ -626,10 +648,13 @@
                   <property name="autoRepeat">
                    <bool>false</bool>
                   </property>
+                  <attribute name="buttonGroup">
+                   <string notr="true">keybButtons</string>
+                  </attribute>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="pushButton_62">
+                 <widget class="QPushButton" name="btn_f11">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                     <horstretch>0</horstretch>
@@ -651,7 +676,6 @@
                   <property name="font">
                    <font>
                     <family>TF2 Build</family>
-                    <weight>50</weight>
                     <italic>false</italic>
                     <bold>false</bold>
                     <stylestrategy>PreferDefault</stylestrategy>
@@ -666,10 +690,13 @@
                   <property name="autoRepeat">
                    <bool>false</bool>
                   </property>
+                  <attribute name="buttonGroup">
+                   <string notr="true">keybButtons</string>
+                  </attribute>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="pushButton_63">
+                 <widget class="QPushButton" name="btn_f12">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                     <horstretch>0</horstretch>
@@ -691,7 +718,6 @@
                   <property name="font">
                    <font>
                     <family>TF2 Build</family>
-                    <weight>50</weight>
                     <italic>false</italic>
                     <bold>false</bold>
                     <stylestrategy>PreferDefault</stylestrategy>
@@ -706,15 +732,18 @@
                   <property name="autoRepeat">
                    <bool>false</bool>
                   </property>
+                  <attribute name="buttonGroup">
+                   <string notr="true">keybButtons</string>
+                  </attribute>
                  </widget>
                 </item>
                 <item>
                  <spacer name="horizontalSpacer_5">
                   <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
+                   <enum>Qt::Orientation::Horizontal</enum>
                   </property>
                   <property name="sizeType">
-                   <enum>QSizePolicy::Fixed</enum>
+                   <enum>QSizePolicy::Policy::Fixed</enum>
                   </property>
                   <property name="sizeHint" stdset="0">
                    <size>
@@ -725,7 +754,10 @@
                  </spacer>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="pushButton_64">
+                 <widget class="QPushButton" name="btn_prtsc_DISABLED">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                     <horstretch>0</horstretch>
@@ -747,14 +779,17 @@
                   <property name="font">
                    <font>
                     <family>TF2 Build</family>
-                    <weight>50</weight>
                     <italic>false</italic>
                     <bold>false</bold>
+                    <strikeout>true</strikeout>
                     <stylestrategy>PreferDefault</stylestrategy>
                    </font>
                   </property>
                   <property name="cursor">
                    <cursorShape>PointingHandCursor</cursorShape>
+                  </property>
+                  <property name="toolTip">
+                   <string>This key cannot be bound to an action.</string>
                   </property>
                   <property name="text">
                    <string>Prt
@@ -766,7 +801,7 @@ Scn</string>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="pushButton_65">
+                 <widget class="QPushButton" name="btn_scrlk">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                     <horstretch>0</horstretch>
@@ -788,7 +823,6 @@ Scn</string>
                   <property name="font">
                    <font>
                     <family>TF2 Build</family>
-                    <weight>50</weight>
                     <italic>false</italic>
                     <bold>false</bold>
                     <stylestrategy>PreferDefault</stylestrategy>
@@ -804,10 +838,13 @@ Lock</string>
                   <property name="autoRepeat">
                    <bool>false</bool>
                   </property>
+                  <attribute name="buttonGroup">
+                   <string notr="true">keybButtons</string>
+                  </attribute>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="pushButton_66">
+                 <widget class="QPushButton" name="btn_pause">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                     <horstretch>0</horstretch>
@@ -829,7 +866,6 @@ Lock</string>
                   <property name="font">
                    <font>
                     <family>TF2 Build</family>
-                    <weight>50</weight>
                     <italic>false</italic>
                     <bold>false</bold>
                     <stylestrategy>PreferDefault</stylestrategy>
@@ -844,6 +880,9 @@ Lock</string>
                   <property name="autoRepeat">
                    <bool>false</bool>
                   </property>
+                  <attribute name="buttonGroup">
+                   <string notr="true">keybButtons</string>
+                  </attribute>
                  </widget>
                 </item>
                </layout>
@@ -862,7 +901,7 @@ Lock</string>
                  <number>16</number>
                 </property>
                 <property name="sizeConstraint">
-                 <enum>QLayout::SetDefaultConstraint</enum>
+                 <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
                 </property>
                 <property name="leftMargin">
                  <number>0</number>
@@ -891,17 +930,17 @@ Lock</string>
                    </size>
                   </property>
                   <property name="frameShape">
-                   <enum>QFrame::StyledPanel</enum>
+                   <enum>QFrame::Shape::StyledPanel</enum>
                   </property>
                   <property name="frameShadow">
-                   <enum>QFrame::Sunken</enum>
+                   <enum>QFrame::Shadow::Sunken</enum>
                   </property>
                   <layout class="QVBoxLayout" name="verticalLayout_5">
                    <property name="spacing">
                     <number>2</number>
                    </property>
                    <property name="sizeConstraint">
-                    <enum>QLayout::SetDefaultConstraint</enum>
+                    <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
                    </property>
                    <property name="leftMargin">
                     <number>0</number>
@@ -934,7 +973,7 @@ Lock</string>
                        <number>2</number>
                       </property>
                       <property name="sizeConstraint">
-                       <enum>QLayout::SetDefaultConstraint</enum>
+                       <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
                       </property>
                       <property name="leftMargin">
                        <number>0</number>
@@ -949,7 +988,7 @@ Lock</string>
                        <number>0</number>
                       </property>
                       <item>
-                       <widget class="QPushButton" name="pushButton_45">
+                       <widget class="QPushButton" name="btn_tilde">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -971,7 +1010,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -986,10 +1024,13 @@ Lock</string>
                         <property name="autoRepeat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_46">
+                       <widget class="QPushButton" name="btn_1">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -1011,7 +1052,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -1026,10 +1066,13 @@ Lock</string>
                         <property name="autoRepeat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_47">
+                       <widget class="QPushButton" name="btn_2">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -1051,7 +1094,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -1066,10 +1108,13 @@ Lock</string>
                         <property name="autoRepeat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_77">
+                       <widget class="QPushButton" name="btn_3">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -1091,7 +1136,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -1106,10 +1150,13 @@ Lock</string>
                         <property name="autoRepeat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_78">
+                       <widget class="QPushButton" name="btn_4">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -1131,7 +1178,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -1155,10 +1201,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_79">
+                       <widget class="QPushButton" name="btn_5">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -1180,7 +1229,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -1204,10 +1252,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_92">
+                       <widget class="QPushButton" name="btn_6">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -1229,7 +1280,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -1253,10 +1303,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_98">
+                       <widget class="QPushButton" name="btn_7">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -1278,7 +1331,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -1302,10 +1354,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_99">
+                       <widget class="QPushButton" name="btn_8">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -1327,7 +1382,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -1342,10 +1396,13 @@ Lock</string>
                         <property name="autoRepeat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_48">
+                       <widget class="QPushButton" name="btn_9">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -1367,7 +1424,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -1391,10 +1447,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_49">
+                       <widget class="QPushButton" name="btn_0">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -1416,7 +1475,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -1440,10 +1498,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_50">
+                       <widget class="QPushButton" name="btn_minus">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -1465,7 +1526,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -1489,10 +1549,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_100">
+                       <widget class="QPushButton" name="btn_eq">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -1514,7 +1577,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -1538,10 +1600,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_105">
+                       <widget class="QPushButton" name="btn_bkspc">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -1563,7 +1628,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -1587,6 +1651,9 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                      </layout>
@@ -1623,7 +1690,7 @@ Lock</string>
                        <number>0</number>
                       </property>
                       <item>
-                       <widget class="QPushButton" name="pushButton_16">
+                       <widget class="QPushButton" name="btn_tab">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -1645,7 +1712,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -1660,10 +1726,13 @@ Lock</string>
                         <property name="autoRepeat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_116">
+                       <widget class="QPushButton" name="btn_q">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -1685,7 +1754,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -1709,10 +1777,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_31">
+                       <widget class="QPushButton" name="btn_w">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -1734,7 +1805,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -1758,10 +1828,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_24">
+                       <widget class="QPushButton" name="btn_e">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -1783,7 +1856,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -1798,10 +1870,13 @@ Lock</string>
                         <property name="autoRepeat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_25">
+                       <widget class="QPushButton" name="btn_r">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -1823,7 +1898,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -1847,10 +1921,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_17">
+                       <widget class="QPushButton" name="btn_t">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -1872,7 +1949,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -1896,10 +1972,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_117">
+                       <widget class="QPushButton" name="btn_y">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -1921,7 +2000,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -1945,10 +2023,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_118">
+                       <widget class="QPushButton" name="btn_u">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -1970,7 +2051,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -1994,10 +2074,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_119">
+                       <widget class="QPushButton" name="btn_i">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -2019,7 +2102,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -2043,10 +2125,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_120">
+                       <widget class="QPushButton" name="btn_o">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -2068,7 +2153,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -2092,10 +2176,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_121">
+                       <widget class="QPushButton" name="btn_p">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -2117,7 +2204,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -2141,10 +2227,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_122">
+                       <widget class="QPushButton" name="btn_lb">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -2166,7 +2255,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -2190,10 +2278,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_123">
+                       <widget class="QPushButton" name="btn_rb">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -2215,7 +2306,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -2239,10 +2329,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_124">
+                       <widget class="QPushButton" name="btn_bslsh">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -2264,7 +2357,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -2288,6 +2380,9 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                      </layout>
@@ -2324,7 +2419,7 @@ Lock</string>
                        <number>0</number>
                       </property>
                       <item>
-                       <widget class="QPushButton" name="pushButton_125">
+                       <widget class="QPushButton" name="btn_capslk">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -2346,7 +2441,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -2361,10 +2455,13 @@ Lock</string>
                         <property name="autoRepeat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_178">
+                       <widget class="QPushButton" name="btn_a">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -2386,7 +2483,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -2401,10 +2497,13 @@ Lock</string>
                         <property name="autoRepeat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_179">
+                       <widget class="QPushButton" name="btn_s">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -2426,7 +2525,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -2441,10 +2539,13 @@ Lock</string>
                         <property name="autoRepeat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_180">
+                       <widget class="QPushButton" name="btn_d">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -2466,7 +2567,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -2490,10 +2590,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_181">
+                       <widget class="QPushButton" name="btn_f">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -2515,7 +2618,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -2539,10 +2641,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_182">
+                       <widget class="QPushButton" name="btn_g">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -2564,7 +2669,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -2588,10 +2692,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_183">
+                       <widget class="QPushButton" name="btn_h">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -2613,7 +2720,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -2628,10 +2734,13 @@ Lock</string>
                         <property name="autoRepeat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_184">
+                       <widget class="QPushButton" name="btn_j">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -2653,7 +2762,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -2668,10 +2776,13 @@ Lock</string>
                         <property name="autoRepeat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_185">
+                       <widget class="QPushButton" name="btn_k">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -2693,7 +2804,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -2717,10 +2827,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_186">
+                       <widget class="QPushButton" name="btn_l">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -2742,7 +2855,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -2757,10 +2869,13 @@ Lock</string>
                         <property name="autoRepeat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_187">
+                       <widget class="QPushButton" name="btn_semi">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -2782,7 +2897,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -2797,10 +2911,13 @@ Lock</string>
                         <property name="autoRepeat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_188">
+                       <widget class="QPushButton" name="btn_apos">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -2822,7 +2939,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -2837,10 +2953,13 @@ Lock</string>
                         <property name="autoRepeat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_189">
+                       <widget class="QPushButton" name="btn_enter">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -2862,7 +2981,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -2877,6 +2995,9 @@ Lock</string>
                         <property name="autoRepeat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                      </layout>
@@ -2913,7 +3034,7 @@ Lock</string>
                        <number>0</number>
                       </property>
                       <item>
-                       <widget class="QPushButton" name="pushButton_190">
+                       <widget class="QPushButton" name="btn_lshift">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -2935,7 +3056,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -2959,10 +3079,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_191">
+                       <widget class="QPushButton" name="btn_z">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -2984,7 +3107,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -3008,10 +3130,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_192">
+                       <widget class="QPushButton" name="btn_x">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -3033,7 +3158,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -3057,10 +3181,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_193">
+                       <widget class="QPushButton" name="btn_c">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -3082,7 +3209,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -3106,10 +3232,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_194">
+                       <widget class="QPushButton" name="btn_v">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -3131,7 +3260,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -3155,10 +3283,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_195">
+                       <widget class="QPushButton" name="btn_b">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -3180,7 +3311,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -3204,10 +3334,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_196">
+                       <widget class="QPushButton" name="btn_n">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -3229,7 +3362,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -3244,10 +3376,13 @@ Lock</string>
                         <property name="autoRepeat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_197">
+                       <widget class="QPushButton" name="btn_m">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -3269,7 +3404,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -3293,10 +3427,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_198">
+                       <widget class="QPushButton" name="btn_comma">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -3318,7 +3455,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -3333,10 +3469,13 @@ Lock</string>
                         <property name="autoRepeat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_199">
+                       <widget class="QPushButton" name="btn_dot">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -3358,7 +3497,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -3382,10 +3520,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_200">
+                       <widget class="QPushButton" name="btn_fslsh">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -3407,7 +3548,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -3431,10 +3571,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_201">
+                       <widget class="QPushButton" name="btn_rshift">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -3462,7 +3605,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <underline>false</underline>
@@ -3482,6 +3624,9 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                      </layout>
@@ -3518,7 +3663,7 @@ Lock</string>
                        <number>0</number>
                       </property>
                       <item>
-                       <widget class="QPushButton" name="pushButton_202">
+                       <widget class="QPushButton" name="btn_lctrl">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -3540,7 +3685,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -3565,10 +3709,13 @@ Ctrl</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_203">
+                       <widget class="QPushButton" name="btn_lsup">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -3590,7 +3737,6 @@ Ctrl</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -3615,10 +3761,13 @@ Super</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_204">
+                       <widget class="QPushButton" name="btn_lalt">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -3640,7 +3789,6 @@ Super</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -3665,10 +3813,13 @@ Alt</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_205">
+                       <widget class="QPushButton" name="btn_space">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -3690,7 +3841,6 @@ Alt</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -3714,10 +3864,13 @@ Alt</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_206">
+                       <widget class="QPushButton" name="btn_ralt">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -3739,7 +3892,6 @@ Alt</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -3764,10 +3916,13 @@ Alt</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_207">
+                       <widget class="QPushButton" name="btn_rsup">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -3789,7 +3944,6 @@ Alt</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -3805,10 +3959,16 @@ Super</string>
                         <property name="autoRepeat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_208">
+                       <widget class="QPushButton" name="btn_menu_DISABLED">
+                        <property name="enabled">
+                         <bool>false</bool>
+                        </property>
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -3830,18 +3990,20 @@ Super</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
+                          <strikeout>true</strikeout>
                           <stylestrategy>PreferDefault</stylestrategy>
                          </font>
                         </property>
                         <property name="cursor">
                          <cursorShape>PointingHandCursor</cursorShape>
                         </property>
+                        <property name="toolTip">
+                         <string>This key cannot be bound to an action.</string>
+                        </property>
                         <property name="text">
-                         <string>Weird
-Key</string>
+                         <string>Menu</string>
                         </property>
                         <property name="autoRepeat">
                          <bool>false</bool>
@@ -3849,7 +4011,7 @@ Key</string>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_209">
+                       <widget class="QPushButton" name="btn_rctrl">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                           <horstretch>0</horstretch>
@@ -3871,7 +4033,6 @@ Key</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -3887,6 +4048,9 @@ Ctrl</string>
                         <property name="autoRepeat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                      </layout>
@@ -3904,10 +4068,10 @@ Ctrl</string>
                    </sizepolicy>
                   </property>
                   <property name="frameShape">
-                   <enum>QFrame::StyledPanel</enum>
+                   <enum>QFrame::Shape::StyledPanel</enum>
                   </property>
                   <property name="frameShadow">
-                   <enum>QFrame::Sunken</enum>
+                   <enum>QFrame::Shadow::Sunken</enum>
                   </property>
                   <layout class="QVBoxLayout" name="verticalLayout_6">
                    <property name="spacing">
@@ -3944,7 +4108,7 @@ Ctrl</string>
                        <number>0</number>
                       </property>
                       <item>
-                       <widget class="QPushButton" name="pushButton_210">
+                       <widget class="QPushButton" name="btn_ins">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                           <horstretch>0</horstretch>
@@ -3966,7 +4130,6 @@ Ctrl</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -3981,10 +4144,13 @@ Ctrl</string>
                         <property name="autoRepeat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_211">
+                       <widget class="QPushButton" name="btn_home">
                         <property name="minimumSize">
                          <size>
                           <width>64</width>
@@ -4000,7 +4166,6 @@ Ctrl</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -4015,10 +4180,13 @@ Ctrl</string>
                         <property name="autoRepeat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_212">
+                       <widget class="QPushButton" name="btn_pgup">
                         <property name="minimumSize">
                          <size>
                           <width>64</width>
@@ -4034,7 +4202,6 @@ Ctrl</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -4050,6 +4217,9 @@ Up</string>
                         <property name="autoRepeat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                      </layout>
@@ -4074,7 +4244,7 @@ Up</string>
                        <number>0</number>
                       </property>
                       <item>
-                       <widget class="QPushButton" name="pushButton_213">
+                       <widget class="QPushButton" name="btn_del">
                         <property name="minimumSize">
                          <size>
                           <width>64</width>
@@ -4090,7 +4260,6 @@ Up</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -4105,10 +4274,13 @@ Up</string>
                         <property name="autoRepeat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_214">
+                       <widget class="QPushButton" name="btn_end">
                         <property name="minimumSize">
                          <size>
                           <width>64</width>
@@ -4124,7 +4296,6 @@ Up</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -4139,10 +4310,13 @@ Up</string>
                         <property name="autoRepeat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_215">
+                       <widget class="QPushButton" name="btn_pgdn">
                         <property name="minimumSize">
                          <size>
                           <width>64</width>
@@ -4158,7 +4332,6 @@ Up</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -4174,6 +4347,9 @@ Down</string>
                         <property name="autoRepeat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                      </layout>
@@ -4184,7 +4360,6 @@ Down</string>
                      <property name="font">
                       <font>
                        <family>TF2 Build</family>
-                       <weight>50</weight>
                        <italic>false</italic>
                        <bold>false</bold>
                        <stylestrategy>PreferDefault</stylestrategy>
@@ -4194,10 +4369,10 @@ Down</string>
                       <cursorShape>ArrowCursor</cursorShape>
                      </property>
                      <property name="orientation">
-                      <enum>Qt::Vertical</enum>
+                      <enum>Qt::Orientation::Vertical</enum>
                      </property>
                      <property name="sizeType">
-                      <enum>QSizePolicy::Fixed</enum>
+                      <enum>QSizePolicy::Policy::Fixed</enum>
                      </property>
                      <property name="sizeHint" stdset="0">
                       <size>
@@ -4226,7 +4401,7 @@ Down</string>
                        <number>0</number>
                       </property>
                       <item>
-                       <widget class="QPushButton" name="pushButton_216">
+                       <widget class="QPushButton" name="btn_uparrow">
                         <property name="minimumSize">
                          <size>
                           <width>64</width>
@@ -4242,7 +4417,6 @@ Down</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -4257,6 +4431,9 @@ Down</string>
                         <property name="autoRepeat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                      </layout>
@@ -4281,7 +4458,7 @@ Down</string>
                        <number>0</number>
                       </property>
                       <item>
-                       <widget class="QPushButton" name="pushButton_217">
+                       <widget class="QPushButton" name="btn_leftarrow">
                         <property name="minimumSize">
                          <size>
                           <width>64</width>
@@ -4297,7 +4474,6 @@ Down</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -4312,10 +4488,13 @@ Down</string>
                         <property name="autoRepeat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_218">
+                       <widget class="QPushButton" name="btn_downarrow">
                         <property name="minimumSize">
                          <size>
                           <width>64</width>
@@ -4331,7 +4510,6 @@ Down</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -4346,10 +4524,13 @@ Down</string>
                         <property name="autoRepeat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_219">
+                       <widget class="QPushButton" name="btn_rightarrow">
                         <property name="minimumSize">
                          <size>
                           <width>64</width>
@@ -4365,7 +4546,6 @@ Down</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -4380,6 +4560,9 @@ Down</string>
                         <property name="autoRepeat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                      </layout>
@@ -4397,10 +4580,10 @@ Down</string>
                    </sizepolicy>
                   </property>
                   <property name="frameShape">
-                   <enum>QFrame::StyledPanel</enum>
+                   <enum>QFrame::Shape::StyledPanel</enum>
                   </property>
                   <property name="frameShadow">
-                   <enum>QFrame::Sunken</enum>
+                   <enum>QFrame::Shadow::Sunken</enum>
                   </property>
                   <layout class="QHBoxLayout" name="horizontalLayout_33">
                    <property name="spacing">
@@ -4467,7 +4650,7 @@ Down</string>
                           <number>0</number>
                          </property>
                          <item>
-                          <widget class="QPushButton" name="pushButton_220">
+                          <widget class="QPushButton" name="btn_numlk">
                            <property name="minimumSize">
                             <size>
                              <width>64</width>
@@ -4483,7 +4666,6 @@ Down</string>
                            <property name="font">
                             <font>
                              <family>TF2 Build</family>
-                             <weight>50</weight>
                              <italic>false</italic>
                              <bold>false</bold>
                              <stylestrategy>PreferDefault</stylestrategy>
@@ -4499,10 +4681,13 @@ Lock</string>
                            <property name="autoRepeat">
                             <bool>false</bool>
                            </property>
+                           <attribute name="buttonGroup">
+                            <string notr="true">keybButtons</string>
+                           </attribute>
                           </widget>
                          </item>
                          <item>
-                          <widget class="QPushButton" name="pushButton_221">
+                          <widget class="QPushButton" name="btn_kpslsh">
                            <property name="minimumSize">
                             <size>
                              <width>64</width>
@@ -4518,7 +4703,6 @@ Lock</string>
                            <property name="font">
                             <font>
                              <family>TF2 Build</family>
-                             <weight>50</weight>
                              <italic>false</italic>
                              <bold>false</bold>
                              <stylestrategy>PreferDefault</stylestrategy>
@@ -4542,10 +4726,13 @@ Lock</string>
                            <property name="flat">
                             <bool>false</bool>
                            </property>
+                           <attribute name="buttonGroup">
+                            <string notr="true">keybButtons</string>
+                           </attribute>
                           </widget>
                          </item>
                          <item>
-                          <widget class="QPushButton" name="pushButton_222">
+                          <widget class="QPushButton" name="btn_kpmult">
                            <property name="minimumSize">
                             <size>
                              <width>64</width>
@@ -4561,7 +4748,6 @@ Lock</string>
                            <property name="font">
                             <font>
                              <family>TF2 Build</family>
-                             <weight>50</weight>
                              <italic>false</italic>
                              <bold>false</bold>
                              <stylestrategy>PreferDefault</stylestrategy>
@@ -4585,6 +4771,9 @@ Lock</string>
                            <property name="flat">
                             <bool>false</bool>
                            </property>
+                           <attribute name="buttonGroup">
+                            <string notr="true">keybButtons</string>
+                           </attribute>
                           </widget>
                          </item>
                         </layout>
@@ -4615,7 +4804,7 @@ Lock</string>
                           <number>0</number>
                          </property>
                          <item>
-                          <widget class="QPushButton" name="pushButton_223">
+                          <widget class="QPushButton" name="btn_kp7">
                            <property name="minimumSize">
                             <size>
                              <width>64</width>
@@ -4631,7 +4820,6 @@ Lock</string>
                            <property name="font">
                             <font>
                              <family>TF2 Build</family>
-                             <weight>50</weight>
                              <italic>false</italic>
                              <bold>false</bold>
                              <stylestrategy>PreferDefault</stylestrategy>
@@ -4655,10 +4843,13 @@ Lock</string>
                            <property name="flat">
                             <bool>false</bool>
                            </property>
+                           <attribute name="buttonGroup">
+                            <string notr="true">keybButtons</string>
+                           </attribute>
                           </widget>
                          </item>
                          <item>
-                          <widget class="QPushButton" name="pushButton_224">
+                          <widget class="QPushButton" name="btn_kp8">
                            <property name="minimumSize">
                             <size>
                              <width>64</width>
@@ -4674,7 +4865,6 @@ Lock</string>
                            <property name="font">
                             <font>
                              <family>TF2 Build</family>
-                             <weight>50</weight>
                              <italic>false</italic>
                              <bold>false</bold>
                              <stylestrategy>PreferDefault</stylestrategy>
@@ -4698,10 +4888,13 @@ Lock</string>
                            <property name="flat">
                             <bool>false</bool>
                            </property>
+                           <attribute name="buttonGroup">
+                            <string notr="true">keybButtons</string>
+                           </attribute>
                           </widget>
                          </item>
                          <item>
-                          <widget class="QPushButton" name="pushButton_225">
+                          <widget class="QPushButton" name="btn_kp9">
                            <property name="minimumSize">
                             <size>
                              <width>64</width>
@@ -4717,7 +4910,6 @@ Lock</string>
                            <property name="font">
                             <font>
                              <family>TF2 Build</family>
-                             <weight>50</weight>
                              <italic>false</italic>
                              <bold>false</bold>
                              <stylestrategy>PreferDefault</stylestrategy>
@@ -4741,6 +4933,9 @@ Lock</string>
                            <property name="flat">
                             <bool>false</bool>
                            </property>
+                           <attribute name="buttonGroup">
+                            <string notr="true">keybButtons</string>
+                           </attribute>
                           </widget>
                          </item>
                         </layout>
@@ -4771,7 +4966,7 @@ Lock</string>
                           <number>0</number>
                          </property>
                          <item>
-                          <widget class="QPushButton" name="pushButton_226">
+                          <widget class="QPushButton" name="btn_kp4">
                            <property name="minimumSize">
                             <size>
                              <width>64</width>
@@ -4787,7 +4982,6 @@ Lock</string>
                            <property name="font">
                             <font>
                              <family>TF2 Build</family>
-                             <weight>50</weight>
                              <italic>false</italic>
                              <bold>false</bold>
                              <stylestrategy>PreferDefault</stylestrategy>
@@ -4811,10 +5005,13 @@ Lock</string>
                            <property name="flat">
                             <bool>false</bool>
                            </property>
+                           <attribute name="buttonGroup">
+                            <string notr="true">keybButtons</string>
+                           </attribute>
                           </widget>
                          </item>
                          <item>
-                          <widget class="QPushButton" name="pushButton_227">
+                          <widget class="QPushButton" name="btn_kp5">
                            <property name="minimumSize">
                             <size>
                              <width>64</width>
@@ -4830,7 +5027,6 @@ Lock</string>
                            <property name="font">
                             <font>
                              <family>TF2 Build</family>
-                             <weight>50</weight>
                              <italic>false</italic>
                              <bold>false</bold>
                              <stylestrategy>PreferDefault</stylestrategy>
@@ -4854,10 +5050,13 @@ Lock</string>
                            <property name="flat">
                             <bool>false</bool>
                            </property>
+                           <attribute name="buttonGroup">
+                            <string notr="true">keybButtons</string>
+                           </attribute>
                           </widget>
                          </item>
                          <item>
-                          <widget class="QPushButton" name="pushButton_228">
+                          <widget class="QPushButton" name="btn_kp6">
                            <property name="minimumSize">
                             <size>
                              <width>64</width>
@@ -4873,7 +5072,6 @@ Lock</string>
                            <property name="font">
                             <font>
                              <family>TF2 Build</family>
-                             <weight>50</weight>
                              <italic>false</italic>
                              <bold>false</bold>
                              <stylestrategy>PreferDefault</stylestrategy>
@@ -4897,6 +5095,9 @@ Lock</string>
                            <property name="flat">
                             <bool>false</bool>
                            </property>
+                           <attribute name="buttonGroup">
+                            <string notr="true">keybButtons</string>
+                           </attribute>
                           </widget>
                          </item>
                         </layout>
@@ -4927,7 +5128,7 @@ Lock</string>
                           <number>0</number>
                          </property>
                          <item>
-                          <widget class="QPushButton" name="pushButton_229">
+                          <widget class="QPushButton" name="btn_kp1">
                            <property name="minimumSize">
                             <size>
                              <width>64</width>
@@ -4943,7 +5144,6 @@ Lock</string>
                            <property name="font">
                             <font>
                              <family>TF2 Build</family>
-                             <weight>50</weight>
                              <italic>false</italic>
                              <bold>false</bold>
                              <stylestrategy>PreferDefault</stylestrategy>
@@ -4967,10 +5167,13 @@ Lock</string>
                            <property name="flat">
                             <bool>false</bool>
                            </property>
+                           <attribute name="buttonGroup">
+                            <string notr="true">keybButtons</string>
+                           </attribute>
                           </widget>
                          </item>
                          <item>
-                          <widget class="QPushButton" name="pushButton_230">
+                          <widget class="QPushButton" name="btn_kp2">
                            <property name="minimumSize">
                             <size>
                              <width>64</width>
@@ -4986,7 +5189,6 @@ Lock</string>
                            <property name="font">
                             <font>
                              <family>TF2 Build</family>
-                             <weight>50</weight>
                              <italic>false</italic>
                              <bold>false</bold>
                              <stylestrategy>PreferDefault</stylestrategy>
@@ -5010,10 +5212,13 @@ Lock</string>
                            <property name="flat">
                             <bool>false</bool>
                            </property>
+                           <attribute name="buttonGroup">
+                            <string notr="true">keybButtons</string>
+                           </attribute>
                           </widget>
                          </item>
                          <item>
-                          <widget class="QPushButton" name="pushButton_231">
+                          <widget class="QPushButton" name="btn_kp3">
                            <property name="minimumSize">
                             <size>
                              <width>64</width>
@@ -5029,7 +5234,6 @@ Lock</string>
                            <property name="font">
                             <font>
                              <family>TF2 Build</family>
-                             <weight>50</weight>
                              <italic>false</italic>
                              <bold>false</bold>
                              <stylestrategy>PreferDefault</stylestrategy>
@@ -5053,6 +5257,9 @@ Lock</string>
                            <property name="flat">
                             <bool>false</bool>
                            </property>
+                           <attribute name="buttonGroup">
+                            <string notr="true">keybButtons</string>
+                           </attribute>
                           </widget>
                          </item>
                         </layout>
@@ -5083,7 +5290,7 @@ Lock</string>
                           <number>0</number>
                          </property>
                          <item>
-                          <widget class="QPushButton" name="pushButton_232">
+                          <widget class="QPushButton" name="btn_kp0">
                            <property name="minimumSize">
                             <size>
                              <width>130</width>
@@ -5099,7 +5306,6 @@ Lock</string>
                            <property name="font">
                             <font>
                              <family>TF2 Build</family>
-                             <weight>50</weight>
                              <italic>false</italic>
                              <bold>false</bold>
                              <stylestrategy>PreferDefault</stylestrategy>
@@ -5123,10 +5329,13 @@ Lock</string>
                            <property name="flat">
                             <bool>false</bool>
                            </property>
+                           <attribute name="buttonGroup">
+                            <string notr="true">keybButtons</string>
+                           </attribute>
                           </widget>
                          </item>
                          <item>
-                          <widget class="QPushButton" name="pushButton_233">
+                          <widget class="QPushButton" name="btn_kpdot">
                            <property name="minimumSize">
                             <size>
                              <width>64</width>
@@ -5142,7 +5351,6 @@ Lock</string>
                            <property name="font">
                             <font>
                              <family>TF2 Build</family>
-                             <weight>50</weight>
                              <italic>false</italic>
                              <bold>false</bold>
                              <stylestrategy>PreferDefault</stylestrategy>
@@ -5166,6 +5374,9 @@ Lock</string>
                            <property name="flat">
                             <bool>false</bool>
                            </property>
+                           <attribute name="buttonGroup">
+                            <string notr="true">keybButtons</string>
+                           </attribute>
                           </widget>
                          </item>
                         </layout>
@@ -5193,7 +5404,7 @@ Lock</string>
                        <number>0</number>
                       </property>
                       <item>
-                       <widget class="QPushButton" name="pushButton_234">
+                       <widget class="QPushButton" name="btn_kpminus">
                         <property name="minimumSize">
                          <size>
                           <width>64</width>
@@ -5209,7 +5420,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -5233,10 +5443,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_235">
+                       <widget class="QPushButton" name="btn_kpplus">
                         <property name="maximumSize">
                          <size>
                           <width>64</width>
@@ -5246,7 +5459,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -5270,10 +5482,13 @@ Lock</string>
                         <property name="flat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QPushButton" name="pushButton_236">
+                       <widget class="QPushButton" name="btn_kpenter">
                         <property name="sizePolicy">
                          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                           <horstretch>0</horstretch>
@@ -5289,7 +5504,6 @@ Lock</string>
                         <property name="font">
                          <font>
                           <family>TF2 Build</family>
-                          <weight>50</weight>
                           <italic>false</italic>
                           <bold>false</bold>
                           <stylestrategy>PreferDefault</stylestrategy>
@@ -5305,6 +5519,9 @@ Enter</string>
                         <property name="autoRepeat">
                          <bool>false</bool>
                         </property>
+                        <attribute name="buttonGroup">
+                         <string notr="true">keybButtons</string>
+                        </attribute>
                        </widget>
                       </item>
                      </layout>
@@ -5330,4 +5547,11 @@ Enter</string>
  </widget>
  <resources/>
  <connections/>
+ <buttongroups>
+  <buttongroup name="keybButtons">
+   <property name="exclusive">
+    <bool>false</bool>
+   </property>
+  </buttongroup>
+ </buttongroups>
 </ui>

@@ -1,5 +1,5 @@
 #include "gameconfig.h"
-#include "configlexer.h"
+#include "gamecfg/configlexer.h"
 
 GameCfg::GameCfg(const QString filename)
 {
