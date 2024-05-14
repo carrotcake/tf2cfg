@@ -16,7 +16,7 @@ public:
     ~KeybForm();
 
 private slots:
-    void on_keybButtons_buttonClicked(int id);
+    void on_keybButtons_idClicked(int id);
 
 private:
     typedef enum {

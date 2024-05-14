@@ -124,7 +124,7 @@ void KeybForm::setupButtonGroup()
     ui->keybButtons->setId(ui->btn_kpenter, K_KPENTER);
 }
 
-void KeybForm::on_keybButtons_buttonClicked(int id)
+void KeybForm::on_keybButtons_idClicked(int id)
 {
     KeyId kid = static_cast<KeyId>(id);
     printf("%s = %d\n", KEY_CODES[kid].toStdString().c_str(), id);
