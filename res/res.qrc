@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/">
+        <file>cfg/default.cfg</file>
+        <file>cfg/b4nny.cfg</file>
+        <file>cfg/b4nny_defbinds.cfg</file>
+        <file>cfg/b4nny_nobinds.cfg</file>
+        <file>font/tf2build.ttf</file>
+        <file>font/tf2professor.ttf</file>
+        <file>font/tf2secondary.ttf</file>
+    </qresource>
+</RCC>

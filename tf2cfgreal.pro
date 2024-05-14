@@ -40,4 +40,4 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 STATECHARTS +=
 
 RESOURCES += \
-    res/cfg_resources.qrc
+    res/res.qrc

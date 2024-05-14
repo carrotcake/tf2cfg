@@ -26,7 +26,7 @@ private slots:
     void on_startGoButton_clicked();
 
 private:
-    const QString CFG_STRINGS[2] = {":/b4nny.cfg", ":/default.cfg"};
+    const QString CFG_STRINGS[2] = {":/cfg/b4nny.cfg", ":/cfg/default.cfg"};
     Ui::StartWindow *ui;
 };
 #endif // STARTWINDOW_H
