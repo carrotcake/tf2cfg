@@ -3,6 +3,7 @@
 
 #include <QFileDialog>
 #include <QMainWindow>
+#include "editwindow.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -25,8 +26,11 @@ private slots:
 
     void on_startGoButton_clicked();
 
+    void changeWindow();
+
 private:
-    const QString CFG_STRINGS[2] = {":/cfg/b4nny.cfg", ":/cfg/default.cfg"};
+    inline static const QString CFG_STRINGS[2] = {":/cfg/b4nny.cfg", ":/cfg/default.cfg"};
     Ui::StartWindow *ui;
+    EditWindow edit_window;
 };
 #endif // STARTWINDOW_H

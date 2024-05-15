@@ -21,11 +21,15 @@ public:
         Command() : type(CMD_CVAR){};
     } Command;
 
-    GameCfg(const QString filename);
+    GameCfg();
 
-    void print_config();
+    explicit GameCfg(const QString filename);
 
+    void append_cfg(const QString filename);
 
+    void print_cfg();
+
+    QVector<Command> *get_cmd_list();
 
 private:
     QHash<QString, CmdType> cmd_types;

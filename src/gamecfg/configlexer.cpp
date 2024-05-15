@@ -2,8 +2,8 @@
 
 cfgLexer::cfgLexer() {}
 
-bool cfgLexer::open(const QString &name){
-
+bool cfgLexer::open(const QString &name)
+{
     in_file.setFileName(name);
     if(!in_file.open(QIODevice::ReadOnly | QIODevice::Text))
         return false;

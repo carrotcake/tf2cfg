@@ -13,19 +13,19 @@ VPATH += ./src
 INCLUDEPATH += ./src
 
 SOURCES += \
-    gamecfg/configlexer.cpp \
-    gamecfg/gameconfig.cpp \
     main.cpp \
     ui/editwindow.cpp \
     ui/keybform.cpp \
-    ui/startwindow.cpp
+    ui/startwindow.cpp \
+    gamecfg/configlexer.cpp \
+    gamecfg/gameconfig.cpp
 
-HEADERS += \
-    gamecfg/configlexer.h \
-    gamecfg/gameconfig.h \
+HEADERS += \ 
     ui/editwindow.h \
     ui/keybform.h \
-    ui/startwindow.h
+    ui/startwindow.h \
+    gamecfg/configlexer.h \
+    gamecfg/gameconfig.h
 
 FORMS += \
     ui/editwindow.ui \

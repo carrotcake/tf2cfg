@@ -1,7 +1,14 @@
 #include "gameconfig.h"
 #include "gamecfg/configlexer.h"
 
+GameCfg::GameCfg() {}
+
 GameCfg::GameCfg(const QString filename)
+{
+    this->append_cfg(filename);
+}
+
+void GameCfg::append_cfg(const QString filename)
 {
     cfgLexer lex;
     Command cmd;
@@ -13,9 +20,8 @@ GameCfg::GameCfg(const QString filename)
         if (cmd.args.empty()) {
             cmd.type = cmd_to_type(tok.str);
         }
-        if (cmd.args.size() == 1 && !cmd.args.front().compare("alias"))
-            cmd_types[tok.str] = CMD_ALIAS;
-        if (tok.type == cfgLexer::TOK_END) {
+        if (cmd.args.size() == 1 && !cmd.args.front().compare("alias")) {
+            cmd_types[tok.str] = CMD_ALIAS;}if (tok.type == cfgLexer::TOK_END) {
             if (!cmd.args.empty()) {
                 cmd_list.push_back(cmd);
                 cmd.args.clear();
@@ -33,7 +39,7 @@ GameCfg::CmdType GameCfg::cmd_to_type(const QString cmd)
     return CMD_UNKWN;
 }
 
-void GameCfg::print_config()
+void GameCfg::print_cfg()
 {
     for (Command &cmd : cmd_list) {
         for (QString &str : cmd.args)
@@ -41,4 +47,8 @@ void GameCfg::print_config()
         printf(" (type: %d) \n", cmd.type);
     }
     fflush(stdout);
+}
+QVector<GameCfg::Command> *GameCfg::get_cmd_list()
+{
+    return &cmd_list;
 }

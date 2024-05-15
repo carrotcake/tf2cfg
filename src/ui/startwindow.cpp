@@ -7,6 +7,7 @@ StartWindow::StartWindow(QWidget *parent)
     , ui(new Ui::StartWindow)
 {
     ui->setupUi(this);
+    edit_window.hide();
 }
 
 StartWindow::~StartWindow()
@@ -41,13 +42,23 @@ void StartWindow::on_cfgPresetBox_currentIndexChanged(int index)
     }
 }
 
+void StartWindow::changeWindow()
+{
+    if (this->isVisible()) {
+        edit_window.hide();
+        this->show();
+    } else {
+        this->hide();
+        edit_window.show();
+    }
+}
+
 void StartWindow::on_startGoButton_clicked()
 {
-    //load config
-    GameCfg config(ui->cfgPathEdit->text());
-    config.print_config();
+    edit_window.load_cfg(ui->cfgPathEdit->text());
+    edit_window.show();
+    this->hide();
     //create main window
-    //this->setHidden(true);
-    //this->destroy();
+
     // delete this;
 }
