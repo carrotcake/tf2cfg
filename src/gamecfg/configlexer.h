@@ -9,7 +9,7 @@ class cfgLexer
 public:
     cfgLexer();
 
-    typedef enum TokenClass { TOK_ERR, TOK_EOF, TOK_STR, TOK_END } TokenClass;
+    enum TokenClass { TOK_ERR, TOK_EOF, TOK_STR, TOK_END };
 
     struct Token{
         QString str;
@@ -23,16 +23,16 @@ public:
     void close();
 
 private:
-    typedef enum LexerState {
+    enum LexerState {
         STATE_START,
         STATE_ERR,
         STATE_CHAR,
         STATE_ESCP,
         STATE_END,
         STATECOUNT // not a valid state
-    } LexerState;
+    };
 
-    typedef enum LexerInput {
+    enum LexerInput {
         IN_WHITESPACE,
         IN_CHAR,
         IN_QUOT,
@@ -40,7 +40,7 @@ private:
         IN_EOL,
         IN_EOF,
         INCOUNT // not a valid input type
-    } LexerInput;
+    };
 
     static constexpr const LexerState STATE[STATECOUNT][INCOUNT] =
         {{STATE_START,STATE_CHAR,STATE_ESCP,STATE_END,STATE_END,STATE_END},

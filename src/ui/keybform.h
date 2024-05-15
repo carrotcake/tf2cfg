@@ -12,7 +12,7 @@ class KeybForm : public QWidget
     Q_OBJECT
 
 public:
-    typedef enum KeyId {
+    enum KeyId {
         K_ESC = 0,
         K_F1,
         K_F2,
@@ -116,7 +116,7 @@ public:
         K_KPPLUS,
         K_KPENTER,
         KEYCOUNT // not a valid key code
-    } KeyId;
+    };
     inline static const QString KEY_CODES[KEYCOUNT] = {"escape",
                                                        "f1",
                                                        "f2",

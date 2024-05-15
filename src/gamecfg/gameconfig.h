@@ -8,11 +8,12 @@ class GameCfg
 public:
     enum CmdType { CMD_CVAR, CMD_SVAR, CMD_COMMAND, CMD_BIND, CMD_ALIAS, CMD_UNKWN };
 
-    typedef struct Command{
+    struct Command
+    {
         QStringList args;
         CmdType type;
         Command() : type(CMD_CVAR){};
-    } Command;
+    };
 
     GameCfg();
 
