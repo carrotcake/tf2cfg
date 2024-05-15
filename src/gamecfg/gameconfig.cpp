@@ -48,7 +48,7 @@ void GameCfg::print_cfg()
     }
     fflush(stdout);
 }
-QVector<GameCfg::Command> *GameCfg::get_cmd_list()
+const QVector<GameCfg::Command> &GameCfg::get_cmd_list() const
 {
-    return &cmd_list;
+    return cmd_list;
 }

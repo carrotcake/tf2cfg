@@ -20,7 +20,7 @@ void EditWindow::load_cfg(const QString filename)
     cfg.append_cfg(filename);
     cfg.print_cfg();
     ui->listWidget->clear();
-    for (GameCfg::Command &cmd : *cfg.get_cmd_list()) {
+    for (const GameCfg::Command &cmd : cfg.get_cmd_list()) {
         ui->listWidget->addItem(cmd.args.join(" "));
     }
 }
@@ -52,8 +52,9 @@ void EditWindow::on_btn_next_page_clicked()
     ui->tabWidget->setCurrentIndex(ui->tabWidget->currentIndex() + 1);
 }
 
-void EditWindow::on_keybWidget_keybButtonClicked(const QString key_code)
+void EditWindow::on_keybWidget_keybButtonClicked(int id)
 {
+    QString key_code = KeybForm::KEY_CODES[id];
     printf("%s\n", key_code.toStdString().c_str());
     fflush(stdout);
     BindEditDialog d;

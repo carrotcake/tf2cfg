@@ -22,7 +22,7 @@ public:
 
     void print_cfg();
 
-    QVector<Command> *get_cmd_list();
+    const QVector<Command> &get_cmd_list() const;
 
 private:
     QHash<QString, CmdType> cmd_types;

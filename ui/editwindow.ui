@@ -23,12 +23,15 @@
    <layout class="QGridLayout" name="gridLayout">
     <item row="1" column="0">
      <widget class="QTabWidget" name="tabWidget">
-      <property name="currentIndex">
-       <number>2</number>
+      <property name="cursor">
+       <cursorShape>PointingHandCursor</cursorShape>
       </property>
-      <widget class="QWidget" name="tab">
+      <property name="currentIndex">
+       <number>1</number>
+      </property>
+      <widget class="QWidget" name="CommandOverview">
        <attribute name="title">
-        <string>Tab 1</string>
+        <string>Command Overview</string>
        </attribute>
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
@@ -52,8 +55,38 @@
                </rect>
               </property>
               <layout class="QGridLayout" name="gridLayout_5">
+               <property name="leftMargin">
+                <number>4</number>
+               </property>
+               <property name="topMargin">
+                <number>4</number>
+               </property>
+               <property name="rightMargin">
+                <number>4</number>
+               </property>
+               <property name="bottomMargin">
+                <number>4</number>
+               </property>
+               <property name="spacing">
+                <number>4</number>
+               </property>
                <item row="0" column="0">
                 <widget class="QListWidget" name="listWidget">
+                 <property name="font">
+                  <font>
+                   <family>Liberation Mono</family>
+                   <pointsize>12</pointsize>
+                  </font>
+                 </property>
+                 <property name="cursor" stdset="0">
+                  <cursorShape>PointingHandCursor</cursorShape>
+                 </property>
+                 <property name="frameShape">
+                  <enum>QFrame::Shape::Panel</enum>
+                 </property>
+                 <property name="frameShadow">
+                  <enum>QFrame::Shadow::Plain</enum>
+                 </property>
                  <item>
                   <property name="text">
                    <string>test_item asdf</string>
@@ -100,10 +133,10 @@
       </widget>
       <widget class="QWidget" name="tab_3">
        <attribute name="title">
-        <string>Page</string>
+        <string>Fuck if I know what should go here</string>
        </attribute>
       </widget>
-      <widget class="QWidget" name="tab_2">
+      <widget class="QWidget" name="BindEditor">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
          <horstretch>0</horstretch>
@@ -111,7 +144,7 @@
         </sizepolicy>
        </property>
        <attribute name="title">
-        <string>Tab 2</string>
+        <string>Edit Binds</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_2">
         <item row="0" column="0">

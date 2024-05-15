@@ -12,16 +12,6 @@ class KeybForm : public QWidget
     Q_OBJECT
 
 public:
-    explicit KeybForm(QWidget *parent = nullptr);
-    ~KeybForm();
-
-signals:
-    void keybButtonClicked(const QString key_code);
-
-private slots:
-    void on_keybButtons_idClicked(int id);
-
-private:
     typedef enum KeyId {
         K_ESC = 0,
         K_F1,
@@ -229,6 +219,17 @@ private:
                                                        "kp_del",
                                                        "kp_plus",
                                                        "kp_enter"};
+
+    explicit KeybForm(QWidget *parent = nullptr);
+    ~KeybForm();
+
+signals:
+    void keybButtonClicked(int id);
+
+private slots:
+    void on_keybButtons_idClicked(int id);
+
+private:
     Ui::KeybForm *ui;
     void setupButtonGroup();
 };

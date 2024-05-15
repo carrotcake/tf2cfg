@@ -25,7 +25,7 @@ private slots:
 
     void on_btn_next_page_clicked();
 
-    void on_keybWidget_keybButtonClicked(const QString key_code);
+    void on_keybWidget_keybButtonClicked(const int id);
 
 private:
     Ui::EditWindow *ui;

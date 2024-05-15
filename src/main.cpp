@@ -1,4 +1,3 @@
-#include "gamecfg/gameconfig.h"
 #include "ui/startwindow.h"
 
 #include <QApplication>
@@ -16,13 +15,8 @@ int main(int argc, char *argv[])
     /***********************************************************/ // from res.qrc
 
     StartWindow w;
-    //  EditWindow e;
-
-    GameCfg cfg("config.cfg");
-    cfg.print_cfg();
 
     w.show();
-    // e.show();
 
     return a.exec();
 }
