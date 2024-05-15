@@ -9,6 +9,18 @@ KeybForm::KeybForm(QWidget *parent)
     setupButtonGroup();
 }
 
+void KeybForm::on_keybButtons_idClicked(int id)
+{
+    if (id > -1 && id < KEYCOUNT) {
+        emit keybButtonClicked(KEY_CODES[id]);
+    }
+}
+
+KeybForm::~KeybForm()
+{
+    delete ui;
+}
+
 // assign each key-button to an enum value (buttonId) corresponding to its key code
 void KeybForm::setupButtonGroup()
 {
@@ -122,16 +134,4 @@ void KeybForm::setupButtonGroup()
     ui->keybButtons->setId(ui->btn_kpdot, K_KPDOT);
     ui->keybButtons->setId(ui->btn_kpplus, K_KPPLUS);
     ui->keybButtons->setId(ui->btn_kpenter, K_KPENTER);
-}
-
-void KeybForm::on_keybButtons_idClicked(int id)
-{
-    KeyId kid = static_cast<KeyId>(id);
-    printf("%s = %d\n", KEY_CODES[kid].toStdString().c_str(), id);
-    fflush(stdout);
-}
-
-KeybForm::~KeybForm()
-{
-    delete ui;
 }

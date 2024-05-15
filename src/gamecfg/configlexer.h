@@ -9,12 +9,7 @@ class cfgLexer
 public:
     cfgLexer();
 
-    typedef enum{
-        TOK_ERR,
-        TOK_EOF,
-        TOK_STR,
-        TOK_END
-    } TokenClass;
+    typedef enum TokenClass { TOK_ERR, TOK_EOF, TOK_STR, TOK_END } TokenClass;
 
     struct Token{
         QString str;
@@ -28,7 +23,7 @@ public:
     void close();
 
 private:
-    typedef enum {
+    typedef enum LexerState {
         STATE_START,
         STATE_ERR,
         STATE_CHAR,
@@ -37,7 +32,7 @@ private:
         STATECOUNT // not a valid state
     } LexerState;
 
-    typedef enum {
+    typedef enum LexerInput {
         IN_WHITESPACE,
         IN_CHAR,
         IN_QUOT,

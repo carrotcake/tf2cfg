@@ -14,13 +14,15 @@ INCLUDEPATH += ./src
 
 SOURCES += \
     main.cpp \
+    ui/bindeditdialog.cpp \
     ui/editwindow.cpp \
     ui/keybform.cpp \
     ui/startwindow.cpp \
     gamecfg/configlexer.cpp \
     gamecfg/gameconfig.cpp
 
-HEADERS += \ 
+HEADERS += \
+    ui/bindeditdialog.h \
     ui/editwindow.h \
     ui/keybform.h \
     ui/startwindow.h \
@@ -28,6 +30,7 @@ HEADERS += \
     gamecfg/gameconfig.h
 
 FORMS += \
+    ui/bindeditdialog.ui \
     ui/editwindow.ui \
     ui/keybform.ui \
     ui/startwindow.ui

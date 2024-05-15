@@ -1,4 +1,5 @@
 #include "editwindow.h"
+#include "ui/bindeditdialog.h"
 #include "ui_editwindow.h"
 
 EditWindow::EditWindow(QWidget *parent)
@@ -49,4 +50,13 @@ void EditWindow::on_btn_prev_page_clicked()
 void EditWindow::on_btn_next_page_clicked()
 {
     ui->tabWidget->setCurrentIndex(ui->tabWidget->currentIndex() + 1);
+}
+
+void EditWindow::on_keybWidget_keybButtonClicked(const QString key_code)
+{
+    printf("%s\n", key_code.toStdString().c_str());
+    fflush(stdout);
+    BindEditDialog d;
+    d.set_original_bind("bind \"" + key_code + "\"");
+    d.exec();
 }

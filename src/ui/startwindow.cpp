@@ -1,5 +1,4 @@
 #include "startwindow.h"
-#include "gamecfg/gameconfig.h"
 #include "ui_startwindow.h"
 
 StartWindow::StartWindow(QWidget *parent)

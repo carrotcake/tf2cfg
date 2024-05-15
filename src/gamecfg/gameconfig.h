@@ -6,14 +6,7 @@
 class GameCfg
 {
 public:
-    typedef enum CmdType {
-        CMD_CVAR,
-        CMD_SVAR,
-        CMD_COMMAND,
-        CMD_BIND,
-        CMD_ALIAS,
-        CMD_UNKWN
-    } CmdType;
+    enum CmdType { CMD_CVAR, CMD_SVAR, CMD_COMMAND, CMD_BIND, CMD_ALIAS, CMD_UNKWN };
 
     typedef struct Command{
         QStringList args;
