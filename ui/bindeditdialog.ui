@@ -96,7 +96,7 @@
         <property name="tabBarAutoHide">
          <bool>false</bool>
         </property>
-        <widget class="QWidget" name="tabWidgetPage1" native="true">
+        <widget class="QWidget" name="tabWidgetPage1">
          <attribute name="title">
           <string>Build-A-Bind</string>
          </attribute>

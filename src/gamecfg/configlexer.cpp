@@ -19,6 +19,16 @@ bool cfgLexer::open(const QString &name)
     return true;
 }
 
+inline void cfgLexer::advance_one_char()
+{
+    if (col < arr.at(line).size()) {
+        col++;
+    } else {
+        col = 0;
+        line++;
+    }
+}
+
 cfgLexer::Token cfgLexer::next_token(){
 
     if(line >= arr.size())
@@ -30,11 +40,8 @@ cfgLexer::Token cfgLexer::next_token(){
         const QChar c = col < str.size() ? str.at(col) : '\n';
         const LexerInput input = char_to_input(c);
         if(state == STATE_START && (input == IN_SEMI || input == IN_EOL)){
-            if(col < str.size()) {
-                col++;
-            } else {
-                col = 0; line++;
-            }
+            //empty token
+            advance_one_char();
             return Token("endcmd", TOK_END);
         }
         const LexerState next = STATE[state][input];
@@ -45,18 +52,15 @@ cfgLexer::Token cfgLexer::next_token(){
             break;
         case STATE_END:
             if(input == IN_QUOT){
+                //we're ending a quote-escaped token
                 tok.append(c);
-                col++;
+                advance_one_char();
             }
             return Token(tok, TOK_STR);
         default:
             break;
         }
-        if(col < str.size()) {
-            col++;
-        } else {
-            col = 0; line++;
-        }
+        advance_one_char();
         state = next;
     }
     return Token("error", TOK_ERR);
