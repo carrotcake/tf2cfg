@@ -146,7 +146,7 @@
                 <item>
                  <widget class="QPushButton" name="btn_esc">
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
@@ -204,7 +204,7 @@
                 <item>
                  <widget class="QPushButton" name="btn_f1">
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
@@ -246,7 +246,7 @@
                 <item>
                  <widget class="QPushButton" name="btn_f2">
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
@@ -288,7 +288,7 @@
                 <item>
                  <widget class="QPushButton" name="btn_f3">
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
@@ -330,7 +330,7 @@
                 <item>
                  <widget class="QPushButton" name="btn_f4">
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
@@ -388,7 +388,7 @@
                 <item>
                  <widget class="QPushButton" name="btn_f5">
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
@@ -430,7 +430,7 @@
                 <item>
                  <widget class="QPushButton" name="btn_f6">
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
@@ -472,7 +472,7 @@
                 <item>
                  <widget class="QPushButton" name="btn_f7">
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
@@ -514,7 +514,7 @@
                 <item>
                  <widget class="QPushButton" name="btn_f8">
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
@@ -572,7 +572,7 @@
                 <item>
                  <widget class="QPushButton" name="btn_f9">
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
@@ -614,7 +614,7 @@
                 <item>
                  <widget class="QPushButton" name="btn_f10">
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
@@ -656,7 +656,7 @@
                 <item>
                  <widget class="QPushButton" name="btn_f11">
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
@@ -698,7 +698,7 @@
                 <item>
                  <widget class="QPushButton" name="btn_f12">
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
@@ -759,7 +759,7 @@
                    <bool>false</bool>
                   </property>
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
@@ -803,7 +803,7 @@ Scn</string>
                 <item>
                  <widget class="QPushButton" name="btn_scrlk">
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
@@ -846,7 +846,7 @@ Lock</string>
                 <item>
                  <widget class="QPushButton" name="btn_pause">
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
@@ -990,7 +990,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_tilde">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -1032,7 +1032,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_1">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -1074,7 +1074,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_2">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -1116,7 +1116,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_3">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -1158,7 +1158,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_4">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -1209,7 +1209,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_5">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -1260,7 +1260,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_6">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -1311,7 +1311,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_7">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -1362,7 +1362,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_8">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -1404,7 +1404,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_9">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -1455,7 +1455,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_0">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -1506,7 +1506,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_minus">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -1557,7 +1557,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_eq">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -1608,7 +1608,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_bkspc">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -1692,7 +1692,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_tab">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -1734,7 +1734,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_q">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -1785,7 +1785,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_w">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -1836,7 +1836,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_e">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -1878,7 +1878,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_r">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -1929,7 +1929,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_t">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -1980,7 +1980,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_y">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -2031,7 +2031,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_u">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -2082,7 +2082,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_i">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -2133,7 +2133,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_o">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -2184,7 +2184,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_p">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -2235,7 +2235,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_lb">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -2286,7 +2286,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_rb">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -2337,7 +2337,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_bslsh">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -2421,7 +2421,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_capslk">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -2463,7 +2463,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_a">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -2505,7 +2505,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_s">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -2547,7 +2547,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_d">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -2598,7 +2598,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_f">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -2649,7 +2649,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_g">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -2700,7 +2700,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_h">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -2742,7 +2742,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_j">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -2784,7 +2784,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_k">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -2835,7 +2835,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_l">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -2877,7 +2877,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_semi">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -2919,7 +2919,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_apos">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -2961,7 +2961,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_enter">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -3036,7 +3036,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_lshift">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -3087,7 +3087,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_z">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -3138,7 +3138,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_x">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -3189,7 +3189,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_c">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -3240,7 +3240,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_v">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -3291,7 +3291,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_b">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -3342,7 +3342,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_n">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -3384,7 +3384,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_m">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -3435,7 +3435,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_comma">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -3477,7 +3477,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_dot">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -3528,7 +3528,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_fslsh">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -3579,7 +3579,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_rshift">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -3665,7 +3665,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_lctrl">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -3717,7 +3717,7 @@ Ctrl</string>
                       <item>
                        <widget class="QPushButton" name="btn_lsup">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -3769,7 +3769,7 @@ Super</string>
                       <item>
                        <widget class="QPushButton" name="btn_lalt">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -3821,7 +3821,7 @@ Alt</string>
                       <item>
                        <widget class="QPushButton" name="btn_space">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -3872,7 +3872,7 @@ Alt</string>
                       <item>
                        <widget class="QPushButton" name="btn_ralt">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -3924,7 +3924,7 @@ Alt</string>
                       <item>
                        <widget class="QPushButton" name="btn_rsup">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -3970,7 +3970,7 @@ Super</string>
                          <bool>false</bool>
                         </property>
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -4013,7 +4013,7 @@ Super</string>
                       <item>
                        <widget class="QPushButton" name="btn_rctrl">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -4110,7 +4110,7 @@ Ctrl</string>
                       <item>
                        <widget class="QPushButton" name="btn_ins">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -4151,6 +4151,12 @@ Ctrl</string>
                       </item>
                       <item>
                        <widget class="QPushButton" name="btn_home">
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
                         <property name="minimumSize">
                          <size>
                           <width>64</width>
@@ -4187,6 +4193,12 @@ Ctrl</string>
                       </item>
                       <item>
                        <widget class="QPushButton" name="btn_pgup">
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
                         <property name="minimumSize">
                          <size>
                           <width>64</width>
@@ -4245,6 +4257,12 @@ Up</string>
                       </property>
                       <item>
                        <widget class="QPushButton" name="btn_del">
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
                         <property name="minimumSize">
                          <size>
                           <width>64</width>
@@ -4281,6 +4299,12 @@ Up</string>
                       </item>
                       <item>
                        <widget class="QPushButton" name="btn_end">
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
                         <property name="minimumSize">
                          <size>
                           <width>64</width>
@@ -4317,6 +4341,12 @@ Up</string>
                       </item>
                       <item>
                        <widget class="QPushButton" name="btn_pgdn">
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
                         <property name="minimumSize">
                          <size>
                           <width>64</width>
@@ -4402,6 +4432,12 @@ Down</string>
                       </property>
                       <item>
                        <widget class="QPushButton" name="btn_uparrow">
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
                         <property name="minimumSize">
                          <size>
                           <width>64</width>
@@ -4459,6 +4495,12 @@ Down</string>
                       </property>
                       <item>
                        <widget class="QPushButton" name="btn_leftarrow">
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
                         <property name="minimumSize">
                          <size>
                           <width>64</width>
@@ -4495,6 +4537,12 @@ Down</string>
                       </item>
                       <item>
                        <widget class="QPushButton" name="btn_downarrow">
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
                         <property name="minimumSize">
                          <size>
                           <width>64</width>
@@ -4531,6 +4579,12 @@ Down</string>
                       </item>
                       <item>
                        <widget class="QPushButton" name="btn_rightarrow">
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
                         <property name="minimumSize">
                          <size>
                           <width>64</width>
@@ -4651,6 +4705,12 @@ Down</string>
                          </property>
                          <item>
                           <widget class="QPushButton" name="btn_numlk">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
                            <property name="minimumSize">
                             <size>
                              <width>64</width>
@@ -4688,6 +4748,12 @@ Lock</string>
                          </item>
                          <item>
                           <widget class="QPushButton" name="btn_kpslsh">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
                            <property name="minimumSize">
                             <size>
                              <width>64</width>
@@ -4733,6 +4799,12 @@ Lock</string>
                          </item>
                          <item>
                           <widget class="QPushButton" name="btn_kpmult">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
                            <property name="minimumSize">
                             <size>
                              <width>64</width>
@@ -4805,6 +4877,12 @@ Lock</string>
                          </property>
                          <item>
                           <widget class="QPushButton" name="btn_kp7">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
                            <property name="minimumSize">
                             <size>
                              <width>64</width>
@@ -4850,6 +4928,12 @@ Lock</string>
                          </item>
                          <item>
                           <widget class="QPushButton" name="btn_kp8">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
                            <property name="minimumSize">
                             <size>
                              <width>64</width>
@@ -4895,6 +4979,12 @@ Lock</string>
                          </item>
                          <item>
                           <widget class="QPushButton" name="btn_kp9">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
                            <property name="minimumSize">
                             <size>
                              <width>64</width>
@@ -4967,6 +5057,12 @@ Lock</string>
                          </property>
                          <item>
                           <widget class="QPushButton" name="btn_kp4">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
                            <property name="minimumSize">
                             <size>
                              <width>64</width>
@@ -5012,6 +5108,12 @@ Lock</string>
                          </item>
                          <item>
                           <widget class="QPushButton" name="btn_kp5">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
                            <property name="minimumSize">
                             <size>
                              <width>64</width>
@@ -5057,6 +5159,12 @@ Lock</string>
                          </item>
                          <item>
                           <widget class="QPushButton" name="btn_kp6">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
                            <property name="minimumSize">
                             <size>
                              <width>64</width>
@@ -5129,6 +5237,12 @@ Lock</string>
                          </property>
                          <item>
                           <widget class="QPushButton" name="btn_kp1">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
                            <property name="minimumSize">
                             <size>
                              <width>64</width>
@@ -5174,6 +5288,12 @@ Lock</string>
                          </item>
                          <item>
                           <widget class="QPushButton" name="btn_kp2">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
                            <property name="minimumSize">
                             <size>
                              <width>64</width>
@@ -5219,6 +5339,12 @@ Lock</string>
                          </item>
                          <item>
                           <widget class="QPushButton" name="btn_kp3">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
                            <property name="minimumSize">
                             <size>
                              <width>64</width>
@@ -5291,6 +5417,12 @@ Lock</string>
                          </property>
                          <item>
                           <widget class="QPushButton" name="btn_kp0">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
                            <property name="minimumSize">
                             <size>
                              <width>130</width>
@@ -5336,6 +5468,12 @@ Lock</string>
                          </item>
                          <item>
                           <widget class="QPushButton" name="btn_kpdot">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
                            <property name="minimumSize">
                             <size>
                              <width>64</width>
@@ -5405,6 +5543,12 @@ Lock</string>
                       </property>
                       <item>
                        <widget class="QPushButton" name="btn_kpminus">
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
                         <property name="minimumSize">
                          <size>
                           <width>64</width>
@@ -5450,6 +5594,12 @@ Lock</string>
                       </item>
                       <item>
                        <widget class="QPushButton" name="btn_kpplus">
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
                         <property name="maximumSize">
                          <size>
                           <width>64</width>
@@ -5490,7 +5640,7 @@ Lock</string>
                       <item>
                        <widget class="QPushButton" name="btn_kpenter">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
