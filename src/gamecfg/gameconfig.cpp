@@ -21,7 +21,9 @@ void GameCfg::append_cfg(const QString filename)
             cmd.type = cmd_to_type(tok.str);
         }
         if (cmd.args.size() == 1 && !cmd.args.front().compare("alias")) {
-            cmd_types[tok.str] = CMD_ALIAS;}if (tok.type == cfgLexer::TOK_END) {
+            cmd_types[tok.str] = CMD_ALIAS;
+        }
+        if (tok.type == cfgLexer::TOK_END) {
             if (!cmd.args.empty()) {
                 cmd_list.push_back(cmd);
                 cmd.args.clear();
