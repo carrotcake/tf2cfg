@@ -1,4 +1,4 @@
-#include "editwindow.h"
+#include "ui/editwindow.h"
 #include "ui/bindeditdialog.h"
 #include "ui_editwindow.h"
 
@@ -20,7 +20,7 @@ void EditWindow::load_cfg(const QString filename)
     cfg.append_cfg(filename);
     cfg.print_cfg();
     ui->listWidget->clear();
-    for (const GameCfg::Command &cmd : cfg.get_cmd_list()) {
+    for (const cmd::Entry &cmd : cfg.get_cmd_list()) {
         ui->listWidget->addItem(cmd.args.join(" "));
     }
 }

@@ -1,0 +1,1 @@
+#include "gamecfg/gameconfig.h"

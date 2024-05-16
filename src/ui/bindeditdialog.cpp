@@ -1,4 +1,4 @@
-#include "bindeditdialog.h"
+#include "ui/bindeditdialog.h"
 #include "ui_bindeditdialog.h"
 
 BindEditDialog::BindEditDialog(QWidget *parent)

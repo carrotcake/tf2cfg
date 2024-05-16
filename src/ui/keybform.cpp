@@ -1,4 +1,4 @@
-#include "keybform.h"
+#include "ui/keybform.h"
 #include "ui_keybform.h"
 
 KeybForm::KeybForm(QWidget *parent)

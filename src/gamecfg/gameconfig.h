@@ -2,33 +2,24 @@
 #define GAMECONFIG_H
 
 #include <QApplication>
+#include "gamecfg/convars.h"
 
-class GameCfg
-{
+class GameCfg {
 public:
-    enum CmdType { CMD_CVAR, CMD_SVAR, CMD_COMMAND, CMD_BIND, CMD_ALIAS, CMD_UNKWN };
-
-    struct Command
-    {
-        QStringList args;
-        CmdType type;
-        Command() : type(CMD_CVAR){};
-    };
-
     GameCfg();
 
-    explicit GameCfg(const QString filename);
+    explicit GameCfg(const QString& filename);
 
-    void append_cfg(const QString filename);
+    void append_cfg(const QString& filename);
 
-    void print_cfg();
+    void print_cfg() const;
 
-    const QVector<Command> &get_cmd_list() const;
+    QVector<cmd::Entry> const& get_cmd_list() const;
 
 private:
-    QHash<QString, CmdType> cmd_types;
-    QVector<Command> cmd_list;
-    CmdType cmd_to_type(const QString cmd);
+    QHash<QString, cmd::CmdType> all_cmds;
+    QVector<cmd::Entry> cmd_list;
+    cmd::CmdType cmd_to_type(const QString cmd) const;
 };
 
 #endif // GAMECONFIG_H

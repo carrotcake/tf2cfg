@@ -3,7 +3,7 @@
 
 #include <QFileDialog>
 #include <QMainWindow>
-#include "editwindow.h"
+#include "ui/editwindow.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {

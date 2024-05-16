@@ -3,25 +3,23 @@
 
 GameCfg::GameCfg() {}
 
-GameCfg::GameCfg(const QString filename)
-{
+GameCfg::GameCfg(const QString &filename) {
     this->append_cfg(filename);
 }
 
-void GameCfg::append_cfg(const QString filename)
-{
+void GameCfg::append_cfg(const QString &filename) {
     cfgLexer lex;
-    Command cmd;
+    cmd::Entry cmd;
 
     lex.open(filename);
 
     while (lex.has_next()) {
-        cfgLexer::Token tok = lex.next_token();
+        const cfgLexer::Token tok = lex.next_token();
         if (cmd.args.empty()) {
             cmd.type = cmd_to_type(tok.str);
         }
         if (cmd.args.size() == 1 && !cmd.args.front().compare("alias")) {
-            cmd_types[tok.str] = CMD_ALIAS;
+            all_cmds[tok.str] = cmd::CMD_ALIAS;
         }
         if (tok.type == cfgLexer::TOK_END) {
             if (!cmd.args.empty()) {
@@ -34,23 +32,22 @@ void GameCfg::append_cfg(const QString filename)
     }
 }
 
-GameCfg::CmdType GameCfg::cmd_to_type(const QString cmd)
-{
-    if (cmd_types.find(cmd) != cmd_types.end())
-        return cmd_types[cmd];
-    return CMD_UNKWN;
+cmd::CmdType GameCfg::cmd_to_type(const QString cmd) const {
+    if (all_cmds.find(cmd) != all_cmds.end()) {
+        return all_cmds[cmd];
+    }
+    return cmd::CMD_UNKWN;
 }
 
-void GameCfg::print_cfg()
-{
-    for (Command &cmd : cmd_list) {
-        for (QString &str : cmd.args)
+void GameCfg::print_cfg() const {
+    for (const cmd::Entry &cmd : cmd_list) {
+        for (const QString &str : cmd.args) {
             printf("%s ", str.toStdString().c_str());
+        }
         printf(" (type: %d) \n", cmd.type);
     }
     fflush(stdout);
 }
-const QVector<GameCfg::Command> &GameCfg::get_cmd_list() const
-{
+QVector<cmd::Entry> const &GameCfg::get_cmd_list() const {
     return cmd_list;
 }

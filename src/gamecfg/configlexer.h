@@ -11,14 +11,14 @@ public:
 
     enum TokenClass { TOK_ERR, TOK_EOF, TOK_STR, TOK_END };
 
-    struct Token{
+    struct Token {
         QString str;
         TokenClass type;
         Token(const QString s, const TokenClass t):str(s),type(t){};
     };
 
     bool open(const QString &name);
-    cfgLexer::Token next_token();
+    const Token next_token();
     bool has_next();
     void close();
 
@@ -43,7 +43,7 @@ private:
     };
 
     static constexpr const LexerState STATE[STATECOUNT][INCOUNT] =
-        //   IN_WHITESPACE IN_CHAR     IN_QUOT     IN_SEMI     IN_EOL      IN_EOF
+        //IN_WHITESPACE   IN_CHAR     IN_QUOT     IN_SEMI     IN_EOL      IN_EOF
         {{STATE_START, STATE_CHAR, STATE_ESCP, STATE_END, STATE_END, STATE_END},
          {STATE_ERR, STATE_ERR, STATE_ERR, STATE_ERR, STATE_ERR, STATE_ERR},
          {STATE_END, STATE_CHAR, STATE_ESCP, STATE_END, STATE_END, STATE_END},

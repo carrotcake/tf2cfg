@@ -14,6 +14,7 @@ INCLUDEPATH += ./src
 
 SOURCES += \
     main.cpp \
+    src/gamecfg/cvar.cpp \
     ui/bindeditdialog.cpp \
     ui/editwindow.cpp \
     ui/keybform.cpp \
@@ -22,6 +23,7 @@ SOURCES += \
     gamecfg/gameconfig.cpp
 
 HEADERS += \
+    src/gamecfg/convars.h \
     ui/bindeditdialog.h \
     ui/editwindow.h \
     ui/keybform.h \

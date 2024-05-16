@@ -1,4 +1,4 @@
-#include "configlexer.h"
+#include "gamecfg/configlexer.h"
 
 cfgLexer::cfgLexer() {}
 
@@ -29,8 +29,7 @@ inline void cfgLexer::advance_one_char()
     }
 }
 
-cfgLexer::Token cfgLexer::next_token(){
-
+cfgLexer::Token const cfgLexer::next_token() {
     if(line >= arr.size())
         return Token("EOF", TOK_EOF);
     const QString str = arr.at(line);
