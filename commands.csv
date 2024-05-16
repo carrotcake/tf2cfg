@@ -3766,4 +3766,4 @@
 "youtube_username","","","","","client archive","Username for YouTube."
 "+zoom","cmd","","","","client",""
 "-zoom","cmd","","","","client",""
-"zoom_sensitivity_ratio","","1.0","","","client archive","Additional mouse sensitivity scale factor applied when FOV is zoomed in.
+"zoom_sensitivity_ratio","","1.0","","","client archive","Additional mouse sensitivity scale factor applied when FOV is zoomed in."
