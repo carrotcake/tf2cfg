@@ -18,10 +18,11 @@ KeybForm::~KeybForm() {
     delete ui;
 }
 
-// assign each key-button to an enum value (buttonId) corresponding to its key code
+// assign each key-button to an enum value (buttonId) corresponding to its key
+// code
 void KeybForm::setupButtonGroup() {
 #define X(b, e) ui->keybButtons->setId((b), (e));
-    //F row
+    // F row
     X(ui->btn_esc, K_ESC);
     X(ui->btn_f1, K_F1);
     X(ui->btn_f2, K_F2);
@@ -38,7 +39,7 @@ void KeybForm::setupButtonGroup() {
     X(ui->btn_scrlk, K_SCRLK);
     X(ui->btn_pause, K_PAUSE);
     X(ui->btn_tilde, K_TILDE);
-    //row 0
+    // row 0
     X(ui->btn_1, K_1);
     X(ui->btn_2, K_2);
     X(ui->btn_3, K_3);
@@ -52,7 +53,7 @@ void KeybForm::setupButtonGroup() {
     X(ui->btn_minus, K_MINUS);
     X(ui->btn_eq, K_EQ);
     X(ui->btn_bkspc, K_BKSPC);
-    //row 1
+    // row 1
     X(ui->btn_tab, K_TAB);
     X(ui->btn_q, K_Q);
     X(ui->btn_w, K_W);
@@ -67,7 +68,7 @@ void KeybForm::setupButtonGroup() {
     X(ui->btn_lb, K_LB);
     X(ui->btn_rb, K_RB);
     X(ui->btn_bslsh, K_BSLSH);
-    //row 2
+    // row 2
     X(ui->btn_capslk, K_CAPSLK);
     X(ui->btn_a, K_A);
     X(ui->btn_s, K_S);
@@ -81,7 +82,7 @@ void KeybForm::setupButtonGroup() {
     X(ui->btn_semi, K_SEMI);
     X(ui->btn_apos, K_APOS);
     X(ui->btn_enter, K_ENTER);
-    //row 3
+    // row 3
     X(ui->btn_lshift, K_LSHFT);
     X(ui->btn_z, K_Z);
     X(ui->btn_x, K_X);
@@ -94,7 +95,7 @@ void KeybForm::setupButtonGroup() {
     X(ui->btn_dot, K_DOT);
     X(ui->btn_fslsh, K_FSLSH);
     X(ui->btn_rshift, K_RSHFT);
-    //row 4
+    // row 4
     X(ui->btn_lctrl, K_LCTRL);
     X(ui->btn_lsup, K_LSUP);
     X(ui->btn_lalt, K_LALT);
@@ -102,7 +103,7 @@ void KeybForm::setupButtonGroup() {
     X(ui->btn_ralt, K_RALT);
     X(ui->btn_rsup, K_RSUP);
     X(ui->btn_rctrl, K_RCTRL);
-    //middle section
+    // middle section
     X(ui->btn_ins, K_INS);
     X(ui->btn_home, K_HOME);
     X(ui->btn_pgup, K_PGUP);
@@ -113,7 +114,7 @@ void KeybForm::setupButtonGroup() {
     X(ui->btn_leftarrow, K_LEFT);
     X(ui->btn_downarrow, K_DOWN);
     X(ui->btn_rightarrow, K_RIGHT);
-    //numpad
+    // numpad
     X(ui->btn_numlk, K_NUMLK);
     X(ui->btn_kpslsh, K_KPSLSH);
     X(ui->btn_kpmult, K_KPSTAR);

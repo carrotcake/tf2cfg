@@ -41,7 +41,7 @@ cfgLexer::Token const cfgLexer::next_token() {
         const QChar c = col < str.size() ? str.at(col) : '\n';
         const LexerInput input = char_to_input(c);
         if (state == STATE_START && (input == IN_SEMI || input == IN_EOL)) {
-            //empty token
+            // empty token
             advance_one_char();
             return Token("endcmd", TOK_END);
         }
@@ -53,7 +53,7 @@ cfgLexer::Token const cfgLexer::next_token() {
             break;
         case STATE_END:
             if (input == IN_QUOT) {
-                //we're ending a quote-escaped token
+                // we're ending a quote-escaped token
                 tok.append(c);
                 advance_one_char();
             }

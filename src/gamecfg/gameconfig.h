@@ -8,13 +8,13 @@ class GameCfg {
 public:
     GameCfg();
 
-    explicit GameCfg(const QString& filename);
+    explicit GameCfg(const QString &filename);
 
-    void append_cfg(const QString& filename);
+    void append_cfg(const QString &filename);
 
     void print_cfg() const;
 
-    QVector<cmd::Entry> const& get_cmd_list() const;
+    QVector<cmd::Entry> const &get_cmd_list() const;
 
 private:
     QHash<QString, cmd::CmdType> all_cmds;

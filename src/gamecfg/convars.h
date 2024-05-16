@@ -19,8 +19,8 @@ public:
     ConVar(const QString nm, const QString doc)
         : name(nm)
         , docs(doc){};
-    QString const& get_name() const { return name; };
-    QString const& get_docs() const { return docs; };
+    QString const &get_name() const { return name; };
+    QString const &get_docs() const { return docs; };
     virtual CmdType get_type() const;
 
 private:
@@ -64,12 +64,12 @@ public:
             : min(minval)
             , max(maxval){};
     };
-    FltVar(const QString& nm, const QString& doc, double def, double min, double max)
+    FltVar(const QString &nm, const QString &doc, double def, double min, double max)
         : ConVar(nm, doc)
         , defVal(def)
         , r(min, max)
         , minMax(min != max){};
-    FltVar(const QString& nm, const QString& doc, double def)
+    FltVar(const QString &nm, const QString &doc, double def)
         : FltVar(nm, doc, def, 0.0, 0.0){};
 
     auto getDefaultVal() const { return defVal; }
@@ -86,11 +86,11 @@ private:
 
 class StrVar : public ConVar {
 public:
-    StrVar(const QString& nm, const QString& doc, const QString& def)
+    StrVar(const QString &nm, const QString &doc, const QString &def)
         : ConVar(nm, doc)
         , defStr(def){};
 
-    QString const& getDefaultStr() const { return defStr; };
+    QString const &getDefaultStr() const { return defStr; };
     CmdType get_type() const { return CMD_SVAR; }
 
 private:
@@ -99,11 +99,11 @@ private:
 
 class ConCmd : public ConVar {
 public:
-    ConCmd(const QString& nm, const QString& doc, const QString& usg)
+    ConCmd(const QString &nm, const QString &doc, const QString &usg)
         : ConVar(nm, doc)
         , usage(usg) {}
 
-    QString const& getUsage() const { return usage; }
+    QString const &getUsage() const { return usage; }
     CmdType get_type() const { return CMD_CMD; }
 
 private:
