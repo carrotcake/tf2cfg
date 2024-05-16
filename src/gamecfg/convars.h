@@ -20,6 +20,7 @@ public:
         , docs(doc){};
     QString const& get_name() const { return name; };
     QString const& get_docs() const { return docs; };
+    virtual CmdType get_type() const;
 
 private:
     const QString name, docs;
@@ -47,6 +48,7 @@ public:
     auto getMinVal() const { return minMax ? r.min : 0; }
     auto getMaxVal() const { return minMax ? r.max : 0; }
     auto hasRange() const { return minMax; }
+    CmdType get_type() const { return CMD_IVAR; }
 
 private:
     const i64 defVal;
@@ -74,6 +76,7 @@ public:
     auto getMinVal() const { return minMax ? r.min : 0; }
     auto getMaxVal() const { return minMax ? r.max : 0; }
     auto hasRange() const { return minMax; }
+    CmdType get_type() const { return CMD_FVAR; }
 
 private:
     const double defVal;
@@ -88,6 +91,7 @@ public:
         , defStr(def){};
 
     QString const& getDefaultStr() const { return defStr; };
+    CmdType get_type() const { return CMD_SVAR; }
 
 private:
     const QString defStr;
@@ -99,6 +103,7 @@ class ConCmd : public ConVar {
         , usage(usg) {}
 
     QString const& getUsage() const { return usage; }
+    CmdType get_type() const { return CMD_CMD; }
 
 private:
     const QString usage;
