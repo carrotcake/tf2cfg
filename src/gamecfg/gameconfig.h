@@ -10,16 +10,16 @@ public:
 
     explicit GameCfg(const QString &filename);
 
-    void append_cfg(const QString &filename);
+    void appendCfg(const QString &filename);
 
-    void print_cfg() const;
+    void printCfg() const;
 
-    QVector<cmd::Entry> const &get_cmd_list() const;
+    QVector<cmd::Entry> const &getCmdList() const;
 
 private:
     QHash<QString, cmd::CmdType> all_cmds;
     QVector<cmd::Entry> cmd_list;
-    cmd::CmdType cmd_to_type(const QString cmd) const;
+    inline cmd::CmdType cmdToType(const QString cmd) const;
 };
 
 #endif // GAMECONFIG_H

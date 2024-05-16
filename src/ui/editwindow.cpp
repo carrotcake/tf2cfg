@@ -13,11 +13,11 @@ EditWindow::~EditWindow() {
     delete ui;
 }
 
-void EditWindow::load_cfg(const QString filename) {
-    cfg.append_cfg(filename);
-    cfg.print_cfg();
+void EditWindow::loadCfg(const QString filename) {
+    cfg.appendCfg(filename);
+    cfg.printCfg();
     ui->listWidget->clear();
-    for (const cmd::Entry &cmd : cfg.get_cmd_list()) {
+    for (const cmd::Entry &cmd : cfg.getCmdList()) {
         ui->listWidget->addItem(cmd.args.join(" "));
     }
 }
@@ -47,10 +47,10 @@ void EditWindow::on_btn_next_page_clicked() {
 }
 
 void EditWindow::on_keybWidget_keybButtonClicked(int id) {
-    QString key_code = KeybForm::KEY_CODES[id];
-    printf("%s\n", key_code.toStdString().c_str());
+    QString keyCode = KeybForm::KEYCODES[id];
+    printf("%s\n", keyCode.toStdString().c_str());
     fflush(stdout);
     BindEditDialog d;
-    d.set_original_bind("bind \"" + key_code + "\"");
+    d.setOriginalBind("bind \"" + keyCode + "\"");
     d.exec();
 }

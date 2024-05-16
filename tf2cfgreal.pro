@@ -19,7 +19,7 @@ SOURCES += \
     ui/editwindow.cpp \
     ui/keybform.cpp \
     ui/startwindow.cpp \
-    gamecfg/configlexer.cpp \
+    gamecfg/lex/configlexer.cpp \
     gamecfg/gameconfig.cpp
 
 HEADERS += \
@@ -28,7 +28,7 @@ HEADERS += \
     ui/editwindow.h \
     ui/keybform.h \
     ui/startwindow.h \
-    gamecfg/configlexer.h \
+    gamecfg/lex/lexers.h \
     gamecfg/gameconfig.h
 
 FORMS += \

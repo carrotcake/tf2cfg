@@ -15,7 +15,7 @@ public:
     explicit EditWindow(QWidget *parent = nullptr);
     ~EditWindow();
 
-    void load_cfg(const QString filename);
+    void loadCfg(const QString filename);
 
 private slots:
     void on_tabWidget_currentChanged(int index);

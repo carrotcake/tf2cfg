@@ -14,7 +14,7 @@ public:
     explicit BindEditDialog(QWidget *parent = nullptr);
     ~BindEditDialog();
 
-    void set_original_bind(const QString str);
+    void setOriginalBind(const QString str);
 
 private slots:
     void on_BindEditDialog_accepted();

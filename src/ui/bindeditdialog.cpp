@@ -11,7 +11,7 @@ BindEditDialog::~BindEditDialog() {
     delete ui;
 }
 
-void BindEditDialog::set_original_bind(const QString str) {
+void BindEditDialog::setOriginalBind(const QString str) {
     ui->lineEdit->setText(str);
 };
 

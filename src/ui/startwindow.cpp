@@ -48,7 +48,7 @@ void StartWindow::changeWindow() {
 }
 
 void StartWindow::on_startGoButton_clicked() {
-    edit_window.load_cfg(ui->cfgPathEdit->text());
+    edit_window.loadCfg(ui->cfgPathEdit->text());
     edit_window.show();
     this->hide();
     // create main window
