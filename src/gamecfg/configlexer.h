@@ -4,8 +4,7 @@
 #include <QFile>
 #include <QTextStream>
 
-class cfgLexer
-{
+class cfgLexer {
 public:
     cfgLexer();
 
@@ -14,7 +13,9 @@ public:
     struct Token {
         QString str;
         TokenClass type;
-        Token(const QString s, const TokenClass t):str(s),type(t){};
+        Token(const QString s, const TokenClass t)
+            : str(s)
+            , type(t){};
     };
 
     bool open(const QString &name);

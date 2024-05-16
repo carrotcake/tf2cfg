@@ -7,8 +7,7 @@ namespace Ui {
 class KeybForm;
 }
 
-class KeybForm : public QWidget
-{
+class KeybForm : public QWidget {
     Q_OBJECT
 
 public:

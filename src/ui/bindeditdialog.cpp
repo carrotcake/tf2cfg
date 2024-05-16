@@ -3,18 +3,15 @@
 
 BindEditDialog::BindEditDialog(QWidget *parent)
     : QDialog(parent)
-    , ui(new Ui::BindEditDialog)
-{
+    , ui(new Ui::BindEditDialog) {
     ui->setupUi(this);
 }
 
-BindEditDialog::~BindEditDialog()
-{
+BindEditDialog::~BindEditDialog() {
     delete ui;
 }
 
-void BindEditDialog::set_original_bind(const QString str)
-{
+void BindEditDialog::set_original_bind(const QString str) {
     ui->lineEdit->setText(str);
 };
 

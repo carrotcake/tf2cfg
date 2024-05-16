@@ -5,6 +5,7 @@
 #include <QStringList>
 
 namespace cmd {
+typedef long long int i64;
 enum CmdType { CMD_IVAR, CMD_FVAR, CMD_SVAR, CMD_CMD, CMD_BIND, CMD_ALIAS, CMD_UNKWN };
 
 struct Entry {
@@ -28,7 +29,6 @@ private:
 
 class IntVar : public ConVar {
 public:
-    typedef long long int i64;
     struct Range {
         const i64 min, max;
         Range(i64 minval, i64 maxval)
@@ -98,6 +98,7 @@ private:
 };
 
 class ConCmd : public ConVar {
+public:
     ConCmd(const QString& nm, const QString& doc, const QString& usg)
         : ConVar(nm, doc)
         , usage(usg) {}

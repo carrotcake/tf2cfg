@@ -7,8 +7,7 @@ namespace Ui {
 class BindEditDialog;
 }
 
-class BindEditDialog : public QDialog
-{
+class BindEditDialog : public QDialog {
     Q_OBJECT
 
 public:

@@ -4,19 +4,16 @@
 
 EditWindow::EditWindow(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::EditWindow)
-{
+    , ui(new Ui::EditWindow) {
     ui->setupUi(this);
     ui->tabWidget->setCurrentIndex(0);
 }
 
-EditWindow::~EditWindow()
-{
+EditWindow::~EditWindow() {
     delete ui;
 }
 
-void EditWindow::load_cfg(const QString filename)
-{
+void EditWindow::load_cfg(const QString filename) {
     cfg.append_cfg(filename);
     cfg.print_cfg();
     ui->listWidget->clear();
@@ -25,8 +22,7 @@ void EditWindow::load_cfg(const QString filename)
     }
 }
 
-void EditWindow::on_tabWidget_currentChanged(int index)
-{
+void EditWindow::on_tabWidget_currentChanged(int index) {
     if (index == 0) {
         ui->btn_prev_page->setEnabled(false);
     } else {
@@ -42,18 +38,15 @@ void EditWindow::on_tabWidget_currentChanged(int index)
     }
 }
 
-void EditWindow::on_btn_prev_page_clicked()
-{
+void EditWindow::on_btn_prev_page_clicked() {
     ui->tabWidget->setCurrentIndex(ui->tabWidget->currentIndex() - 1);
 }
 
-void EditWindow::on_btn_next_page_clicked()
-{
+void EditWindow::on_btn_next_page_clicked() {
     ui->tabWidget->setCurrentIndex(ui->tabWidget->currentIndex() + 1);
 }
 
-void EditWindow::on_keybWidget_keybButtonClicked(int id)
-{
+void EditWindow::on_keybWidget_keybButtonClicked(int id) {
     QString key_code = KeybForm::KEY_CODES[id];
     printf("%s\n", key_code.toStdString().c_str());
     fflush(stdout);

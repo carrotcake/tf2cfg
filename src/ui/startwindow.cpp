@@ -3,19 +3,16 @@
 
 StartWindow::StartWindow(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::StartWindow)
-{
+    , ui(new Ui::StartWindow) {
     ui->setupUi(this);
     edit_window.hide();
 }
 
-StartWindow::~StartWindow()
-{
+StartWindow::~StartWindow() {
     delete ui;
 }
 
-void StartWindow::on_cfgPathBrowseButton_clicked()
-{
+void StartWindow::on_cfgPathBrowseButton_clicked() {
     QString file_path = QFileDialog::getOpenFileName(this,
                                                      tr("Open Config"),
                                                      "",
@@ -27,8 +24,7 @@ void StartWindow::on_cfgPathBrowseButton_clicked()
     }
 }
 
-void StartWindow::on_cfgPresetBox_currentIndexChanged(int index)
-{
+void StartWindow::on_cfgPresetBox_currentIndexChanged(int index) {
     switch (index) {
     case 0:
     case 1:
@@ -41,8 +37,7 @@ void StartWindow::on_cfgPresetBox_currentIndexChanged(int index)
     }
 }
 
-void StartWindow::changeWindow()
-{
+void StartWindow::changeWindow() {
     if (this->isVisible()) {
         edit_window.hide();
         this->show();
@@ -52,8 +47,7 @@ void StartWindow::changeWindow()
     }
 }
 
-void StartWindow::on_startGoButton_clicked()
-{
+void StartWindow::on_startGoButton_clicked() {
     edit_window.load_cfg(ui->cfgPathEdit->text());
     edit_window.show();
     this->hide();

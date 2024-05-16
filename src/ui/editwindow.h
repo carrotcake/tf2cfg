@@ -8,8 +8,7 @@ namespace Ui {
 class EditWindow;
 }
 
-class EditWindow : public QMainWindow
-{
+class EditWindow : public QMainWindow {
     Q_OBJECT
 
 public:

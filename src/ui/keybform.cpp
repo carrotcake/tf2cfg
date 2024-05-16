@@ -3,27 +3,23 @@
 
 KeybForm::KeybForm(QWidget *parent)
     : QWidget(parent)
-    , ui(new Ui::KeybForm)
-{
+    , ui(new Ui::KeybForm) {
     ui->setupUi(this);
     setupButtonGroup();
 }
 
-void KeybForm::on_keybButtons_idClicked(int id)
-{
+void KeybForm::on_keybButtons_idClicked(int id) {
     if (id > -1 && id < KEYCOUNT) {
         emit keybButtonClicked(id);
     }
 }
 
-KeybForm::~KeybForm()
-{
+KeybForm::~KeybForm() {
     delete ui;
 }
 
 // assign each key-button to an enum value (buttonId) corresponding to its key code
-void KeybForm::setupButtonGroup()
-{
+void KeybForm::setupButtonGroup() {
 #define X(b, e) ui->keybButtons->setId((b), (e));
     //F row
     X(ui->btn_esc, K_ESC);
