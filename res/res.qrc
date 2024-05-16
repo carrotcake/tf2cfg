@@ -7,5 +7,6 @@
         <file>font/tf2build.ttf</file>
         <file>font/tf2professor.ttf</file>
         <file>font/tf2secondary.ttf</file>
+        <file>font/LiberationMono-Regular.ttf</file>
     </qresource>
 </RCC>
