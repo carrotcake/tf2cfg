@@ -2,11 +2,9 @@
 
 using namespace Lexers;
 
-cfgLex::cfgLex() {}
-
 cfgLex::Token const cfgLex::nextToken() {
     if (line >= arr.size()) {
-        return Token("EOF", TOK_EOF);
+        return Token("EOF", Token::TOK_EOF);
     }
     const QString str = arr.at(line);
     QString tok("");
@@ -17,7 +15,7 @@ cfgLex::Token const cfgLex::nextToken() {
         if (state == STATE_START && (input == IN_SEMI || input == IN_EOL)) {
             // empty token
             advanceOneChar();
-            return Token("endcmd", TOK_END);
+            return Token("endcmd", Token::TOK_END);
         }
         const LexState next = STATE[state][input];
         switch (next) {
@@ -31,14 +29,14 @@ cfgLex::Token const cfgLex::nextToken() {
                 tok.append(c);
                 advanceOneChar();
             }
-            return Token(tok, TOK_STR);
+            return Token(tok, Token::TOK_STR);
         default:
             break;
         }
         advanceOneChar();
         state = next;
     }
-    return Token("error", TOK_ERR);
+    return Token("error", Token::TOK_ERR);
 }
 
 inline cfgLex::LexInput cfgLex::charToInput(const QChar c) const {

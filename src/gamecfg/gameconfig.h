@@ -14,10 +14,14 @@ public:
 
     void printCfg() const;
 
+    void loadAllCmds();
+
     QVector<cmd::Entry> const &getCmdList() const;
 
 private:
-    QHash<QString, cmd::CmdType> all_cmds;
+    QHash<QString, cmd::CmdType> cmd_types;
+    QHash<QString, unsigned> cmd_map;
+    QVector<cmd::ConVar> known_cmds;
     QVector<cmd::Entry> cmd_list;
     inline cmd::CmdType cmdToType(const QString cmd) const;
 };

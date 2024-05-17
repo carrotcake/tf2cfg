@@ -15,6 +15,7 @@ INCLUDEPATH += ./src
 SOURCES += \
     main.cpp \
     src/gamecfg/cvar.cpp \
+    src/gamecfg/lex/cmdlexer.cpp \
     ui/bindeditdialog.cpp \
     ui/editwindow.cpp \
     ui/keybform.cpp \

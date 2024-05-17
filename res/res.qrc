@@ -8,5 +8,6 @@
         <file>font/tf2professor.ttf</file>
         <file>font/tf2secondary.ttf</file>
         <file>font/LiberationMono-Regular.ttf</file>
+        <file>cfg/allcmds.csv</file>
     </qresource>
 </RCC>

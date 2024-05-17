@@ -21,10 +21,10 @@ public:
         , docs(doc){};
     QString const &get_name() const { return name; };
     QString const &get_docs() const { return docs; };
-    virtual CmdType get_type() const;
+    virtual CmdType get_type() const { return CMD_UNKWN; };
 
 private:
-    const QString name, docs;
+    QString name, docs;
 };
 
 class IntVar : public ConVar {
@@ -51,9 +51,9 @@ public:
     CmdType get_type() const { return CMD_IVAR; }
 
 private:
-    const i64 defVal;
-    const Range r;
-    const bool minMax;
+    i64 defVal;
+    Range r;
+    bool minMax;
 };
 
 class FltVar : public ConVar {
@@ -79,9 +79,9 @@ public:
     CmdType get_type() const { return CMD_FVAR; }
 
 private:
-    const double defVal;
+    double defVal;
     Range r;
-    const bool minMax;
+    bool minMax;
 };
 
 class StrVar : public ConVar {
@@ -94,7 +94,7 @@ public:
     CmdType get_type() const { return CMD_SVAR; }
 
 private:
-    const QString defStr;
+    QString defStr;
 };
 
 class ConCmd : public ConVar {
@@ -107,7 +107,7 @@ public:
     CmdType get_type() const { return CMD_CMD; }
 
 private:
-    const QString usage;
+    QString usage;
 };
 
 } // namespace cmd
