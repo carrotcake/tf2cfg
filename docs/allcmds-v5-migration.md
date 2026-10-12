@@ -6,15 +6,16 @@ Field meanings live in [res/cfg/schema.md](../res/cfg/schema.md), flag/tag vocab
 in [res/cfg/flags.md](../res/cfg/flags.md).
 
 The file is now canonical as `res/cfg/allcmds.csv` (renamed from `allcmds_v5.csv`);
-older revisions remain as `res/cfg/allcmds_*_legacy.csv` and are **not** in the
-resource file.
+older revisions are recoverable from git history and are **not** in the resource
+file.
 
 ## 1. Immediate fix (done with this doc)
 
 - `res/res.qrc` referenced `cfg/allcmds.csv`, which the versioning renames had removed
   — the resource build was broken. Resolved by renaming `allcmds_v5.csv` back to
   `allcmds.csv`. `GameCfg::loadAllCmds()`'s path `"://cfg/allcmds.csv"` stays valid.
-  Future data refreshes must keep the canonical name and add a new `_legacy` file.
+  Future data refreshes must keep the canonical name; `tools/csvio.py` rotates the
+  previous copy to a local `allcmds_bak.csv` and older revisions stay in git history.
 
 ## 2. Parser changes (`src/gamecfg/lex/`)
 

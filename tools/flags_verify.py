@@ -2,8 +2,7 @@
 """
 Verify res/cfg/allcmds.csv flags against the dump sources:
 1. every row's flags are a superset of the Linux dump tokens
-2. rows filled from the CS2 dump (still empty in the v3 legacy snapshot)
-3. cross-check non-empty flags vs CS2 evidence (expected version drift)
+2. cross-check non-empty flags vs CS2 evidence (expected version drift)
 Read-only. Run from the repo root.
 """
 import csv
@@ -32,13 +31,6 @@ for line in open('./data/cvarlist_linux.txt', encoding='utf-8', errors='replace'
 bad = [(r[0], r[5], ' '.join(sorted(dump[r[0]]))) for r in rows if r[0] in dump and dump[r[0]] and not norm(r[5]) >= dump[r[0]]]
 print(f"rows missing dump tokens: {len(bad)}")
 for b in bad[:10]: print(' ', b)
-
-# the CS2-filled rows (empty in v3 legacy, non-empty now)
-old = list(csv.reader(open('./res/cfg/allcmds_v3_legacy.csv', encoding='utf-8')))
-oldmap = {r[0]: r for r in old}
-filled = [(r[0], r[1] or 'cvar', r[5]) for r in rows if not oldmap[r[0]][5] and r[5]]
-print(f"\nfilled from CS2 ({len(filled)}):")
-for n, t, f in filled: print(f"  {n} [{t}]: {f}")
 
 # cross-check: existing non-empty flags vs CS2 evidence
 import re
