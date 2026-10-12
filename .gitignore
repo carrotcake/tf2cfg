@@ -6,3 +6,6 @@ build/
 # Python
 __pycache__/
 *.py[cod]
+
+# local backup made by tools/csvio.py on rewrite
+allcmds_bak.csv

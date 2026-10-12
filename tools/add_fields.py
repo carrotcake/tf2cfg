@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
 """
-Add three fields to allcmds_v4.csv -> allcmds_v5.csv:
+Recompute the three derived fields (cols 8-10) of res/cfg/allcmds.csv in place
+(previous copy rotated to allcmds_bak.csv):
   col 8: input type   (bool/int/flt/str for cvars; none or [mandatory]/<optional> types for commands)
   col 9: platform     (universal/xbox/linux/windows)
   col 10: in-game context (client controls/client settings/client render/server commands/server settings/engine)
+Run from the repo root.
 """
-import csv, re, shutil
+import re
+from collections import Counter
+
+from csvio import read, write
 from field_dicts import SIGS, SERVER_CMDS, PLAYER_ACTIONS, INPUT_OVERRIDES, CONTEXT_OVERRIDES
 
-rows = list(csv.reader(open('./res/cfg/allcmds_v4.csv', encoding='utf-8')))
+rows = read()
 
 # ---------------- input type ----------------
 FLOAT_RE = re.compile(r'^-?(\d+\.\d*|\.\d+)(f?)$|^-\d+f$')
@@ -95,17 +100,14 @@ for r in rows:
         inp = cmd_input(r[0])
     else:
         inp = cvar_input(r)
-    r.append(inp)
-    r.append(platform(r[0]))
-    r.append(context(r))
+    r += [''] * (10 - len(r))   # tolerate short legacy rows
+    r[7], r[8], r[9] = inp, platform(r[0]), context(r)
     out.append(r)
 
-with open('./res/cfg/allcmds_v5.csv', 'w', newline='', encoding='utf-8') as f:
-    csv.writer(f).writerows(out)
-shutil.move('./res/cfg/allcmds_v4.csv', './res/cfg/allcmds_v4_legacy.csv')
+write(out)
+print("Wrote res/cfg/allcmds.csv (previous copy in allcmds_bak.csv)")
 
 # ---------------- stats ----------------
-from collections import Counter
 n = len(out)
 print(f"rows: {n}")
 print("input:", dict(Counter(r[7] for r in out).most_common(12)))

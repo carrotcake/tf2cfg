@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-Populate empty descriptions in allcmds_v2.csv from authored knowledge.
-Output: allcmds_v3.csv. Existing descriptions untouched.
+Populate empty descriptions (col 7) in res/cfg/allcmds.csv from authored
+knowledge. Rewrites the canonical file in place (previous copy rotated to
+allcmds_bak.csv). Existing descriptions untouched. Run from the repo root.
 """
-import csv, shutil
+from csvio import read, write
 from desc_part1 import D1
 from desc_part2 import D2
 from desc_part3 import D3
@@ -127,7 +128,7 @@ AUTHORED.update({
     "tf_powerup_max_charge_time": "Maximum charge time for power-up mode pickups.",
 })
 
-rows = list(csv.reader(open('./res/cfg/allcmds_v2.csv', encoding='utf-8')))
+rows = read()
 filled = 0
 fallbacks = []
 for r in rows:
@@ -146,11 +147,7 @@ for n in fallbacks:
 names = [r[0] for r in rows]
 assert len(names) == len(set(names)), "duplicate names!"
 
-with open('./res/cfg/allcmds_v3.csv', 'w', newline='', encoding='utf-8') as f:
-    csv.writer(f).writerows(rows)
-
-shutil.move('./res/cfg/allcmds_v2.csv', './res/cfg/allcmds_v2_legacy.csv')
-print(f"\nWrote {len(rows)} rows to allcmds_v3.csv")
-print("Moved v2 -> allcmds_v2_legacy.csv")
+write(rows)
+print(f"\nWrote {len(rows)} rows to res/cfg/allcmds.csv")
 ndesc = sum(1 for r in rows if r[6])
 print(f"Non-empty descriptions: {ndesc}/{len(rows)}")

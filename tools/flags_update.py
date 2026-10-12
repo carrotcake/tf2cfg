@@ -2,12 +2,15 @@
 """
 Flag (tags) pass:
 1. Normalize dump short tokens to canonical wiki-style vocabulary.
-2. Union cvar flags: v3 + Linux dump (both normalized).
+2. Union cvar flags: canonical flags + Linux dump (both normalized).
 3. Fill empty flags (cmd + cvar) from CS2 1.39.6.5 FCVAR dump (mapped, engine-only tokens).
-Output: allcmds_v4.csv + conflict report.
+Rewrites res/cfg/allcmds.csv in place (previous copy rotated to allcmds_bak.csv).
+Run from the repo root.
 """
-import csv, re, shutil
+import re
 from collections import Counter
+
+from csvio import read, write
 
 # ---------- canonical vocabulary ----------
 TOK_MAP = {
@@ -86,7 +89,7 @@ for line in text.splitlines():
 print(f"CS2 evidence entries: {len(cs2)}")
 
 # ---------- apply ----------
-rows = list(csv.reader(open('./res/cfg/allcmds_v3.csv', encoding='utf-8')))
+rows = read()
 stats = Counter()
 for r in rows:
     name, typ, flags = r[0], r[1], r[5]
@@ -115,10 +118,8 @@ empty_cvar = [r[0] for r in rows if r[1] == '' and not r[5]]
 print(f"\nstill empty - cmd/ncmd: {len(empty_cmd)}, cvars: {len(empty_cvar)}")
 print("still-empty cmds with CS2 candidates? none (already filled); sample cvars:", empty_cvar[:15])
 
-with open('./res/cfg/allcmds_v4.csv', 'w', newline='', encoding='utf-8') as f:
-    csv.writer(f).writerows(rows)
-shutil.move('./res/cfg/allcmds_v3.csv', './res/cfg/allcmds_v3_legacy.csv')
-print(f"\nWrote {len(rows)} rows to allcmds_v4.csv; v3 -> allcmds_v3_legacy.csv")
+write(rows)
+print(f"\nWrote {len(rows)} rows to res/cfg/allcmds.csv (previous copy in allcmds_bak.csv)")
 
 tok = Counter(t for r in rows for t in r[5].split())
 print("\nfinal token counts:")

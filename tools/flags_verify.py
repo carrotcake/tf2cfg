@@ -1,7 +1,17 @@
+#!/usr/bin/env python3
+"""
+Verify res/cfg/allcmds.csv flags against the dump sources:
+1. every row's flags are a superset of the Linux dump tokens
+2. rows filled from the CS2 dump (still empty in the v3 legacy snapshot)
+3. cross-check non-empty flags vs CS2 evidence (expected version drift)
+Read-only. Run from the repo root.
+"""
 import csv
 from collections import Counter
 
-rows = list(csv.reader(open('./res/cfg/allcmds_v4.csv', encoding='utf-8')))
+from csvio import read
+
+rows = read()
 
 MAP = {'a':'archive','cl':'client','sv':'game','rep':'replicated','nf':'notify','nr':'norecord',
        'user':'userinfo','prot':'protected','sp':'singleplayer','print':'printonly',
