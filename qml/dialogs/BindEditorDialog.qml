@@ -541,6 +541,11 @@ Dialog {
                             padding: 1
                             closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
+                            // Max height = 8 items worth so the list scrolls when browsing.
+                            readonly property real itemHeight: Theme.sizeUi + Theme.spacingTight * 2
+                            readonly property real maxHeight: itemHeight * 8 + 2
+                            height: Math.min(maxHeight, suggestionView.contentHeight)
+
                             background: Rectangle {
                                 color: Theme.colorSurfaceSunken
                                 border.width: Theme.borderWidth
@@ -551,12 +556,13 @@ Dialog {
                             contentItem: ListView {
                                 id: suggestionView
                                 clip: true
-                                implicitHeight: contentHeight
+                                width: parent.width
+                                height: parent.height
                                 // When browsing, show all; otherwise cap at 8.
                                 model: browsing ? suggestionList : suggestionList.slice(0, 8)
                                 currentIndex: suggestionIndex
                                 ScrollIndicator.vertical: ScrollIndicator {
-                                    visible: suggestionView.count > 8
+                                    visible: suggestionView.contentHeight > suggestionView.height
                                 }
                                 // Mouse wheel on the list enters browsing mode.
                                 WheelHandler {
