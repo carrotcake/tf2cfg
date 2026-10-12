@@ -4,6 +4,8 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickStyle>
+#include <QQuickWindow>
+#include <QScreen>
 
 #include "ui/configcontroller.h"
 
@@ -74,6 +76,14 @@ int main(int argc, char *argv[]) {
     engine.load(QUrl(QStringLiteral("qrc:/qml/Main.qml")));
     if (engine.rootObjects().isEmpty())
         return -1;
+
+    // The OS decides where a new window opens, which on a multi-monitor desktop can leave
+    // it straddling two screens. Pin the window frame to the top-left of the primary screen
+    // so every launch starts from the same, fully visible position.
+    if (auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().constFirst())) {
+        if (const QScreen *screen = QGuiApplication::primaryScreen())
+            window->setFramePosition(screen->geometry().topLeft());
+    }
 
     return a.exec();
 }

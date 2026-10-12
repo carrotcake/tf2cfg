@@ -97,6 +97,7 @@ Each is small, and each is listed so parity can be audited. D15 and D16 are the 
 | D14 | The bind dialog opens centred on the window and is dragged by its title bar, clamped inside the window | A stock QML `Dialog` has no drag behaviour and sits at (0,0); the widget `QDialog` was moved by the window manager, which could leave the screen. In-window bounds are what the tool needs. |
 | D15 | The keyboard panel scrolls in both directions when the window is too small for it, and the keyboard alone can be zoomed (`Ctrl`+wheel, `Ctrl`+`+`/`-`/`0`) | Requested usability additions: the keyboard is 1632 px wide and does not fit even the default editor width (1573 px), so the outer keys were previously unreachable. See section 13. |
 | D16 | A cap whose key the loaded config binds is filled burnt orange; OK in the bind dialog edits the bind instead of logging it | P31/P34/P35 left the dialog inert and `BoundKeyRole` empty, so the keyboard was a viewer. The user asked for the caps to show their binds and for OK to add/remove one. The Custom Command text is the command applied (an empty field removes the bind); `Existing Bind:` becomes display-only. Nothing is written to disk — there is still no save path (section 10) — so the edit lives in the loaded model until the next load. |
+| D17 | The window is pinned to the top-left corner of the primary screen at startup instead of opening wherever the OS puts it | On a multi-monitor desktop the OS could open the window straddling two screens, pushing part of it (and of the editor's 1573 px width) outside any single-monitor capture. Pinning the frame to the primary screen's origin makes every launch start from the same, fully visible spot. Only the position is fixed; a page change still resizes the window (P2/P13) and keeps the frame's top-left. See section 14. |
 
 ## 5. Target architecture
 
@@ -314,6 +315,7 @@ Performed against the MinGW Qt 6.12.0 build with the full automation run on 2026
 11. Zoom (D15): `Ctrl`+wheel in and out, `Ctrl+=` / `Ctrl+-`, the numpad `+`/`-`, and `Ctrl+Shift+=` / `Ctrl+Shift+-` all change the level in 0.1 steps; the level clamps at 0.5 and 2.0; `Ctrl+0` returns to 1.0. Zoom is anchored: the viewport centre stays over the same key (the scroll offset changes to compensate). The zoom badge shows the percentage and fades after 1.2 s.
 12. Zoom scope and hit testing: at zoom 0.5 the content equals the viewport (both bars hidden) and clicking Space logs `id=71 token=space`; at zoom 0.5 clicking `KP Enter` logs `id=101 token=kp_enter`, so the click areas scale with the caps. Only the keyboard scales — the tab bar, status strip, zoom badge and panel geometry are unaffected. `Flickable` does not clamp programmatically assigned `contentX`/`contentY`, so `setZoom` clamps to `[0, content − viewport]` itself; without it, a zoom-out produced negative scroll offsets (−164, −77).
 13. Binds on the keyboard (D16): with `default.cfg` loaded, the caps whose key the config binds are painted with the bound tokens. A pixel scan of the Edit Binds tab finds 47 visible bound caps — exactly the on-screen keys `default.cfg` binds (of its 54 binds, 50 land on a cap; `end`/`pgdn`/`pgup` sit past the right edge, and the mouse binds have no cap) — and the whole numpad stays grey, the negative control for a wrong key mapping. `b4nny.cfg` binds 59 keys, a second data point. The dialog's OK applies the Custom Command text through `cfg.setBind`/`cfg.clearBind`, which edits the parsed rows; the caps and the Overview line update from the model's change signals. The edit is in memory only (section 10: no save path exists).
+14. Startup position (D17): with the primary screen at 2560×1440, at launch `GetWindowRect` reports the frame at `L=-9 T=0 R=1259 B=669` and the client origin at (0, 35). The −9 is the invisible DWM resize border, so the visible window sits in the top-left corner; the title bar is fully on screen. Before the rule the OS opened the window at (138, 69), with the 1573 px editor overlapping the second monitor at x=2560.
 
 | Parity row | How it was verified |
 |---|---|
@@ -325,6 +327,7 @@ Performed against the MinGW Qt 6.12.0 build with the full automation run on 2026
 | P30/P36 (dialog) | opens centred; drag clamped to the window (D14); Escape rejects; outside press blocked |
 | D15 (scroll + zoom) | see items 10–12 of this section |
 | D16 (bound caps + dialog edit) | loaded-config colouring confirmed visually and by the pixel scan in item 13 (47 visible bound caps == the on-screen keys `default.cfg` binds; numpad all grey); the dialog's OK is wired to `cfg.setBind`/`cfg.clearBind`, whose `bindsChanged` signal is what repaints the caps |
+| D17 (startup position) | confirmed visually, and by the `GetWindowRect` probe in item 14 (frame top-left at the primary screen's origin) |
 
 ## 13. Keyboard usability: scrolling and zoom
 
@@ -345,3 +348,12 @@ Requested after the rewrite: when the window is too small, all keys must stay vi
 - A transient badge (bottom-right, above the horizontal bar) shows `Zoom N%` and fades after 1.2 s.
 
 Neither addition changes the widget parity contract: at the default window size and zoom 1.0 the panel looks exactly as before, except that the horizontal bar is now available (the keyboard genuinely did not fit before, which is what made the outer keys unreachable).
+
+## 14. Startup position
+
+Requested after the rewrite: the app must open in the top-left corner of the active (primary) screen, so it never straddles two monitors. `src/main.cpp` pins it there once, right after `engine.load()`:
+
+- The target is `QGuiApplication::primaryScreen()->geometry().topLeft()`, so the position is the same on every launch even when the pointer is on the second monitor.
+- `QWindow::setFramePosition()` is what positions the frame **including** its decorations. `QWindow::setPosition()` was tried first: it sets the client origin, and `frameMargins()` under-reports the left border, which left the frame at (−9, −70) with the title bar above the screen.
+- Only the position is fixed. A page change still resizes the window (P2/P13) and keeps the frame's top-left at the screen origin.
+- Nothing else changes: no layout value, no parity row, and the widget build's `StartWindow`/`EditWindow` behaviour is untouched (they are out of the build).
