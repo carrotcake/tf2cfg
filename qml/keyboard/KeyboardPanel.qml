@@ -5,11 +5,25 @@ import "../theme"
 // The keyboard. Four clusters, same arrangement as the widget build
 // (docs/ui-qml-rewrite.md section 8): function row, main block, middle cluster, numpad.
 // Everything is data-driven from KeyTable.
+//
+// Usability additions over the widget build (section 13): the panel scrolls in both
+// directions when the window is too small for it, and the keyboard alone can be
+// zoomed with Ctrl+wheel or Ctrl+plus/minus. Neither changes any layout value.
 Item {
     id: panel
 
     /// Emitted when a bindable cap is clicked.
     signal keyActivated(int keyId, string token)
+
+    /// Zoom of the keyboard (caps and their click areas) only. 1.0 is design size.
+    property real zoom: 1.0
+    readonly property real zoomMin: 0.5
+    readonly property real zoomMax: 2.0
+    readonly property real zoomStep: 0.1
+
+    /// Padding around the keyboard inside the flickable content. The extra room over
+    /// Theme.spacingWide keeps an overlay scroll bar off the outer caps.
+    readonly property real contentMargin: Theme.spacingWide + 12
 
     /// Width of the widest main-block row; the other rows are stretched to match.
     readonly property real mainRowWidth: {
@@ -42,19 +56,70 @@ Item {
         return Theme.capGap + (mainRowWidth - rowWidth(names)) / (names.length - 1)
     }
 
+    /// Set the zoom, clamped to [zoomMin, zoomMax]. The viewport centre is kept over
+    /// the same key, so zooming does not throw the panel off to a corner.
+    function setZoom(value) {
+        const clamped = Math.max(zoomMin, Math.min(zoomMax, value))
+        if (Math.abs(clamped - zoom) < 0.0001)
+            return
+
+        const centreX = (flick.contentX + flick.width / 2 - keyboard.x) / zoom
+        const centreY = (flick.contentY + flick.height / 2 - keyboard.y) / zoom
+
+        zoom = clamped
+
+        // The keyboard bindings above have already re-evaluated for the new zoom.
+        // Flickable does not clamp assigned contentX/Y, so clamp to its own range.
+        flick.contentX = Math.max(0, Math.min(keyboard.x + centreX * zoom - flick.width / 2,
+                                              flick.contentWidth - flick.width))
+        flick.contentY = Math.max(0, Math.min(keyboard.y + centreY * zoom - flick.height / 2,
+                                              flick.contentHeight - flick.height))
+
+        zoomBadge.opacity = 1
+        zoomHint.restart()
+    }
+
+    function zoomBy(delta) {
+        setZoom(zoom + delta)
+    }
+
+    /// Ctrl+0.
+    function resetZoom() {
+        setZoom(1.0)
+    }
+
     Flickable {
         id: flick
         anchors.fill: parent
-        contentWidth: Math.max(width, keyboard.width + Theme.spacingWide * 2)
-        contentHeight: Math.max(height, keyboard.height + Theme.spacingWide * 2)
+        contentWidth: Math.max(width, keyboard.width * panel.zoom + panel.contentMargin * 2)
+        contentHeight: Math.max(height, keyboard.height * panel.zoom + panel.contentMargin * 2)
         clip: true
         boundsBehavior: Flickable.StopAtBounds
-        ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+        // Deterministic bars: shown only when the keyboard does not fit, and then
+        // permanently visible (AsNeeded fades them out again when idle, which hides
+        // the only affordance for reaching the outer keys).
+        ScrollBar.vertical: ScrollBar {
+            id: vbar
+            policy: flick.contentHeight > flick.height ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
+        }
+        ScrollBar.horizontal: ScrollBar {
+            id: hbar
+            policy: flick.contentWidth > flick.width ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
+        }
+
+        // Ctrl+wheel zooms the keyboard; a plain wheel still scrolls (Flickable's own
+        // wheel handling runs whenever this handler does not accept the event).
+        WheelHandler {
+            acceptedModifiers: Qt.ControlModifier
+            onWheel: function (event) { panel.zoomBy(event.angleDelta.y / 120 * panel.zoomStep) }
+        }
 
         Column {
             id: keyboard
-            x: (flick.contentWidth - width) / 2
-            y: Theme.spacingWide
+            transformOrigin: Item.TopLeft
+            scale: panel.zoom
+            x: (flick.contentWidth - width * panel.zoom) / 2
+            y: panel.contentMargin
             spacing: Theme.capGap
 
             // -- function row --------------------------------------------------
@@ -170,5 +235,55 @@ Item {
                 }
             }
         }
+    }
+
+    // Ctrl+plus / Ctrl+minus / Ctrl+0. Both the main-row key (=) and the numpad key (+)
+    // are accepted, on the numeric row and on the numeric keypad.
+    Shortcut {
+        sequences: ["Ctrl++", "Ctrl+="]
+        onActivated: panel.zoomBy(panel.zoomStep)
+    }
+    Shortcut {
+        sequences: ["Ctrl+-", "Ctrl+_"]
+        onActivated: panel.zoomBy(-panel.zoomStep)
+    }
+    Shortcut {
+        sequence: "Ctrl+0"
+        onActivated: panel.resetZoom()
+    }
+
+    // Level read-out. Transient, so it never covers a cap for long and never competes
+    // with the panel's own layout.
+    Rectangle {
+        id: zoomBadge
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.rightMargin: Theme.spacing
+        anchors.bottomMargin: Theme.spacing + (hbar.visible ? hbar.height : 0)
+        opacity: 0
+        visible: opacity > 0
+        radius: Theme.radius
+        color: Theme.colorSurfaceRaised
+        border.width: Theme.borderWidth
+        border.color: Theme.colorBorderStrong
+        implicitWidth: zoomBadgeText.implicitWidth + Theme.spacing * 2
+        implicitHeight: zoomBadgeText.implicitHeight + Theme.spacingTight * 2
+
+        Behavior on opacity { NumberAnimation { duration: 150 } }
+
+        Text {
+            id: zoomBadgeText
+            anchors.centerIn: parent
+            text: qsTr("Zoom %1%").arg(Math.round(panel.zoom * 100))
+            color: Theme.colorText
+            font.family: Theme.familyUi
+            font.pointSize: Theme.sizeSmall
+        }
+    }
+
+    Timer {
+        id: zoomHint
+        interval: 1200
+        onTriggered: zoomBadge.opacity = 0
     }
 }

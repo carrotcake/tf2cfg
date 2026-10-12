@@ -95,6 +95,7 @@ Each is small, and each is listed so parity can be audited. No functional capabi
 | D12 | Short description line under the preset combo, and placeholder text in the bind dialog's empty combos/argument area | Both are empty-state wording. The preset note is data (`presets[].note`), so future presets get one for free. |
 | D13 | Main keyboard rows are stretched to the widest row (1012 px) with computed per-row gaps | Matches what the widget's `QHBoxLayout` rows did with fixed-width caps; keeps the main block rectangular. The middle and numpad clusters keep the plain 4 px gap. |
 | D14 | The bind dialog opens centred on the window and is dragged by its title bar, clamped inside the window | A stock QML `Dialog` has no drag behaviour and sits at (0,0); the widget `QDialog` was moved by the window manager, which could leave the screen. In-window bounds are what the tool needs. |
+| D15 | The keyboard panel scrolls in both directions when the window is too small for it, and the keyboard alone can be zoomed (`Ctrl`+wheel, `Ctrl`+`+`/`-`/`0`) | Requested usability additions: the keyboard is 1632 px wide and does not fit even the default editor width (1573 px), so the outer keys were previously unreachable. This is the one place where a capability is added on purpose; see section 13. |
 
 ## 5. Target architecture
 
@@ -235,6 +236,8 @@ numpad  : NumLk KP/ KP*  | KP-        with KP+ and KP Enter spanning two rows
 
 Default cap: 64×64. Widths above are the widget `maximumSize` values; the 4 px inter-cap gap matches the `.ui` `spacing`. Main-block rows are stretched to the widest row (D13). The middle and numpad clusters are centred as a group and keep the plain 4 px gap.
 
+The panel renders inside a `Flickable`, so section 13 (scrolling and zoom) applies; the layout values above are never changed by it.
+
 ## 9. Theme
 
 Dark tool theme, TF2-adjacent palette. All values in `Theme.qml`.
@@ -292,18 +295,42 @@ Performed against the MinGW Qt 6.12.0 build with the full automation run on 2026
 1. Clean qmake build (`-spec win32-g++ "CONFIG+=release"`): compiles with zero new warnings; the only remaining warning is the pre-existing unused variable in `src/gamecfg/lex/cmdlexer.cpp:34` plus windeployqt's standard Direct3D note, which is ignorable.
 2. Start screen: app launches to `TF2 Config Manager` (1000×500, fixed). Preset combo shows `< Choose a Preset >`; selecting `b4nny` sets the path to `:/cfg/b4nny.cfg` and enables Go.
 3. Load: Go triggers `printCfg` to stdout (274 lines for b4nny.cfg); the editor opens at 1573×807 (`Team Fortress 2 Config Editor`).
-4. Overview tab: ListView `count` = 274 = stdout dump line count, same `args.join(" ")` text; empty-state label hidden.
+4. Overview tab: ListView `count` = 274 = stdout dump line count, same `args.join(" ")` text; empty-state label hidden. **Correction:** the first pass of this check only compared the model `count`, which hid a real defect — the delegate declared `id: line`, which shadowed the model's `required property string line`, so `text: line` assigned the `Text` item itself and rendered nothing (Qt logged `Unable to assign QQuickText to QString`). The id is removed; a probe of the first three delegates now returns the expected rows (`unbindall`, `bind "0" "slot10"`, `bind "1" "slot1"`) and the warning is gone.
 5. Keyboard: all 104 caps render; clicking the Space cap logged `keybButtonClicked: id=71 token=space` via `console.log` and opened the modal bind dialog with the field prefilled `bind "space"` — the id/token contract (section 7) holds at runtime.
 6. Tab bar: editor tabs and the dialog's Build-A-Bind/Custom Command tabs share the same control; Prev/Next enable rules follow the current tab.
 7. Bind dialog (D14): opens centred — measured (537, 204) inside a 1573×807 parent, i.e. exactly centred for 500×400 — and drags by the title bar: +400/+300 moved it (400, 203) with y clamped at the 407 px limit, a further +2000/+1500 clamped exactly at (1073, 407) = parent minus dialog, and dragging back up-left clamped at (0, 0). Escape still rejects, clicking outside still does nothing (modal).
 8. Deploy: `windeployqt --release --qmldir qml` produces a 101.8 MB folder; the exe runs standalone with a stripped `PATH` (no Qt bin dirs) and shows the start screen.
 9. Everything in section 3 that is not covered above is guaranteed by construction (same `KeyTable` data drives caps, ids, tokens, widths; bind dialog parity strings are literals; `printCfg` is the untouched engine function).
+10. Scrolling (D15): at the default editor size the keyboard (1632 px) is wider than the viewport (1557 px), so the horizontal bar is shown (`hbar size 0.95`, policy `AlwaysOn`, opacity 1). At the minimum window (1180×700, viewport 1164×568) `hbar size 0.71`; `KP Enter` sits at x=1580, i.e. outside the viewport. Flicking the keyboard left by 600 px set `contentX` to 468 and `KP Enter` to x=1112; clicking there logged `keybButtonClicked: id=101 token=kp_enter`, so the outer keys are reachable and clickable. A vertical bar appears only when the content is taller than the viewport (at zoom 2.0: `vbar size 0.66`).
+11. Zoom (D15): `Ctrl`+wheel in and out, `Ctrl+=` / `Ctrl+-`, the numpad `+`/`-`, and `Ctrl+Shift+=` / `Ctrl+Shift+-` all change the level in 0.1 steps; the level clamps at 0.5 and 2.0; `Ctrl+0` returns to 1.0. Zoom is anchored: the viewport centre stays over the same key (the scroll offset changes to compensate). The zoom badge shows the percentage and fades after 1.2 s.
+12. Zoom scope and hit testing: at zoom 0.5 the content equals the viewport (both bars hidden) and clicking Space logs `id=71 token=space`; at zoom 0.5 clicking `KP Enter` logs `id=101 token=kp_enter`, so the click areas scale with the caps. Only the keyboard scales — the tab bar, status strip, zoom badge and panel geometry are unaffected. `Flickable` does not clamp programmatically assigned `contentX`/`contentY`, so `setZoom` clamps to `[0, content − viewport]` itself; without it, a zoom-out produced negative scroll offsets (−164, −77).
 
 | Parity row | How it was verified |
 |---|---|
-| P38 (overview text) | ListView count == `printCfg` stdout lines (274), same join, same order |
+| P38 (overview text) | ListView count == `printCfg` stdout lines (274), same join, same order; also the first three delegates read back `unbindall` / `bind "0" "slot10"` / `bind "1" "slot1"` with no `Unable to assign` warning |
 | P25/P27/P29 (key ids + click → dialog) | automated click on Space → `id=71 token=space`, dialog prefill `bind "space"` |
 | P11/P7/P10 (Go enable) | Go enabled exactly when path non-empty (probed state before/after preset selection) |
 | P2/P13 (window sizes) | start 1000×500, editor 1573×807, fixed min=max per page |
 | P21/P22 (menus, status strip) | present on the editor page, absent/hidden on the start page |
 | P30/P36 (dialog) | opens centred; drag clamped to the window (D14); Escape rejects; outside press blocked |
+| D15 (scroll + zoom) | see items 10–12 of this section |
+
+## 13. Keyboard usability: scrolling and zoom
+
+Requested after the rewrite: when the window is too small, all keys must stay visible and clickable, and the keyboard alone must be zoomable. Both are confined to `qml/keyboard/KeyboardPanel.qml`; no layout value, cap size, token or id changes.
+
+### 13.1 Scrolling
+
+- The keyboard sits in a `Flickable` (`id: flick`) that fills the panel.
+- `contentWidth/Height = max(viewport, keyboard × zoom + 2 × contentMargin)`, `contentMargin = Theme.spacingWide + 12`, so the overlay bars never cover the outer caps.
+- Bars are `ScrollBar.vertical` / `ScrollBar.horizontal` with `policy` bound to whether the content overflows: `AlwaysOn` when it does, `AlwaysOff` when it does not. `AsNeeded` was rejected because the Basic style fades a bar out when idle, which would hide the only affordance for reaching the outer keys.
+- `boundsBehavior: Flickable.StopAtBounds`; the content can be panned by dragging it or by dragging a bar handle.
+
+### 13.2 Zoom
+
+- `property real zoom` (min 0.5, max 2.0, step 0.1) applied to the keyboard `Column` via `scale`, `transformOrigin: Item.TopLeft`.
+- Input: `WheelHandler { acceptedModifiers: Qt.ControlModifier }` (a plain wheel still scrolls), and `Shortcut`s `Ctrl++`/`Ctrl+=`, `Ctrl+-`/`Ctrl+_`, `Ctrl+0` (reset). The numpad `+`/`-` work because Qt maps them to the same sequences.
+- `setZoom` keeps the viewport centre over the same key, then clamps the new scroll offset into range (the `Flickable` clamp bug noted above).
+- A transient badge (bottom-right, above the horizontal bar) shows `Zoom N%` and fades after 1.2 s.
+
+Neither addition changes the widget parity contract: at the default window size and zoom 1.0 the panel looks exactly as before, except that the horizontal bar is now available (the keyboard genuinely did not fit before, which is what made the outer keys unreachable).
