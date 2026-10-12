@@ -29,9 +29,8 @@ Panel {
             ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
 
             delegate: Text {
-                id: line
-
                 // Role "line" is args.join(" "), exactly what the widget list showed.
+                // No id here: an id named "line" would shadow this property.
                 required property string line
 
                 width: commandList.width
