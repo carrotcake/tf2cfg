@@ -7,6 +7,7 @@ import "../theme"
 // Bind editor. Parity P30-P36.
 Dialog {
     id: dialog
+    objectName: "bindEditorDialog"
 
     /// Prefill for the "Existing Bind:" field; set from a key cap click.
     property string originalBind: ""
@@ -136,8 +137,8 @@ Dialog {
 
     title: "Dialog"          // parity P30: the widget's dialog title really is "Dialog"
     modal: true              // parity P36: widget used exec()
-    width: 500
-    height: 400
+    width: 640
+    height: 460
     padding: Theme.spacingWide
     font.family: Theme.familyUi
     font.pointSize: Theme.sizeUi
@@ -282,6 +283,7 @@ Dialog {
                     }
                     Tf2ComboBox {
                         id: categoryCombo
+                        objectName: "categoryCombo"
                         model: ["client controls", "client settings", "client render",
                                 "server commands", "server settings", "engine", "all"]
                         currentIndex: 0
@@ -299,6 +301,7 @@ Dialog {
                     }
                     Tf2ComboBox {
                         id: platformCombo
+                        objectName: "platformCombo"
                         model: ["universal", "linux", "windows", "xbox", "all"]
                         currentIndex: 0
                         onActivated: function (index) {
@@ -320,6 +323,7 @@ Dialog {
                     }
                     Tf2ComboBox {
                         id: commandCombo
+                        objectName: "commandCombo"
                         Layout.fillWidth: true
                         placeholderText: "< choose a command >"
                         textRole: "name"
@@ -409,6 +413,7 @@ Dialog {
                                 required property var model
                                 required property int index
 
+                                Layout.fillWidth: true
                                 spacing: Theme.spacing
 
                                 CheckBox {

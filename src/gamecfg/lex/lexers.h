@@ -167,35 +167,9 @@ public:
     const Token nextToken();
 
 private:
-    enum LexState {
-        STATE_START,
-        STATE_ERR,
-        STATE_VAL,
-        STATE_ENDQT,
-        STATE_COMMA,
-        STATE_END,
-        STATECOUNT // not a valid state
-    };
-
-    enum LexInput {
-        IN_CHAR,
-        IN_QUOT,
-        IN_COMMA,
-        IN_EOL,
-        IN_EOF,
-        INCOUNT // not a valid input type
-    };
-
-    static constexpr const LexState STATE[STATECOUNT][INCOUNT] =
-        // IN_CHAR     IN_QUOT     IN_COMMA    IN_EOL      IN_EOF
-        /*start*/ {{STATE_ERR, STATE_VAL, STATE_ERR, STATE_START, STATE_END},
-                   /* err */ {STATE_ERR, STATE_ERR, STATE_ERR, STATE_ERR, STATE_ERR},
-                   /* val */ {STATE_VAL, STATE_ENDQT, STATE_VAL, STATE_VAL, STATE_ERR},
-                   /*endqt*/ {STATE_ERR, STATE_ERR, STATE_COMMA, STATE_END, STATE_END},
-                   /*comma*/ {STATE_ERR, STATE_VAL, STATE_ERR, STATE_ERR, STATE_ERR},
-                   /* end */ {STATE_ERR, STATE_ERR, STATE_ERR, STATE_ERR, STATE_ERR}};
-
-    inline LexInput charToInput(QChar c) const;
+    // The old DFA errored out on every unquoted field (plain text like
+    // "client settings" after a comma), so any row csv.writer had not force-quoted
+    // was dropped. Fields are now split by a plain CSV scan instead.
 };
 
 } // namespace Lexers

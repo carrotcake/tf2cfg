@@ -48,7 +48,16 @@ ComboBox {
         required property int index
 
         width: control.width
-        text: control.textRole !== "" && model[control.textRole] !== undefined ? model[control.textRole] : model
+        // C++ models resolve roles through the model object; plain JS arrays wrap
+        // their element in modelData, where a bare `model` stringifies to nothing.
+        text: {
+            if (control.textRole !== "") {
+                const v = model[control.textRole]
+                if (v !== undefined)
+                    return String(v)
+            }
+            return model.modelData !== undefined ? String(model.modelData) : String(model)
+        }
         font.family: Theme.familyUi
         font.pointSize: Theme.sizeUi
         highlighted: control.highlightedIndex === index
