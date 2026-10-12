@@ -14,50 +14,29 @@ Numbered across all groups so you can say "fix 2 and 5".
 
 ### Must fix (bug, security, data loss, breaks at expected load)
 
-1. **Memory leak: `GameCfg::known_cmds` never frees its `ConVar*` objects** (`src/gamecfg/gameconfig.cpp:58-100`)
-   - **What this is:** `loadAllCmds()` `new`s one `ConCmd`/`BoolVar`/`IntVar`/`FltVar`/`StrVar` per CSV row (3800 rows) and stores the owning pointers in a `QVector`. `GameCfg` lives for the whole process, so the leak never manifests as OOM, but it is a leak.
-   - **Fix:** Add a destructor to `GameCfg` that `qDeleteAll(known_cmds)`. One line, nothing else changes.
-   - **If we skip it:** Valgrind/ASan will complain; no user-visible effect at current scale.
+1. ~~**Memory leak: `GameCfg::known_cmds` never frees its `ConVar*` objects**~~ **FIXED** — added `GameCfg::~GameCfg()` with `qDeleteAll(known_cmds)`.
 
-2. **`CommandListModel::binds()` rebuilds the entire map on every read** (`src/ui/commandlistmodel.cpp:94-128`)
-   - **What this is:** `binds()` iterates all parsed entries (`m_entries`, up to ~300 lines) and reconstructs a `QVariantMap` from scratch. QML accesses this via `cfg.binds` on every key cap repaint (104 caps) and on every bind change. Currently fast enough (104 × 300 ≈ 31k trivial ops), but quadratic if both grow.
-   - **Fix:** Cache the map and invalidate only when `m_entries` changes (i.e. in `setEntries`, `setBind`, `clearBind`). Return the cached `QVariantMap` from `binds()`.
-   - **If we skip it:** No problem today; future save/load of larger configs could jank.
+2. ~~**`CommandListModel::binds()` rebuilds the entire map on every read**~~ **FIXED** — added `m_bindsCache` / `m_bindsCacheValid`, invalidated on `setEntries`, `clearEntries`, `setBind`, `clearBind`.
 
-3. **`ConfigController::loadCfg()` parses synchronously on the GUI thread** (`src/ui/configcontroller.cpp:78-99`)
-   - **What this is:** `appendCfg()` tokenizes and classifies the whole file before returning. A 10k-line config would block the UI for a noticeable moment.
-   - **Fix:** Move parsing to a worker thread (`QtConcurrent::run` or a `QThread`), emit `loadedChanged` when done. The model swap (`setEntries`) must stay on the GUI thread.
-   - **If we skip it:** Large configs (not typical for TF2) freeze the window.
+3. ~~**`ConfigController::loadCfg()` parses synchronously on the GUI thread**~~ **FIXED** — moved parsing to `QtConcurrent::run`; added `loading` property; model swap on GUI thread via `QMetaObject::invokeMethod`.
 
 4. **`ConsoleCommandModel::suggest()` scans the full catalog on every keystroke** (`src/ui/consolecommandmodel.cpp:143-159`)
    - **What this is:** The Build-A-Bind command field calls `suggest(text)` on every `editTextChanged`. It iterates all 3800 `m_all` entries, applies three filters, and does a `contains` match. At 60 fps typing this is ~200k string ops/frame — acceptable on modern CPUs, but wasteful.
    - **Fix:** Pre-index names (e.g. a `QMap<QString, QVector<int>>` of trigrams, or just cache the last filter+text result and invalidate on filter change). Or debounce the QML side (200 ms).
    - **If we skip it:** Works fine; only a perf nit.
 
-5. **`cmdLex::Token` has `const QString` members, making it non-movable and expensive to return by value** (`src/gamecfg/lex/lexers.h:117-165`)
-   - **What this is:** Every field is `const QString`. `nextToken()` returns `Token` by value, forcing a copy of all 10 strings per row (3800 × 10 = 38k allocations on load). `QVector` cannot move them; it copies.
-   - **Fix:** Drop `const` on the members. Return `Token` by value (NRVO/move will work). Or store `QStringView` into the line buffer (lifetime = `arr` in base `Lexer`).
-   - **If we skip it:** Load takes a few extra ms; not user-visible.
+5. ~~**`cmdLex::Token` has `const QString` members, making it non-movable and expensive to return by value**~~ **FIXED** — dropped `const` on all `QString` members in `Token` struct.
 
 6. **Config lexer does not handle escaped quotes inside quoted strings** (`src/gamecfg/lex/configlexer.cpp:23-30`)
    - **What this is:** The DFA treats a `"` inside a quoted token as the end of the token. TF2 configs allow `\"` inside quotes (e.g. `alias test "say \"hello\""`). The current lexer would split this into two tokens.
    - **Fix:** In `STATE_ESCP` (entered after `\`), treat the next char as literal and append it, including `"` and `\`. The DFA already has `STATE_ESCP` — wire it to append `c` unconditionally and return to `STATE_CHAR`.
    - **If we skip it:** Aliases with embedded quotes parse incorrectly; rare but valid.
 
-7. **KeyCap tooltip interpolates user data into a format string** (`qml/keyboard/KeyCap.qml`)
-   - **What this is:** `qsTr('bind "%1" "%2"').arg(cap.token).arg(cap.boundCommand)`. If `boundCommand` contains `%` (e.g. `echo 100%`), `qsTr` treats it as a format specifier and produces garbage or crashes.
-   - **Fix:** Use `Qt.format()` or build the string manually: `'bind "' + cap.token + '" "' + cap.boundCommand + '"'`.
-   - **If we skip it:** Weird tooltip text when a bind contains `%`.
+7. ~~**KeyCap tooltip interpolates user data into a format string**~~ **FIXED** — changed to string concatenation: `'bind "' + cap.token + '" "' + cap.boundCommand + '"'`.
 
-8. **`CommandListModel::bindRows()` scans all entries on every `setBind`/`clearBind`** (`src/ui/commandlistmodel.cpp:130-146`)
-   - **What this is:** `bindRows(key)` iterates `m_entries` to find rows for a key. Called twice per edit (once in `binds()` for the equality check, once to remove). With ~300 entries it's trivial, but duplicated logic with `binds()`.
-   - **Fix:** Share the scan: `binds()` can return both the map and the row indices, or cache the row list per key.
-   - **If we skip it:** No measurable impact; code duplication only.
+8. ~~**`CommandListModel::bindRows()` scans all entries on every `setBind`/`clearBind`**~~ **FIXED** — added `scanBinds()` shared helper used by both `binds()` and `bindRows()`.
 
-9. **Only 2 of 4 bundled presets are exposed in the UI** (`src/ui/configcontroller.cpp:22-38`)
-   - **What this is:** `b4nny_defbinds.cfg` and `b4nny_nobinds.cfg` exist in `res/res.qrc` but `presets()` returns only `b4nny.cfg` and `default.cfg`.
-   - **Fix:** Add the two missing entries to the `presets()` list with correct labels/notes.
-   - **If we skip it:** Users cannot select those presets from the UI.
+9. ~~**Only 2 of 4 bundled presets are exposed in the UI**~~ **FIXED** — added `b4nny_defbinds.cfg` and `b4nny_nobinds.cfg` to `presets()`.
 
 ### Should fix (risky code without test, real slowness, duplication, mixed jobs, dead code)
 
@@ -132,14 +111,12 @@ Numbered across all groups so you can say "fix 2 and 5".
 
 ## Verdict
 
-**Healthy core, missing safety net.** The engine and UI are functionally complete for the read-only use case. The parser has a known escape bug (#6) and a memory leak (#1) but neither affects typical TF2 configs today. The **biggest risk is zero tests** (#10) — any future change (save feature, Linux port, config refresh) has no guard rails. The **biggest missing feature is save-to-disk**, which the docs already track.
+**Healthy core, missing safety net.** The engine and UI are functionally complete for the read-only use case. The parser has a known escape bug (#6) but it doesn't affect typical TF2 configs today. The **biggest risk is zero tests** (#10) — any future change (save feature, Linux port, config refresh) has no guard rails. The **biggest missing feature is save-to-disk**, which the docs already track. Seven of the nine "Must fix" items are now resolved.
 
 **Priority order if you continue:**
 1. Add a minimal test suite (#10) — covers the parser and bind logic.
 2. Fix the escaped-quote lexer bug (#6) — corrects a real config case.
-3. Free the `ConVar*` objects in `GameCfg` dtor (#1) — cleans up sanitizers.
-4. Expose the two missing presets (#9) — finishes the Start screen.
-5. Consider a worker thread for `loadCfg` (#3) — only if users report jank.
+3. (Done) Memory leak, binds caching, async loadCfg, Token movability, tooltip format string, bindRows deduplication, missing presets.
 
 ## Lean
 
@@ -153,7 +130,7 @@ Numbered across all groups so you can say "fix 2 and 5".
 - `qml/components/*.qml` (`Tf2ComboBox`, `Tf2Button`, `Panel`, `Tf2TabBar`, `Tf2Label`, `Tf2TextField`) — assumed correct; not read line by line.
 - `qml/pages/StartPage.qml`, `qml/pages/tabs/*.qml` — not read.
 - `tools/csvio.py` — read; simple and correct.
-- Linux build — not attempted; only Windows MinGW verified.
+- Linux build — not attempted; only Windows MinGW verified. **Note: added `concurrent` to QT in .pro for QtConcurrent.**
 - `res/res.qrc` and `qml.qrc` resource packing — not audited for completeness.
 - Accessibility (screen readers, high contrast) — not evaluated.
 - Packaging/installer — none exists; `windeployqt` folder copy is the deploy.

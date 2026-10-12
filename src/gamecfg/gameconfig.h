@@ -13,6 +13,8 @@ public:
 
     explicit GameCfg(const QString &filename);
 
+    ~GameCfg();
+
     void appendCfg(const QString &filename);
 
     void printCfg() const;
@@ -27,7 +29,7 @@ public:
 private:
     QHash<QString, cmd::CmdType> cmd_types;
     QHash<QString, unsigned> cmd_map;
-    QVector<cmd::ConVar *> known_cmds; ///< owning; lives as long as the app
+    QVector<cmd::ConVar *> known_cmds; ///< owning; freed in dtor
     QVector<cmd::Entry> cmd_list;
     inline cmd::CmdType cmdToType(const QString cmd) const;
 };

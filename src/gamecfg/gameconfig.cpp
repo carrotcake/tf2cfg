@@ -116,3 +116,7 @@ void GameCfg::printCfg() const {
 QVector<cmd::Entry> const &GameCfg::getCmdList() const {
     return cmd_list;
 }
+
+GameCfg::~GameCfg() {
+    qDeleteAll(known_cmds);
+}

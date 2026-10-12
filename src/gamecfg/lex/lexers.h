@@ -159,9 +159,9 @@ public:
         inline bool hasUsage() const { return !input.isEmpty() && input != QLatin1String("none"); };
 
     private:
-        const QString cmd_name, is_cmd, def, min, max, flags, doc, input;
+        QString cmd_name, is_cmd, def, min, max, flags, doc, input;
         QString platformStr, contextStr;
-        const TokenClass type;
+        TokenClass type;
     };
 
     const Token nextToken();

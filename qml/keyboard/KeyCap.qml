@@ -124,7 +124,7 @@ Rectangle {
         if (cap.keyInfo !== null && cap.keyInfo.tooltip !== undefined)
             return cap.keyInfo.tooltip
         if (cap.bound)
-            return qsTr('bind "%1" "%2"').arg(cap.token).arg(cap.boundCommand)
+            return 'bind "' + cap.token + '" "' + cap.boundCommand + '"'
         return ""
     }
     ToolTip.visible: mouse.containsMouse && cap.tipText !== ""

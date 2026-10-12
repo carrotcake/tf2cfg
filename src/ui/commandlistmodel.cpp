@@ -81,6 +81,7 @@ void CommandListModel::setEntries(const QVector<cmd::Entry> &entries) {
     beginResetModel();
     m_entries = entries;
     endResetModel();
+    m_bindsCacheValid = false;
     emit bindsChanged();
 }
 
@@ -88,25 +89,48 @@ void CommandListModel::clearEntries() {
     beginResetModel();
     m_entries.clear();
     endResetModel();
+    m_bindsCacheValid = false;
     emit bindsChanged();
 }
 
 QVariantMap CommandListModel::binds() const {
-    QVariantMap map;
+    if (m_bindsCacheValid) {
+        return m_bindsCache;
+    }
 
-    for (const cmd::Entry &entry : m_entries) {
+    const BindScanResult result = scanBinds();
+    m_bindsCache = result.binds;
+    m_bindsCacheValid = true;
+    return m_bindsCache;
+}
+
+QVector<int> CommandListModel::bindRows(const QString &key) const {
+    const BindScanResult result = scanBinds();
+    const QString wanted = unquoted(key).toLower();
+    return result.rowsByKey.value(wanted);
+}
+
+CommandListModel::BindScanResult CommandListModel::scanBinds() const {
+    BindScanResult result;
+
+    for (int row = 0; row < m_entries.size(); ++row) {
+        const cmd::Entry &entry = m_entries.at(row);
         if (entry.args.isEmpty())
             continue;
 
         const QString head = unquoted(entry.args.at(0)).toLower();
 
         if (head == QLatin1String("unbindall")) {
-            map.clear();
+            result.binds.clear();
+            result.rowsByKey.clear();
             continue;
         }
         if (head == QLatin1String("unbind")) {
-            if (entry.args.size() >= 2)
-                map.remove(unquoted(entry.args.at(1)).toLower());
+            if (entry.args.size() >= 2) {
+                const QString key = unquoted(entry.args.at(1)).toLower();
+                result.binds.remove(key);
+                result.rowsByKey[key].append(row);
+            }
             continue;
         }
         if (!isBindCommand(head) || entry.args.size() < 2)
@@ -118,31 +142,14 @@ QVariantMap CommandListModel::binds() const {
 
         // `bind "r" ""` is how a config unbinds a key.
         const QString command = entry.args.size() >= 3 ? unquoted(entry.args.at(2)) : QString();
+        result.rowsByKey[key].append(row);
         if (command.isEmpty())
-            map.remove(key);
+            result.binds.remove(key);
         else
-            map.insert(key, command);
+            result.binds.insert(key, command);
     }
 
-    return map;
-}
-
-QVector<int> CommandListModel::bindRows(const QString &key) const {
-    QVector<int> rows;
-    const QString wanted = unquoted(key).toLower();
-
-    for (int row = 0; row < m_entries.size(); ++row) {
-        const cmd::Entry &entry = m_entries.at(row);
-        if (entry.args.size() < 2)
-            continue;
-        const QString head = unquoted(entry.args.at(0)).toLower();
-        if (!isBindCommand(head) && head != QLatin1String("unbind"))
-            continue;
-        if (unquoted(entry.args.at(1)).toLower() == wanted)
-            rows.append(row);
-    }
-
-    return rows;
+    return result;
 }
 
 bool CommandListModel::setBind(const QString &key, const QString &command) {
@@ -177,6 +184,7 @@ bool CommandListModel::setBind(const QString &key, const QString &command) {
     m_entries.push_back(entry);
     endInsertRows();
 
+    m_bindsCacheValid = false;
     emit bindsChanged();
     return true;
 }
@@ -193,6 +201,7 @@ bool CommandListModel::clearBind(const QString &key) {
         endRemoveRows();
     }
 
+    m_bindsCacheValid = false;
     emit bindsChanged();
     return true;
 }

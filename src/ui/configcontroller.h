@@ -5,6 +5,7 @@
 #include <QString>
 #include <QVariantList>
 #include <QVariantMap>
+#include <QFuture>
 
 #include "gamecfg/gameconfig.h"
 #include "ui/commandlistmodel.h"
@@ -26,6 +27,7 @@ class ConfigController : public QObject {
     Q_PROPERTY(QString cfgPath READ cfgPath NOTIFY cfgPathChanged)
     Q_PROPERTY(QString lastError READ lastError NOTIFY lastErrorChanged)
     Q_PROPERTY(bool loaded READ loaded NOTIFY loadedChanged)
+    Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
     Q_PROPERTY(QVariantMap binds READ binds NOTIFY bindsChanged)
 
 public:
@@ -38,6 +40,7 @@ public:
     QString cfgPath() const;
     QString lastError() const;
     bool loaded() const;
+    bool loading() const { return m_loading; }
 
     /// Active binds, key token -> command, derived from the parsed command list. The
     /// keyboard paints a cap when its token is a key of this map; a notifying property,
@@ -50,8 +53,9 @@ public:
     /// Short description of a preset, or an empty string.
     Q_INVOKABLE QString presetNote(int index) const;
 
-    /// Parse a config and fill the command model. Appends, like the widget build (P37).
-    Q_INVOKABLE bool loadCfg(const QString &path);
+    /// Parse a config asynchronously and fill the command model. Appends, like the widget build (P37).
+    /// Returns immediately; `loading` becomes true, then `loadedChanged`/`lastErrorChanged` fire when done.
+    Q_INVOKABLE void loadCfg(const QString &path);
 
     /// Drop everything that was loaded.
     Q_INVOKABLE void clear();
@@ -68,17 +72,21 @@ signals:
     void cfgPathChanged();
     void lastErrorChanged();
     void loadedChanged();
+    void loadingChanged();
     void bindsChanged();
 
 private:
     void setCfgPath(const QString &path);
     void setLastError(const QString &error);
+    void setLoading(bool loading);
 
     GameCfg m_cfg; ///< default ctor loads res/cfg/allcmds.csv once
     CommandListModel m_commands;
     ConsoleCommandModel m_console;
     QString m_cfgPath;
     QString m_lastError;
+    bool m_loading = false;
+    QFuture<void> m_loadFuture;
 };
 
 #endif // CONFIGCONTROLLER_H

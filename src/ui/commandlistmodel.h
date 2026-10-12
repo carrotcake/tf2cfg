@@ -70,7 +70,15 @@ private:
     /// Rows that bind or unbind key token `key`, in parse order.
     QVector<int> bindRows(const QString &key) const;
 
+    struct BindScanResult {
+        QVariantMap binds;
+        QHash<QString, QVector<int>> rowsByKey;
+    };
+    BindScanResult scanBinds() const;
+
     QVector<cmd::Entry> m_entries;
+    mutable QVariantMap m_bindsCache;
+    mutable bool m_bindsCacheValid = false;
 };
 
 #endif // COMMANDLISTMODEL_H
