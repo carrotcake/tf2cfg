@@ -1,7 +1,8 @@
 #ifndef LEXERS_H
 #define LEXERS_H
-#include <QApplication>
 #include <QFile>
+#include <QString>
+#include <QStringList>
 #include <QTextStream>
 
 namespace Lexers {

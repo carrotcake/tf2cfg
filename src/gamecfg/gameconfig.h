@@ -1,7 +1,10 @@
 #ifndef GAMECONFIG_H
 #define GAMECONFIG_H
 
-#include <QApplication>
+#include <QHash>
+#include <QString>
+#include <QVector>
+
 #include "gamecfg/convars.h"
 
 class GameCfg {
