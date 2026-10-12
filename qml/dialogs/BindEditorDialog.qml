@@ -34,6 +34,10 @@ Dialog {
     /// Highlighted entry in the suggestion pop-down (-1 = none).
     property int suggestionIndex: -1
 
+    /// True when user is navigating with arrow keys or mouse wheel.
+    /// When true, show all entries with scroll bar; when false, show only first 8.
+    property bool browsing: false
+
     /// Toggle mode needs the engine's incrementvar command to know where to stop:
     /// bool cvars are always 0..1, int/flt need the CSV min/max.
     readonly property bool toggleAvailable:
@@ -112,6 +116,7 @@ Dialog {
     /// Rebuild + show/hide the suggestion pop-down for the typed text.
     function updateSuggestions() {
         suggestionIndex = -1
+        browsing = false  // typing resets browsing mode
         const typed = typedPrefix()
         if (typed === "" || !commandCombo.activeFocus
                 || (commandCombo.currentIndex >= 0 && typed === commandCombo.currentText)) {
@@ -135,6 +140,7 @@ Dialog {
             updateSuggestions()
             if (suggestionPopup.opened) {
                 suggestionIndex = delta > 0 ? 0 : suggestionList.length - 1
+                browsing = true  // arrow key navigation enters browsing mode
                 return true
             }
             // nothing to suggest: an empty field opens the browse list, typed
@@ -144,8 +150,10 @@ Dialog {
             return true
         }
         const next = suggestionIndex + delta
-        if (next >= 0 && next < suggestionList.length)
+        if (next >= 0 && next < suggestionList.length) {
             suggestionIndex = next
+            browsing = true  // arrow key navigation enters browsing mode
+        }
         return true
     }
 
@@ -522,6 +530,8 @@ Dialog {
                         // Live-filtered suggestion pop-down shown while typing:
                         // whole-catalog contains-matches, so typed text reaches
                         // commands the category/platform filters hide.
+                        // Shows only first 8 entries while typing; arrow keys / mouse wheel
+                        // switch to full list with scroll bar.
                         Popup {
                             id: suggestionPopup
                             parent: commandCombo
@@ -539,11 +549,23 @@ Dialog {
                             }
 
                             contentItem: ListView {
+                                id: suggestionView
                                 clip: true
                                 implicitHeight: contentHeight
-                                model: suggestionList
+                                // When browsing, show all; otherwise cap at 8.
+                                model: browsing ? suggestionList : suggestionList.slice(0, 8)
                                 currentIndex: suggestionIndex
-                                ScrollIndicator.vertical: ScrollIndicator {}
+                                ScrollIndicator.vertical: ScrollIndicator {
+                                    visible: suggestionView.count > 8
+                                }
+                                // Mouse wheel on the list enters browsing mode.
+                                WheelHandler {
+                                    onWheel: {
+                                        if (!browsing) {
+                                            dialog.browsing = true
+                                        }
+                                    }
+                                }
 
                                 delegate: ItemDelegate {
                                     id: suggestionItem
