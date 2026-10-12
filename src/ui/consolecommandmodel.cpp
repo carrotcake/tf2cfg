@@ -2,6 +2,14 @@
 
 #include <algorithm>
 
+uint qHash(const ConsoleCommandModel::FilterKey &key, uint seed = 0) noexcept {
+    uint h = seed;
+    h = qHash(key.context, h);
+    h = qHash(key.platform, h);
+    h = qHash(key.showCheats, h);
+    return h;
+}
+
 // Build-A-Bind sort: names order by their alphanumeric characters only, so
 // "+attack" sorts as "attack". Case-insensitive.
 static QString commandSortKey(const QString &name) {
@@ -102,28 +110,38 @@ void ConsoleCommandModel::setShowCheats(bool show) {
 }
 
 void ConsoleCommandModel::rebuild() {
-    QVector<QPair<QString, int>> keyed;
-    keyed.reserve(m_all.size());
-    for (int i = 0; i < m_all.size(); ++i) {
-        const cmd::ConVar *cmd = m_all.at(i);
-        if (!m_contextFilter.isEmpty() && cmd->get_context() != m_contextFilter)
-            continue;
-        if (!m_platformFilter.isEmpty() && cmd->get_platform() != m_platformFilter)
-            continue;
-        if (!m_showCheats && cmd->isCheat())
-            continue;
-        keyed.append({commandSortKey(cmd->get_name()), i});
+    m_currentFilterKey = {m_contextFilter, m_platformFilter, m_showCheats};
+
+    auto it = m_filterCache.find(m_currentFilterKey);
+    if (it == m_filterCache.end()) {
+        // First time seeing this filter combo: build and cache.
+        FilterCache cache;
+        QVector<QPair<QString, int>> keyed;
+        keyed.reserve(m_all.size());
+        for (int i = 0; i < m_all.size(); ++i) {
+            const cmd::ConVar *cmd = m_all.at(i);
+            if (!m_contextFilter.isEmpty() && cmd->get_context() != m_contextFilter)
+                continue;
+            if (!m_platformFilter.isEmpty() && cmd->get_platform() != m_platformFilter)
+                continue;
+            if (!m_showCheats && cmd->isCheat())
+                continue;
+            keyed.append({commandSortKey(cmd->get_name()), i});
+        }
+        std::sort(keyed.begin(), keyed.end(),
+                  [this](const QPair<QString, int> &a, const QPair<QString, int> &b) {
+            if (a.first != b.first)
+                return a.first < b.first;
+            return QString::compare(m_all.at(a.second)->get_name(),
+                                    m_all.at(b.second)->get_name(), Qt::CaseInsensitive) < 0;
+        });
+        cache.visibleIndices.resize(keyed.size());
+        for (int row = 0; row < keyed.size(); ++row)
+            cache.visibleIndices[row] = keyed.at(row).second;
+        m_filterCache.insert(m_currentFilterKey, std::move(cache));
+        it = m_filterCache.find(m_currentFilterKey);
     }
-    std::sort(keyed.begin(), keyed.end(),
-              [this](const QPair<QString, int> &a, const QPair<QString, int> &b) {
-        if (a.first != b.first)
-            return a.first < b.first;
-        return QString::compare(m_all.at(a.second)->get_name(),
-                                m_all.at(b.second)->get_name(), Qt::CaseInsensitive) < 0;
-    });
-    m_visible.resize(keyed.size());
-    for (int row = 0; row < keyed.size(); ++row)
-        m_visible[row] = keyed.at(row).second;
+    m_visible = it->visibleIndices;
 }
 
 QVariantMap ConsoleCommandModel::findCommand(const QString &name) const {
@@ -142,15 +160,20 @@ QVariantMap ConsoleCommandModel::findCommand(const QString &name) const {
 
 QStringList ConsoleCommandModel::suggest(const QString &text, int limit) const {
     QStringList out;
-    for (const cmd::ConVar *cmd : m_all) {
-        if (!m_contextFilter.isEmpty() && cmd->get_context() != m_contextFilter)
-            continue;
-        if (!m_platformFilter.isEmpty() && cmd->get_platform() != m_platformFilter)
-            continue;
-        if (!m_showCheats && cmd->isCheat())
-            continue;
-        if (cmd->get_name().contains(text, Qt::CaseInsensitive)) {
-            out.append(cmd->get_name());
+    if (text.isEmpty())
+        return out;
+
+    // Use the cached filtered indices for the current filter combo.
+    auto it = m_filterCache.find(m_currentFilterKey);
+    if (it == m_filterCache.end())
+        return out; // no visible entries for this filter combo
+
+    const QVector<int> &candidates = it->visibleIndices;
+    const QString needle = text.toLower();
+
+    for (int idx : candidates) {
+        if (m_all.at(idx)->get_name().contains(needle, Qt::CaseInsensitive)) {
+            out.append(m_all.at(idx)->get_name());
             if (out.size() >= limit)
                 break;
         }

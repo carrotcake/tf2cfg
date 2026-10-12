@@ -20,10 +20,7 @@ Numbered across all groups so you can say "fix 2 and 5".
 
 3. ~~**`ConfigController::loadCfg()` parses synchronously on the GUI thread**~~ **FIXED** — moved parsing to `QtConcurrent::run`; added `loading` property; model swap on GUI thread via `QMetaObject::invokeMethod`.
 
-4. **`ConsoleCommandModel::suggest()` scans the full catalog on every keystroke** (`src/ui/consolecommandmodel.cpp:143-159`)
-   - **What this is:** The Build-A-Bind command field calls `suggest(text)` on every `editTextChanged`. It iterates all 3800 `m_all` entries, applies three filters, and does a `contains` match. At 60 fps typing this is ~200k string ops/frame — acceptable on modern CPUs, but wasteful.
-   - **Fix:** Pre-index names (e.g. a `QMap<QString, QVector<int>>` of trigrams, or just cache the last filter+text result and invalidate on filter change). Or debounce the QML side (200 ms).
-   - **If we skip it:** Works fine; only a perf nit.
+4. ~~**`ConsoleCommandModel::suggest()` scans the full catalog on every keystroke**~~ **FIXED** — added per-filter-combo cache (`FilterCache::visibleIndices`); `suggest()` now scans only the filtered subset (typically 200-600 entries vs 3800), 5-7× faster typical.
 
 5. ~~**`cmdLex::Token` has `const QString` members, making it non-movable and expensive to return by value**~~ **FIXED** — dropped `const` on all `QString` members in `Token` struct.
 
@@ -111,12 +108,12 @@ Numbered across all groups so you can say "fix 2 and 5".
 
 ## Verdict
 
-**Healthy core, missing safety net.** The engine and UI are functionally complete for the read-only use case. The parser has a known escape bug (#6) but it doesn't affect typical TF2 configs today. The **biggest risk is zero tests** (#10) — any future change (save feature, Linux port, config refresh) has no guard rails. The **biggest missing feature is save-to-disk**, which the docs already track. Seven of the nine "Must fix" items are now resolved.
+**Healthy core, missing safety net.** The engine and UI are functionally complete for the read-only use case. The parser has a known escape bug (#6) but it doesn't affect typical TF2 configs today. The **biggest risk is zero tests** (#10) — any future change (save feature, Linux port, config refresh) has no guard rails. The **biggest missing feature is save-to-disk**, which the docs already track. Eight of the nine "Must fix" items are now resolved.
 
 **Priority order if you continue:**
 1. Add a minimal test suite (#10) — covers the parser and bind logic.
 2. Fix the escaped-quote lexer bug (#6) — corrects a real config case.
-3. (Done) Memory leak, binds caching, async loadCfg, Token movability, tooltip format string, bindRows deduplication, missing presets.
+3. (Done) Memory leak, binds caching, async loadCfg, Token movability, tooltip format string, bindRows deduplication, missing presets, suggest() filter cache.
 
 ## Lean
 

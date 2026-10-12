@@ -71,11 +71,30 @@ signals:
 private:
     void rebuild();
 
-    QVector<cmd::ConVar *> m_all;   ///< borrowed from GameCfg, which outlives the model
-    QVector<int> m_visible;         ///< indices into m_all passing both filters
+    // Filter cache key: context + platform + cheat visibility.
+    struct FilterKey {
+        QString context;
+        QString platform;
+        bool showCheats;
+        bool operator==(const FilterKey &other) const noexcept {
+            return context == other.context && platform == other.platform && showCheats == other.showCheats;
+        }
+    };
+
+    struct FilterCache {
+        QVector<int> visibleIndices; ///< sorted indices into m_all passing filters
+    };
+
+    // Declare qHash as friend so it can access private FilterKey members.
+    friend uint qHash(const FilterKey &key, uint seed) noexcept;
+
+    QVector<cmd::ConVar *> m_all;              ///< borrowed from GameCfg, which outlives the model
+    QVector<int> m_visible;                    ///< indices into m_all passing both filters
     QString m_contextFilter;
     QString m_platformFilter;
     bool m_showCheats = true;
+    FilterKey m_currentFilterKey;              ///< key for the active filter combo
+    QHash<FilterKey, FilterCache> m_filterCache; ///< per-combo cached visible indices
 };
 
 #endif // CONSOLECOMMANDMODEL_H
