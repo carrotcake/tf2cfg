@@ -1,0 +1,28 @@
+<RCC>
+    <qresource prefix="/">
+        <file>qml/Main.qml</file>
+
+        <file>qml/theme/qmldir</file>
+        <file>qml/theme/Theme.qml</file>
+
+        <file>qml/keyboard/qmldir</file>
+        <file>qml/keyboard/KeyTable.qml</file>
+        <file>qml/keyboard/KeyCap.qml</file>
+        <file>qml/keyboard/KeyboardPanel.qml</file>
+
+        <file>qml/components/Panel.qml</file>
+        <file>qml/components/Tf2Button.qml</file>
+        <file>qml/components/Tf2Label.qml</file>
+        <file>qml/components/Tf2TextField.qml</file>
+        <file>qml/components/Tf2ComboBox.qml</file>
+        <file>qml/components/Tf2TabBar.qml</file>
+
+        <file>qml/pages/StartPage.qml</file>
+        <file>qml/pages/EditorPage.qml</file>
+        <file>qml/pages/tabs/CommandOverviewTab.qml</file>
+        <file>qml/pages/tabs/PlaceholderTab.qml</file>
+        <file>qml/pages/tabs/BindEditorTab.qml</file>
+
+        <file>qml/dialogs/BindEditorDialog.qml</file>
+    </qresource>
+</RCC>

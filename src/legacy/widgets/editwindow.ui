@@ -283,7 +283,7 @@
   <customwidget>
    <class>KeybForm</class>
    <extends>QWidget</extends>
-   <header>src/ui/keybform.h</header>
+   <header>src/legacy/widgets/keybform.h</header>
    <container>1</container>
    <slots>
     <signal>keybButtonClicked()</signal>
