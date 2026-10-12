@@ -1,6 +1,6 @@
-# allcmds_v5.csv schema
+# allcmds.csv schema (v5 / 10-column format)
 
-10 comma-separated fields, quoted, headerless, sorted by command name:
+10 comma-separated fields, quoted, headerless, sorted alphanumerically by command name:
 
 | # | Field | Example | Notes |
 |---|-------|---------|-------|

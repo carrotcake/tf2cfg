@@ -1,6 +1,6 @@
 # Console Command Tags (FCVAR flags)
 
-The `Flags` column of `allcmds_v4.csv` holds the Source-engine FCVAR flags each
+The `Flags` column of `allcmds.csv` holds the Source-engine FCVAR flags each
 console command or variable was registered with. Sources render the same flags
 under different names; this dataset normalizes all of them to one canonical
 vocabulary (left column).
