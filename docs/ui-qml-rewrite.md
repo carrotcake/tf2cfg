@@ -11,7 +11,7 @@ Rewrite the entire presentation layer in QML while keeping behavioural parity wi
 Goals:
 
 1. **Functional parity** with the widget build, feature by feature (section 3).
-2. **Extension-ready** for the known future work: saving configs, painting loaded binds onto the keyboard, type-aware argument editing, alias chains, command categories, more presets (section 10).
+2. **Extension-ready** for the known future work: saving configs, type-aware argument editing, alias chains, command categories, more presets (section 10). Painting the loaded binds onto the keyboard, which this list used to contain, landed as D16.
 3. **Layout preserved**: same two screens, same panels, same arrangement, same window sizes.
 4. **Aesthetic fit for the use case**: a dark, game-adjacent tool that reads as a TF2 companion app, with the game's own fonts already bundled.
 
@@ -66,18 +66,18 @@ Every row is a behaviour of the widget build, with its evidence and its QML repl
 | P28 | Cap ids outside `0…KEYCOUNT-1` are not emitted | `keybform.cpp:12` | same guard in `KeyCap` / signal relay |
 | P29 | Key click → print the key token to stdout, then open a modal bind dialog prefilled with `bind "<token>"` | `editwindow.cpp:49-55` | `console.log` of the token (parity) + `BindEditorDialog` opened with `originalBind` |
 | P30 | Bind dialog 500×400, base font TF2 14pt, title `Dialog` | `bindeditdialog.ui:4-23` | `Dialog` with `Theme.fontBindDialog`; title kept as `Dialog` for parity |
-| P31 | `Existing Bind:` label (bold) + editable field, placeholder `< not currently bound >` | `bindeditdialog.ui:47-73` | `Label` + `TextField` |
+| P31 | `Existing Bind:` label (bold) + editable field, placeholder `< not currently bound >` | `bindeditdialog.ui:47-73` | `Label` + `TextField`, filled with the key's current bind and made read-only (D16) |
 | P32 | Tabs `Build-A-Bind` and `Custom Command` | `bindeditdialog.ui:99-101,212-215` | `Tf2TabBar` + `StackLayout` |
 | P33 | Build-A-Bind: `Category:` label + empty combo, `Command:` label + empty combo, `Arguments:` label + empty empty area | `bindeditdialog.ui:119-208` | same widgets, no model wired (parity: empty) |
-| P34 | Custom Command: `QPlainTextEdit`, Liberation Mono, no wrap, placeholder `< command goes here >` | `bindeditdialog.ui:254-272` | `TextArea` with `wrapMode: NoWrap`, same placeholder |
-| P35 | Cancel/Ok buttons, centered, wired to `reject()`/`accept()`; accept slot body empty | `bindeditdialog.ui:284-340`, `bindeditdialog.cpp:18-20` | `Dialog.standardButtons` (Ok/Cancel); `onAccepted` logs only |
+| P34 | Custom Command: `QPlainTextEdit`, Liberation Mono, no wrap, placeholder `< command goes here >` | `bindeditdialog.ui:254-272` | `TextArea` with `wrapMode: NoWrap`, same placeholder; this is the text OK applies (D16) |
+| P35 | Cancel/Ok buttons, centered, wired to `reject()`/`accept()`; accept slot body empty | `bindeditdialog.ui:284-340`, `bindeditdialog.cpp:18-20` | `Dialog.standardButtons` (Ok/Cancel); `onAccepted` now applies the Custom Command text as a bind or unbind (D16) |
 | P36 | Modal (`exec()`) — the editor is blocked while the dialog is open | `editwindow.cpp:55` | `Dialog.modal: true` |
 | P37 | Loaded config survives across tab switches; a second `loadCfg` appends | `editwindow.cpp:16-23`, `gameconfig.cpp:12-35` | keep `GameCfg` semantics untouched |
 | P38 | Parsed lines shown as `args.join(" ")`, i.e. quotes retained as parsed | `editwindow.cpp:21` | model role `line` = `args.join(" ")`, byte-identical to the widget version |
 
 ## 4. Deliberate deviations
 
-Each is small, and each is listed so parity can be audited. No functional capability is added or removed.
+Each is small, and each is listed so parity can be audited. D15 and D16 are the only places where a capability is added on purpose; every other row removes or re-homes something without changing what the app can do.
 
 | # | Deviation | Reason |
 |---|---|---|
@@ -95,7 +95,8 @@ Each is small, and each is listed so parity can be audited. No functional capabi
 | D12 | Short description line under the preset combo, and placeholder text in the bind dialog's empty combos/argument area | Both are empty-state wording. The preset note is data (`presets[].note`), so future presets get one for free. |
 | D13 | Main keyboard rows are stretched to the widest row (1012 px) with computed per-row gaps | Matches what the widget's `QHBoxLayout` rows did with fixed-width caps; keeps the main block rectangular. The middle and numpad clusters keep the plain 4 px gap. |
 | D14 | The bind dialog opens centred on the window and is dragged by its title bar, clamped inside the window | A stock QML `Dialog` has no drag behaviour and sits at (0,0); the widget `QDialog` was moved by the window manager, which could leave the screen. In-window bounds are what the tool needs. |
-| D15 | The keyboard panel scrolls in both directions when the window is too small for it, and the keyboard alone can be zoomed (`Ctrl`+wheel, `Ctrl`+`+`/`-`/`0`) | Requested usability additions: the keyboard is 1632 px wide and does not fit even the default editor width (1573 px), so the outer keys were previously unreachable. This is the one place where a capability is added on purpose; see section 13. |
+| D15 | The keyboard panel scrolls in both directions when the window is too small for it, and the keyboard alone can be zoomed (`Ctrl`+wheel, `Ctrl`+`+`/`-`/`0`) | Requested usability additions: the keyboard is 1632 px wide and does not fit even the default editor width (1573 px), so the outer keys were previously unreachable. See section 13. |
+| D16 | A cap whose key the loaded config binds is filled burnt orange; OK in the bind dialog edits the bind instead of logging it | P31/P34/P35 left the dialog inert and `BoundKeyRole` empty, so the keyboard was a viewer. The user asked for the caps to show their binds and for OK to add/remove one. The Custom Command text is the command applied (an empty field removes the bind); `Existing Bind:` becomes display-only. Nothing is written to disk — there is still no save path (section 10) — so the edit lives in the loaded model until the next load. |
 
 ## 5. Target architecture
 
@@ -139,7 +140,7 @@ Implementation notes:
 - `main.cpp` installs a dark `QPalette` on `QGuiApplication`. Every control the app themes in `Theme.qml` ignores it; the palette colours the few controls left stock (tool tips, menu popups, scroll bars, dialog chrome), so they match instead of flashing light.
 - Key clicks are measured against the id table by both `KeyTable` (QML) and the widget build's `KeyId` enum; the first automated run clicked the Space cap and logged `id=71 token=space`, and the dialog opened with `bind "space"` — the id/order parity holds end to end.
 
-Data flow: `Main.qml` owns the page stack. `StartPage` picks a path and calls `cfg.loadCfg(path)`. `ConfigController` parses through `GameCfg` and fills `CommandListModel`. `EditorPage` renders the model and the keyboard; a key click opens `BindEditorDialog` with the token from `KeyTable`. Nothing in QML touches `GameCfg` directly.
+Data flow: `Main.qml` owns the page stack. `StartPage` picks a path and calls `cfg.loadCfg(path)`. `ConfigController` parses through `GameCfg` and fills `CommandListModel`. `EditorPage` renders the model and the keyboard; a key click opens `BindEditorDialog` with the token from `KeyTable`. The dialog's OK calls `cfg.setBind`/`cfg.clearBind`, which edit the parsed rows in `CommandListModel`; every cap reads its key back from the notifying `cfg.binds` map, so adding or removing a bind repaints the keyboard live (D16). Nothing in QML touches `GameCfg` directly.
 
 Boundary rule: **C++ owns game/config data and parsing; QML owns presentation and the key layout.** The only exception is the key table (D9), because nothing in C++ consumes it yet.
 
@@ -156,9 +157,11 @@ Mirrors one `cmd::Entry` per row. Row order = insertion order = parse order, so 
 | `ArgsRole` | QStringList | `entry.args.mid(1)` | future: argument editors |
 | `TypeRole` | int | `cmd::CmdType` as int | future: type-aware UI |
 | `TypeNameRole` | QString | `"int"`, `"float"`, `"string"`, `"command"`, `"bind"`, `"alias"`, `"unknown"` | future: display + debugging |
-| `BoundKeyRole` | QString | empty for now; reserved for the key token a bind applies to | future: keyboard overlay |
+| `BoundKeyRole` | QString | lowercase key token a `bind`/`bindtoggle` row applies to, else empty (D16) | keyboard overlay, row identity |
 
 `setEntries(const QVector<cmd::Entry> &)` replaces the contents with `beginResetModel`/`endResetModel`.
+
+`binds()`, `setBind()` and `clearBind()` keep the model's view of the binds in step with its rows. `binds()` replays the rows the way TF2 would — a later bind wins, and `unbindall`, `unbind "k"` and an empty command (`bind "r" ""`, which `b4nny.cfg` uses) all clear — and returns lowercase key token → command. `setBind`/`clearBind` edit the rows themselves and emit `bindsChanged`, so any view reading the map repaints. `setBind` drops every earlier row for that key and appends one `bind "<key>" "<command>"` row typed `CMD_CMD`, the type the parser gives an identical line in a config file, so a key never ends up with two competing rows and a reload is indistinguishable from the edit. Keys are lowercased in both directions because `Lexer::open` lowercases the whole file. See D16.
 
 ### `ConfigController` (QObject, exposed to QML as the context property `cfg`)
 
@@ -172,6 +175,9 @@ Mirrors one `cmd::Entry` per row. Row order = insertion order = parse order, so 
 | `cfgPath` | `Q_PROPERTY QString` | last successfully loaded path; used by the future save path |
 | `loaded` | `Q_PROPERTY bool` | `commandModel.rowCount() > 0` |
 | `lastError` | `Q_PROPERTY QString` | empty on success; `Lexers::Lexer::open` failure is currently silent, so this is set from the same check the widget build ignored (review finding 6, surfaced not fixed) |
+| `binds` | `Q_PROPERTY QVariantMap` | active binds: lowercase key token → command, derived from the parsed rows; notifies on every change, so the caps recolour (D16) |
+| `setBind(key, command)` | `Q_INVOKABLE bool` | bind `command` to TF2 key token `key`, replacing earlier binds; an empty command removes instead; false when nothing changed. In memory only (D16) |
+| `clearBind(key)` | `Q_INVOKABLE bool` | remove key token `key`'s bind row(s); false when it had none |
 
 `GameCfg`, `cmd::*`, `Lexers::*` are unchanged apart from removing two unused `#include <QApplication>` lines that only existed because the widgets module was in the build.
 
@@ -257,6 +263,7 @@ Dark tool theme, TF2-adjacent palette. All values in `Theme.qml`.
 | `colorAccentText` | `#1a1206` | text on accent |
 | `colorRed` / `colorBlu` | `#b8383b` / `#5885a2` | decorative accents only |
 | `colorKeyCap` / `colorKeyCapHover` / `colorKeyCapDisabled` | `#2b3136` / `#39424a` / `#202427` | key caps |
+| `colorKeyCapBound` / `...Hover` / `...Pressed` / `...Border` | `#4e2d17` / `#5f3920` / `#704527` / `#9a5a26` | cap fill and border when the key has a bind (D16). A muted burnt orange, deliberately darker than `colorAccent` so a bound key reads as "set" rather than "interactive" |
 | `fontTitle` | `TF2 Professor`, 40 | banner |
 | `fontHeading` | `TF2 Professor`, 22 | panel headings |
 | `fontUi` | `TF2`, 12 | body text |
@@ -275,7 +282,7 @@ Mapped from `docs/pickle-inferences.md` §"What is unfinished" and `docs/CODE_RE
 | Future feature | Where it lands | What is already in place after this rewrite |
 |---|---|---|
 | Save a config to disk | `ConfigController::saveCfg()` + `File` menu action + `cfgPath` | menu bar exists with an empty `File` menu; `cfgPath` already tracked |
-| Paint loaded binds onto the keyboard | `BindEditorTab` sets `KeyCap.bindText` from the model's `BoundKeyRole` | `KeyCap` has a `bindText` property rendering nothing today; role reserved |
+| ~~Paint loaded binds onto the keyboard~~ (landed, D16) | done: `KeyCap.boundCommand` reads `cfg.binds` and colours the cap; OK in the dialog edits the bind | `BoundKeyRole` reports the key token, `cfg.binds`/`setBind`/`clearBind` exist, and bound caps have their own colour tokens |
 | Type-aware argument editors | `BindEditorDialog` "Arguments" area switches on `TypeRole`, using `IntVar::getMinVal()`/`getMaxVal()` | model exposes type + args; the cvar metadata is already parsed (unused today) |
 | Alias chains | `BindEditorDialog` command list includes aliases; `TypeNameRole` reports `alias` | `CMD_ALIAS` detection already exists in `GameCfg` |
 | Command categories | `Command:` combo grouped by a new field | the combo is a component with a model-driven API, empty for now |
@@ -306,6 +313,7 @@ Performed against the MinGW Qt 6.12.0 build with the full automation run on 2026
 10. Scrolling (D15): at the default editor size the keyboard (1632 px) is wider than the viewport (1557 px), so the horizontal bar is shown (`hbar size 0.95`, policy `AlwaysOn`, opacity 1). At the minimum window (1180×700, viewport 1164×568) `hbar size 0.71`; `KP Enter` sits at x=1580, i.e. outside the viewport. Flicking the keyboard left by 600 px set `contentX` to 468 and `KP Enter` to x=1112; clicking there logged `keybButtonClicked: id=101 token=kp_enter`, so the outer keys are reachable and clickable. A vertical bar appears only when the content is taller than the viewport (at zoom 2.0: `vbar size 0.66`).
 11. Zoom (D15): `Ctrl`+wheel in and out, `Ctrl+=` / `Ctrl+-`, the numpad `+`/`-`, and `Ctrl+Shift+=` / `Ctrl+Shift+-` all change the level in 0.1 steps; the level clamps at 0.5 and 2.0; `Ctrl+0` returns to 1.0. Zoom is anchored: the viewport centre stays over the same key (the scroll offset changes to compensate). The zoom badge shows the percentage and fades after 1.2 s.
 12. Zoom scope and hit testing: at zoom 0.5 the content equals the viewport (both bars hidden) and clicking Space logs `id=71 token=space`; at zoom 0.5 clicking `KP Enter` logs `id=101 token=kp_enter`, so the click areas scale with the caps. Only the keyboard scales — the tab bar, status strip, zoom badge and panel geometry are unaffected. `Flickable` does not clamp programmatically assigned `contentX`/`contentY`, so `setZoom` clamps to `[0, content − viewport]` itself; without it, a zoom-out produced negative scroll offsets (−164, −77).
+13. Binds on the keyboard (D16): with `default.cfg` loaded, the caps whose key the config binds are painted with the bound tokens. A pixel scan of the Edit Binds tab finds 47 visible bound caps — exactly the on-screen keys `default.cfg` binds (of its 54 binds, 50 land on a cap; `end`/`pgdn`/`pgup` sit past the right edge, and the mouse binds have no cap) — and the whole numpad stays grey, the negative control for a wrong key mapping. `b4nny.cfg` binds 59 keys, a second data point. The dialog's OK applies the Custom Command text through `cfg.setBind`/`cfg.clearBind`, which edits the parsed rows; the caps and the Overview line update from the model's change signals. The edit is in memory only (section 10: no save path exists).
 
 | Parity row | How it was verified |
 |---|---|
@@ -316,6 +324,7 @@ Performed against the MinGW Qt 6.12.0 build with the full automation run on 2026
 | P21/P22 (menus, status strip) | present on the editor page, absent/hidden on the start page |
 | P30/P36 (dialog) | opens centred; drag clamped to the window (D14); Escape rejects; outside press blocked |
 | D15 (scroll + zoom) | see items 10–12 of this section |
+| D16 (bound caps + dialog edit) | loaded-config colouring confirmed visually and by the pixel scan in item 13 (47 visible bound caps == the on-screen keys `default.cfg` binds; numpad all grey); the dialog's OK is wired to `cfg.setBind`/`cfg.clearBind`, whose `bindsChanged` signal is what repaints the caps |
 
 ## 13. Keyboard usability: scrolling and zoom
 

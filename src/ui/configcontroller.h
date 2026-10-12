@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QString>
 #include <QVariantList>
+#include <QVariantMap>
 
 #include "gamecfg/gameconfig.h"
 #include "ui/commandlistmodel.h"
@@ -23,6 +24,7 @@ class ConfigController : public QObject {
     Q_PROPERTY(QString cfgPath READ cfgPath NOTIFY cfgPathChanged)
     Q_PROPERTY(QString lastError READ lastError NOTIFY lastErrorChanged)
     Q_PROPERTY(bool loaded READ loaded NOTIFY loadedChanged)
+    Q_PROPERTY(QVariantMap binds READ binds NOTIFY bindsChanged)
 
 public:
     explicit ConfigController(QObject *parent = nullptr);
@@ -32,6 +34,11 @@ public:
     QString cfgPath() const;
     QString lastError() const;
     bool loaded() const;
+
+    /// Active binds, key token -> command, derived from the parsed command list. The
+    /// keyboard paints a cap when its token is a key of this map; a notifying property,
+    /// so the caps recolour the moment a bind is added or removed (D16).
+    QVariantMap binds() const;
 
     /// ":/cfg/..." path of a preset, or an empty string for an invalid index.
     Q_INVOKABLE QString presetAt(int index) const;
@@ -45,10 +52,19 @@ public:
     /// Drop everything that was loaded.
     Q_INVOKABLE void clear();
 
+    /// Bind `command` to TF2 key token `key` (e.g. "space", "kp_home"), replacing any
+    /// bind the key already had. An empty command removes the bind instead. In memory
+    /// only: the loaded .cfg file is not touched, because the app has no save yet (D16).
+    Q_INVOKABLE bool setBind(const QString &key, const QString &command);
+
+    /// Remove the bind of TF2 key token `key`.
+    Q_INVOKABLE bool clearBind(const QString &key);
+
 signals:
     void cfgPathChanged();
     void lastErrorChanged();
     void loadedChanged();
+    void bindsChanged();
 
 private:
     void setCfgPath(const QString &path);

@@ -7,6 +7,9 @@ ConfigController::ConfigController(QObject *parent)
     : QObject(parent) {
     // GameCfg's default constructor already ran loadAllCmds(); calling it again would
     // duplicate every known command, so it is deliberately not repeated here.
+
+    // The bind map belongs to the model (it owns the rows); QML sees it as cfg.binds.
+    connect(&m_commands, &CommandListModel::bindsChanged, this, &ConfigController::bindsChanged);
 }
 
 QAbstractItemModel *ConfigController::commandModel() {
@@ -55,6 +58,18 @@ QString ConfigController::lastError() const {
 
 bool ConfigController::loaded() const {
     return m_commands.rowCount() > 0;
+}
+
+QVariantMap ConfigController::binds() const {
+    return m_commands.binds();
+}
+
+bool ConfigController::setBind(const QString &key, const QString &command) {
+    return m_commands.setBind(key, command);
+}
+
+bool ConfigController::clearBind(const QString &key) {
+    return m_commands.clearBind(key);
 }
 
 bool ConfigController::loadCfg(const QString &path) {

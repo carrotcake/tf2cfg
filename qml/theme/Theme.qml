@@ -34,6 +34,12 @@ QtObject {
     readonly property color colorKeyCapDisabled: "#1f2427"
     readonly property color colorKeyCapBorder: "#444c53"
     readonly property color colorKeyCapText: "#d7dde2"
+    // A bound key. Deliberately muted burnt orange: it has to read as "set" at a glance
+    // without competing with Theme.colorAccent, which marks what is interactive (D16).
+    readonly property color colorKeyCapBound: "#4e2d17"
+    readonly property color colorKeyCapBoundHover: "#5f3920"
+    readonly property color colorKeyCapBoundPressed: "#704527"
+    readonly property color colorKeyCapBoundBorder: "#9a5a26"
 
     // -- fonts (families registered from res/font at startup) ----------------
     readonly property string familyBanner: "TF2"

@@ -11,9 +11,22 @@ Dialog {
     /// Prefill for the "Existing Bind:" field; set from a key cap click.
     property string originalBind: ""
 
-    /// Open the dialog for a TF2 key token: prefills bind "<token>".
+    /// TF2 key token this dialog is editing (e.g. "space", "kp_home").
+    property string keyToken: ""
+
+    /// The command the loaded config has on this key, or "" when it is unbound.
+    readonly property string boundCommand: {
+        if (dialog.keyToken === "")
+            return ""
+        const command = cfg.binds[dialog.keyToken.toLowerCase()]
+        return command === undefined ? "" : command
+    }
+
+    /// Open the dialog for a TF2 key token: shows the bind the key carries today, if any.
     function openForKey(token) {
-        dialog.originalBind = 'bind "' + token + '"'
+        dialog.keyToken = token
+        const command = dialog.boundCommand
+        dialog.originalBind = 'bind "' + token + '"' + (command === "" ? "" : ' "' + command + '"')
         dialog.open()
     }
 
@@ -30,14 +43,25 @@ Dialog {
 
     onOpened: {
         existingBindField.text = dialog.originalBind
+        customCommand.text = dialog.boundCommand
         // Center on the window each time it opens (a plain Dialog sits at 0,0).
         if (dialog.parent) {
             dialog.x = Math.max(0, Math.round((dialog.parent.width - dialog.width) / 2))
             dialog.y = Math.max(0, Math.round((dialog.parent.height - dialog.height) / 2))
         }
     }
-    // Parity P35: the widget's accept slot was empty. Log instead of silently dropping.
-    onAccepted: console.log("bind dialog accepted: " + existingBindField.text)
+    // Deviation D16: the widget's accept slot was empty (P35), which made the keyboard a
+    // viewer. OK now applies the command authored in the Custom Command tab: a non-empty
+    // command becomes bind "<key>" "<command>", an empty one removes the key's bind.
+    // Either way the cap repaints, because cfg.binds notifies. Nothing is written to the
+    // .cfg file - the app has no save yet (docs/ui-qml-rewrite.md section 10).
+    onAccepted: {
+        const command = customCommand.text.trim()
+        if (command === "")
+            cfg.clearBind(dialog.keyToken)
+        else
+            cfg.setBind(dialog.keyToken, command)
+    }
 
     background: Rectangle {
         color: Theme.colorSurface
@@ -113,6 +137,9 @@ Dialog {
                 id: existingBindField
                 Layout.fillWidth: true
                 placeholderText: "< not currently bound >"
+                // Reports the bind the selected key carries. The command to apply is
+                // authored in the Custom Command tab, so this field is display only (D16).
+                readOnly: true
             }
         }
 
@@ -202,6 +229,18 @@ Dialog {
                     }
                 }
             }
+        }
+
+        // Says what OK does, because neither tab did anything in the widget build and
+        // "leave it empty to remove" is not something a user can guess (D16).
+        Tf2Label {
+            Layout.fillWidth: true
+            text: dialog.keyToken === "" ? ""
+                                        : qsTr('Binds this command to "%1". Clear the field to remove the bind.')
+                                              .arg(dialog.keyToken)
+            color: Theme.colorTextMuted
+            font.pointSize: Theme.sizeSmall
+            wrapMode: Text.WordWrap
         }
     }
 }

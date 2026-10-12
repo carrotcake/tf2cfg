@@ -78,7 +78,7 @@ Design decisions visible in the data:
 | Grouped, non-exclusive | generated `ui_keybform.h`: `keybButtons = new QButtonGroup(KeybForm); keybButtons->setExclusive(false);` | caps behave as click targets, not a radio selection |
 | Enum ↔ string mapping | `keybform.h:119-220` `KEYCODES[]` maps enum id → TF2 key token (`"scrollock"`, `"kp_slash"`, `"uparrow"`) | the strings are exactly what belongs inside `bind "<key>"` |
 | Click → signal → dialog | `keybform.cpp:11-15` emits `keybButtonClicked(id)`; `editwindow.cpp:49-55` opens `BindEditDialog` prefilled with `bind "<key>"` | the keyboard's whole purpose is bind editing |
-| No state on the caps | no `setChecked`, no per-key text update anywhere | binds from the loaded cfg are **not** yet reflected on the keyboard — a core unfinished piece |
+| No state on the caps | no `setChecked`, no per-key text update anywhere | binds from the loaded cfg are **not** yet reflected on the keyboard — a core unfinished piece (the later QML rewrite landed this as D16 in `docs/ui-qml-rewrite.md`) |
 
 Spelling inside `KEYCODES` is copied from the game's own cvar table, typos included (`"scrollock"`, `"KP_home"`, `"kp_5"`); these must match the engine verbatim, so they are not bugs. Note `"shift"` / `"rshift"`, `"ctrl"` / `"rctrl"` mirror TF2's asymmetric naming.
 
@@ -139,7 +139,7 @@ The QML names are informative: `SSBox` is a rounded dark rectangle and `SSBText`
 ## What is unfinished, ranked by how much it blocks the verdict
 
 1. **No save path.** No serializer, no write dialog, no menu action. The app cannot produce a cfg. Everything else is in service of this missing feature.
-2. **Binds never reach the keyboard.** `CMD_BIND` exists in the enum (`convars.h:9`) but is never assigned anywhere — the only values ever inserted into `cmd_types` are `CMD_CMD`, `CMD_IVAR`, `CMD_FVAR`, `CMD_SVAR` and `CMD_ALIAS`, so `cmdToType` can never report a bind. No loaded bind is ever painted onto a key cap.
+2. **Binds never reach the keyboard.** `CMD_BIND` exists in the enum (`convars.h:9`) but is never assigned anywhere — the only values ever inserted into `cmd_types` are `CMD_CMD`, `CMD_IVAR`, `CMD_FVAR`, `CMD_SVAR` and `CMD_ALIAS`, so `cmdToType` can never report a bind. No loaded bind is ever painted onto a key cap. (The later QML rewrite paints the caps from the parsed rows instead, D16 in `docs/ui-qml-rewrite.md`; the engine gap described here still stands.)
 3. **BindEditDialog does nothing.** Empty combos, placeholder argument area, no result plumbing.
 4. **Parse fidelity is not yet good enough to trust for editing.** `Lexer::open` lowercases the entire file and truncates lines at the first `//` (`lexers.h:19-23`), quotes are retained inside tokens (`configlexer.cpp:27-32`), and `allcmds.csv` indexing is unchecked (`cmdlexer.cpp:29-37`). Details in `docs/CODE_REVIEW.md`, findings 1-3 and the Info section.
 5. **Two presets bundled but unreachable**; the placeholder third tab; the empty menu bar.

@@ -9,7 +9,8 @@ Rectangle {
 
     /// Key name into KeyTable (e.g. "esc", "bkspc", "kpplus").
     property string keyName: ""
-    /// Reserved for the bind overlay: the token this cap is bound to, empty today.
+    /// Reserved for the bind overlay. Always empty: a bound cap is shown by its colour
+    /// (see `bound` below), and a 64px cap has no room for a command string (D16).
     property string bindText: ""
 
     readonly property var keyInfo: KeyTable.keyData(keyName)
@@ -17,19 +18,47 @@ Rectangle {
     readonly property int keyId: KeyTable.keyId(keyName)
     readonly property string token: KeyTable.keyToken(keyName)
 
+    /// The command the loaded config binds to this cap's token, or "" when unbound.
+    /// Read straight off the C++ bind map, so the cap repaints whenever a bind is added
+    /// or removed (docs/ui-qml-rewrite.md D16).
+    readonly property string boundCommand: {
+        if (cap.token === "")
+            return ""
+        const command = cfg.binds[cap.token.toLowerCase()]
+        return command === undefined ? "" : command
+    }
+    readonly property bool bound: cap.boundCommand !== ""
+
     /// Emitted with the engine key id (see docs/ui-qml-rewrite.md section 7).
     signal activated(int keyId)
 
     implicitWidth: KeyTable.keyWidth(keyName)
     implicitHeight: KeyTable.keyHeight(keyName)
 
+    /// Hover and press are the cap's own affordance: a cap that cannot be clicked never
+    /// shows them, even when the config does have something bound to it.
+    readonly property bool highlighted: cap.bindable && mouse.containsMouse
+    readonly property bool pressed: cap.bindable && mouse.pressed
+
+    /// Cap fill for the hover/press states, split by bound and unbound so the colour
+    /// binding below stays readable.
+    readonly property color fillWhenBound: cap.pressed ? Theme.colorKeyCapBoundPressed
+                                         : cap.highlighted ? Theme.colorKeyCapBoundHover
+                                         : Theme.colorKeyCapBound
+    readonly property color fillWhenUnbound: cap.pressed ? Theme.colorKeyCapPressed
+                                           : cap.highlighted ? Theme.colorKeyCapHover
+                                           : Theme.colorKeyCap
+
     radius: Theme.radius
     border.width: Theme.borderWidth
-    border.color: mouse.containsMouse && bindable ? Theme.colorBorderStrong : Theme.colorKeyCapBorder
-    color: !bindable ? Theme.colorKeyCapDisabled
-                    : mouse.pressed ? Theme.colorKeyCapPressed
-                    : mouse.containsMouse ? Theme.colorKeyCapHover
-                    : Theme.colorKeyCap
+    border.color: cap.highlighted ? Theme.colorBorderStrong
+                : bound ? Theme.colorKeyCapBoundBorder
+                : Theme.colorKeyCapBorder
+    // A bound key is burnt orange. The two caps the widget build could not bind keep
+    // their dimmed fill even when bound - PrtScn has no token at all, Pause does (D16).
+    color: bound ? cap.fillWhenBound
+         : bindable ? cap.fillWhenUnbound
+         : Theme.colorKeyCapDisabled
     opacity: bindable ? 1.0 : 0.55
 
     Text {
@@ -48,8 +77,9 @@ Rectangle {
         elide: Text.ElideRight
     }
 
-    // Bind overlay slot. Renders nothing while bindText is empty, which it always is
-    // until the bind engine lands; the plumbing (roles, property, geometry) is done.
+    // Bind overlay slot. Renders nothing while bindText is empty, which it always is:
+    // a bound cap is painted, not annotated (D16). The plumbing stays for a later
+    // "show me what this key does" mode.
     Rectangle {
         id: bindSlot
         visible: cap.bindText !== ""
