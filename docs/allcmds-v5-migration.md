@@ -139,7 +139,7 @@ symmetrical.
 - Command signatures default to `none` when the parameter list was never publicly
   documented; the console's own autocomplete is the ground truth for those.
 - The `bool` vs `int` boundary is heuristic for 0/1 defaults without bounds; the
-  `INPUT_OVERRIDES` list in `field_dicts.py` records the manual fixes made so far.
+  `INPUT_OVERRIDES` list in `tools/field_dicts.py` records the manual fixes made so far.
 - The `linux` platform tag derives from dump provenance (a Linux client); a few
   `gl_*` cvars may also exist on the Windows OpenGL renderer. Treat `linux` as
   "seen in Linux dumps", not "proven absent elsewhere".

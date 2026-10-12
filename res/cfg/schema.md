@@ -28,7 +28,7 @@ For cvars — the value type the variable accepts:
 Derived mechanically from the default value; a decimal point in min or max forces
 `flt` (e.g. `sensitivity` defaults to integer-looking `3` but is a float).
 Descriptions listing multiple numbered modes force `int` (e.g. `cl_showfps`).
-Edge cases are listed in `INPUT_OVERRIDES` in `field_dicts.py`.
+Edge cases are listed in `INPUT_OVERRIDES` in `tools/field_dicts.py`.
 
 For commands — `none` if the command takes no parameters, otherwise the parameter
 list, space separated: `[type]` = mandatory parameter, `<type>` = optional parameter.
@@ -37,7 +37,7 @@ list, space separated: `[type]` = mandatory parameter, `<type>` = optional param
 - `addcond [int] <int>` — condition id, optional value
 - `bot_teleport [str] [flt] [flt] [flt] [flt] [flt] [flt]` — name + position + angles
 
-Signatures are authored per command in `SIGS` (field_dicts.py), informed by the
+Signatures are authored per command in `SIGS` (tools/field_dicts.py), informed by the
 command's documented usage string. ~860 commands take no parameters; commands
 whose parameter lists are not publicly documented default to `none` — verify
 against the in-game console before relying on a signature.

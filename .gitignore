@@ -1,5 +1,8 @@
-/build/
-/tf2cfgreal.pro.user
-/.qtcreator/
-__pycache__/
+# Qt build output and Creator state
 build/
+*.pro.user
+/.qtcreator/
+
+# Python
+__pycache__/
+*.py[cod]
