@@ -37,12 +37,23 @@ Item {
     }
 
     function loadSelected() {
-        if (cfg.loadCfg(page.cfgPath)) {
-            page.errorText = ""
-            page.loaded()
-        } else {
-            page.errorText = "Could not load " + page.cfgPath
-                            + (cfg.lastError.length > 0 ? " (" + cfg.lastError + ")" : "")
+        page.errorText = ""
+        cfg.loadCfg(page.cfgPath)
+    }
+
+    Connections {
+        target: cfg
+        function onLoadedChanged() {
+            if (cfg.loaded) {
+                page.loaded()
+            } else if (cfg.lastError.length > 0) {
+                page.errorText = "Could not load " + page.cfgPath + " (" + cfg.lastError + ")"
+            }
+        }
+        function onLastErrorChanged() {
+            if (cfg.lastError.length > 0 && !cfg.loaded) {
+                page.errorText = "Could not load " + page.cfgPath + " (" + cfg.lastError + ")"
+            }
         }
     }
 
