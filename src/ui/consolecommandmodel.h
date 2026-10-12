@@ -21,6 +21,8 @@ class ConsoleCommandModel : public QAbstractListModel {
 
     Q_PROPERTY(QString contextFilter READ contextFilter WRITE setContextFilter NOTIFY filtersChanged)
     Q_PROPERTY(QString platformFilter READ platformFilter WRITE setPlatformFilter NOTIFY filtersChanged)
+    /// false hides commands flagged "cheat" from the list and suggestions.
+    Q_PROPERTY(bool showCheats READ showCheats WRITE setShowCheats NOTIFY filtersChanged)
 
 public:
     enum Role {
@@ -44,12 +46,22 @@ public:
 
     QString contextFilter() const { return m_contextFilter; }
     QString platformFilter() const { return m_platformFilter; }
+    bool showCheats() const { return m_showCheats; }
     void setContextFilter(const QString &context);
     void setPlatformFilter(const QString &platform);
+    void setShowCheats(bool show);
 
     /// Full record of one visible row, for the Build-A-Bind arguments pane:
     /// name, docs, input, platform, context, cheat, def, min, max.
     Q_INVOKABLE QVariantMap commandAt(int row) const;
+
+    /// Record (name, context, platform) for the named command, found
+    /// case-insensitively anywhere in the catalog. Empty map when unknown.
+    Q_INVOKABLE QVariantMap findCommand(const QString &name) const;
+
+    /// Names (in the model's sorted order) containing the text,
+    /// case-insensitive, restricted to the active filters, capped at limit.
+    Q_INVOKABLE QStringList suggest(const QString &text, int limit = 20) const;
 
     void setCommands(const QVector<cmd::ConVar *> &commands);
 
@@ -63,6 +75,7 @@ private:
     QVector<int> m_visible;         ///< indices into m_all passing both filters
     QString m_contextFilter;
     QString m_platformFilter;
+    bool m_showCheats = true;
 };
 
 #endif // CONSOLECOMMANDMODEL_H

@@ -17,6 +17,9 @@ Rectangle {
     readonly property bool bindable: KeyTable.isBindable(keyName)
     readonly property int keyId: KeyTable.keyId(keyName)
     readonly property string token: KeyTable.keyToken(keyName)
+    /// Label size override for caps whose strings run long (mouse caps).
+    readonly property int labelPointSize: keyInfo !== null && keyInfo.fs !== undefined
+                                          ? keyInfo.fs : Theme.sizeUi
 
     /// The command the loaded config binds to this cap's token, or "" when unbound.
     /// Read straight off the C++ bind map, so the cap repaints whenever a bind is added
@@ -69,7 +72,7 @@ Rectangle {
         text: KeyTable.keyLabel(cap.keyName)
         color: cap.bindable ? Theme.colorKeyCapText : Theme.colorTextDisabled
         font.family: Theme.familyButton
-        font.pointSize: Theme.sizeUi
+        font.pointSize: cap.labelPointSize
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
         fontSizeMode: Text.Fit
@@ -115,8 +118,16 @@ Rectangle {
         }
     }
 
-    // Parity P26: the two un-bindable caps explain themselves on hover.
-    ToolTip.visible: mouse.containsMouse && cap.keyInfo !== null && cap.keyInfo.tooltip !== undefined
-    ToolTip.text: cap.keyInfo !== null && cap.keyInfo.tooltip !== undefined ? cap.keyInfo.tooltip : ""
+    // Hover text: the table's static tooltip for un-bindable caps (P26), else
+    // the cap's current bind line for anything the loaded config has bound.
+    readonly property string tipText: {
+        if (cap.keyInfo !== null && cap.keyInfo.tooltip !== undefined)
+            return cap.keyInfo.tooltip
+        if (cap.bound)
+            return qsTr('bind "%1" "%2"').arg(cap.token).arg(cap.boundCommand)
+        return ""
+    }
+    ToolTip.visible: mouse.containsMouse && cap.tipText !== ""
+    ToolTip.text: cap.tipText
     ToolTip.delay: 400
 }

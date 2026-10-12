@@ -27,6 +27,13 @@ Dialog {
     /// cfg.consoleModel.commandAt(). null until a command is selected.
     property var commandInfo: null
 
+    /// Live suggestion entries for the typed command text (whole-catalog
+    /// contains-matches from cfg.consoleModel.suggest()).
+    property var suggestionList: []
+
+    /// Highlighted entry in the suggestion pop-down (-1 = none).
+    property int suggestionIndex: -1
+
     /// Toggle mode needs the engine's incrementvar command to know where to stop:
     /// bool cvars are always 0..1, int/flt need the CSV min/max.
     readonly property bool toggleAvailable:
@@ -82,6 +89,109 @@ Dialog {
         if (kind === "flt")
             return "0.0"
         return ""
+    }
+
+    /// Fall back to the current selection when the field holds text that is not
+    /// a catalog command (so a non-existent command is never carried forward).
+    function revertEdit() {
+        commandCombo.editText = commandCombo.currentIndex >= 0 ? commandCombo.currentText : ""
+    }
+
+    /// The typed portion of the command field: the engine's inline auto-complete
+    /// appends the completed remainder as a selected suffix, which must not count
+    /// as typed text.
+    function typedPrefix() {
+        const edit = commandCombo.contentItem
+        const text = commandCombo.editText
+        if (edit.selectionStart !== edit.selectionEnd
+                && Math.max(edit.selectionStart, edit.selectionEnd) === text.length)
+            return text.substring(0, Math.min(edit.selectionStart, edit.selectionEnd))
+        return text
+    }
+
+    /// Rebuild + show/hide the suggestion pop-down for the typed text.
+    function updateSuggestions() {
+        suggestionIndex = -1
+        const typed = typedPrefix()
+        if (typed === "" || !commandCombo.activeFocus
+                || (commandCombo.currentIndex >= 0 && typed === commandCombo.currentText)) {
+            suggestionPopup.close()
+            return
+        }
+        commandCombo.popup.close()
+        suggestionList = cfg.consoleModel.suggest(typed)
+        if (suggestionList.length > 0)
+            suggestionPopup.open()
+        else
+            suggestionPopup.close()
+    }
+
+    /// Move the suggestion highlight (delta = +1/-1). Consumed when handled.
+    /// Browsing the real dropdown keeps the combo's default Up/Down behavior.
+    function moveSuggestion(delta) {
+        if (commandCombo.popup.opened)
+            return false
+        if (!suggestionPopup.opened) {
+            updateSuggestions()
+            if (suggestionPopup.opened) {
+                suggestionIndex = delta > 0 ? 0 : suggestionList.length - 1
+                return true
+            }
+            // nothing to suggest: an empty field opens the browse list, typed
+            // text without matches does not jump the selection
+            if (typedPrefix() === "")
+                commandCombo.popup.open()
+            return true
+        }
+        const next = suggestionIndex + delta
+        if (next >= 0 && next < suggestionList.length)
+            suggestionIndex = next
+        return true
+    }
+
+    function commitSuggestion(name) {
+        commandCombo.editText = name
+        settleCommand()
+    }
+
+    /// Point the filter dropdowns (and the model filters behind them) at one of
+    /// their options; "all" clears the corresponding model filter.
+    function applyCategoryFilter(context) {
+        cfg.consoleModel.contextFilter = context === "all" ? "" : context
+        categoryCombo.currentIndex = categoryCombo.find(context, Qt.MatchFixedString)
+    }
+
+    function applyPlatformFilter(platform) {
+        cfg.consoleModel.platformFilter = platform === "all" ? "" : platform
+        platformCombo.currentIndex = platformCombo.find(platform, Qt.MatchFixedString)
+    }
+
+    /// Settle the command field: commit the typed name when it exists in allcmds,
+    /// else revert. Runs on Enter (accepted) and on focus loss, matching the
+    /// editable-combo behavior in widgets.
+    function settleCommand() {
+        const typed = commandCombo.editText.trim()
+        const rec = cfg.consoleModel.findCommand(typed)
+        if (rec.name === undefined
+                || (!cfg.consoleModel.showCheats && rec.cheat)) {
+            revertEdit()
+            return
+        }
+        if (commandCombo.find(typed, Qt.MatchFixedString) < 0) {
+            // hidden by the filters: switch the dropdowns to the command's own
+            // category/platform - the most restrictive options that match it
+            applyCategoryFilter(rec.context)
+            applyPlatformFilter(rec.platform)
+        }
+        const idx = commandCombo.find(typed, Qt.MatchFixedString)
+        if (idx >= 0) {
+            commandCombo.currentIndex = idx
+            commandCombo.popup.close()
+            suggestionPopup.close()
+            suggestionIndex = -1
+        } else {
+            revertEdit()
+        }
     }
 
     /// The console line the Build-A-Bind editors produce (without the surrounding
@@ -152,6 +262,9 @@ Dialog {
         // Start each edit from a clean Build-A-Bind pane; the chosen category and
         // platform filters persist across opens on purpose.
         commandCombo.currentIndex = -1
+        suggestionList = []
+        suggestionIndex = -1
+        suggestionPopup.close()
         // Center on the window each time it opens (a plain Dialog sits at 0,0).
         if (dialog.parent) {
             dialog.x = Math.max(0, Math.round((dialog.parent.width - dialog.width) / 2))
@@ -284,6 +397,8 @@ Dialog {
                     Tf2ComboBox {
                         id: categoryCombo
                         objectName: "categoryCombo"
+                        Layout.minimumWidth: 150
+                        Layout.preferredWidth: 150
                         model: ["client controls", "client settings", "client render",
                                 "server commands", "server settings", "engine", "all"]
                         currentIndex: 0
@@ -302,12 +417,24 @@ Dialog {
                     Tf2ComboBox {
                         id: platformCombo
                         objectName: "platformCombo"
+                        Layout.minimumWidth: 150
+                        Layout.preferredWidth: 150
                         model: ["universal", "linux", "windows", "xbox", "all"]
                         currentIndex: 0
                         onActivated: function (index) {
                             cfg.consoleModel.platformFilter =
                                     currentText === "all" ? "" : currentText
                         }
+                    }
+
+                    // Cheats filter: off hides "cheat"-flagged commands from the
+                    // dropdown and the suggestions.
+                    CheckBox {
+                        id: cheatsCheck
+                        objectName: "cheatsCheck"
+                        text: "Cheats"
+                        checked: true
+                        onToggled: cfg.consoleModel.showCheats = checked
                     }
                 }
 
@@ -325,10 +452,131 @@ Dialog {
                         id: commandCombo
                         objectName: "commandCombo"
                         Layout.fillWidth: true
-                        placeholderText: "< choose a command >"
+                        placeholderText: "< choose or type a command >"
                         textRole: "name"
                         model: cfg.consoleModel
+
+                        // Editable command field. The contentItem override is per
+                        // instance on purpose: the shared Tf2ComboBox stays read-only
+                        // for every other dropdown. It must be declared BEFORE
+                        // editable - the engine wires its text sync and inline
+                        // auto-complete inside setEditable(), which inspects whatever
+                        // contentItem exists at that moment.
+                        contentItem: TextField {
+                            leftPadding: Theme.spacing
+                            rightPadding: Theme.spacing * 3
+                            text: commandCombo.editText
+                            placeholderText: commandCombo.placeholderText
+                            autoScroll: true
+                            selectByMouse: true
+                            inputMethodHints: commandCombo.inputMethodHints
+                            font: commandCombo.font
+                            color: Theme.colorText
+                            placeholderTextColor: Theme.colorTextMuted
+                            selectionColor: Theme.colorBorderStrong
+                            selectedTextColor: Theme.colorText
+                            verticalAlignment: Text.AlignVCenter
+                            background: null
+
+                            // Up/Down pick suggestion entries and Enter finalizes
+                            // them; without this the keys would escape the field and
+                            // the combo would jump its plain list selection. Consuming
+                            // here stops that propagation.
+                            Keys.onDownPressed: function (event) {
+                                event.accepted = moveSuggestion(1)
+                            }
+                            Keys.onUpPressed: function (event) {
+                                event.accepted = moveSuggestion(-1)
+                            }
+                            Keys.onReturnPressed: function (event) {
+                                // Browsing the real dropdown: let the combo's own
+                                // Return handling activate the highlighted entry.
+                                if (commandCombo.popup.opened)
+                                    return
+                                // Owned here so the rules are unconditional: a
+                                // highlighted suggestion finalizes, everything else
+                                // settles (commit a valid full command, else reset to
+                                // the previous good one). The engine's acceptInput()
+                                // never sees the key.
+                                event.accepted = true
+                                if (suggestionPopup.opened && suggestionIndex >= 0)
+                                    commitSuggestion(suggestionList[suggestionIndex])
+                                else
+                                    settleCommand()
+                            }
+                        }
+                        editable: true
+
+                        onEditTextChanged: updateSuggestions()
+
                         onCurrentIndexChanged: rebuildArgs()
+
+                        // Popup clicks and built-in commit paths land here; settling
+                        // is idempotent, so revalidating costs nothing.
+                        onActivated: function (index) { settleCommand() }
+                        onAccepted: settleCommand()
+                        // Leaving the field settles it, so uncommitted text never
+                        // lingers past the next click. Skip while the popup has focus.
+                        onActiveFocusChanged: if (!activeFocus && !popup.opened) settleCommand()
+
+                        // Live-filtered suggestion pop-down shown while typing:
+                        // whole-catalog contains-matches, so typed text reaches
+                        // commands the category/platform filters hide.
+                        Popup {
+                            id: suggestionPopup
+                            parent: commandCombo
+                            x: 0
+                            y: commandCombo.height
+                            width: commandCombo.width
+                            padding: 1
+                            closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+
+                            background: Rectangle {
+                                color: Theme.colorSurfaceSunken
+                                border.width: Theme.borderWidth
+                                border.color: Theme.colorBorderStrong
+                                radius: Theme.radius
+                            }
+
+                            contentItem: ListView {
+                                clip: true
+                                implicitHeight: contentHeight
+                                model: suggestionList
+                                currentIndex: suggestionIndex
+                                ScrollIndicator.vertical: ScrollIndicator {}
+
+                                delegate: ItemDelegate {
+                                    id: suggestionItem
+                                    required property var modelData
+
+                                    width: ListView.view.width
+                                    text: suggestionItem.modelData
+                                    font.family: Theme.familyUi
+                                    font.pointSize: Theme.sizeUi
+                                    hoverEnabled: true
+                                    onClicked: {
+                                        commandCombo.editText = suggestionItem.modelData
+                                        settleCommand()
+                                        suggestionPopup.close()
+                                    }
+
+                                    contentItem: Text {
+                                        text: suggestionItem.text
+                                        font: suggestionItem.font
+                                        color: Theme.colorText
+                                        verticalAlignment: Text.AlignVCenter
+                                        elide: Text.ElideRight
+                                        leftPadding: Theme.spacing
+                                    }
+
+                                    background: Rectangle {
+                                        color: suggestionItem.hovered
+                                               || suggestionItem.ListView.isCurrentItem
+                                               ? Theme.colorSurfaceRaised : "transparent"
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 

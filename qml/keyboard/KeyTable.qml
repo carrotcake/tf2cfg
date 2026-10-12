@@ -132,7 +132,49 @@ QtObject {
         "kp0":        { id: 98,  token: "kp_ins",        label: "KP 0", w: 128 },
         "kpdot":      { id: 99,  token: "kp_del",        label: "KP ." },
         "kpplus":     { id: 100, token: "kp_plus",       label: "KP +", rows: 2 },
-        "kpenter":    { id: 101, token: "kp_enter",      label: "KP Enter", rows: 2 }
+        "kpenter":    { id: 101, token: "kp_enter",      label: "KP Enter", rows: 2 },
+
+        // -- mouse buttons and wheel ------------------------------------------
+        // Not in the widget build's keybform.h, so the ids continue after the
+        // keyboard's 0..101. Tokens are the engine's own mouse input names.
+        // Labels run long, so the caps take the smaller fs override.
+        "mouse1":     { id: 102, token: "mouse1",        label: "Left Click", fs: 10 },
+        "mouse2":     { id: 103, token: "mouse2",        label: "Right Click", fs: 10 },
+        "mouse3":     { id: 104, token: "mouse3",        label: "Middle Click", fs: 10 },
+        "mouse4":     { id: 105, token: "mouse4",        label: "Back", fs: 10 },
+        "mouse5":     { id: 106, token: "mouse5",        label: "Forward", fs: 10 },
+        "mwheelup":   { id: 107, token: "mwheelup",      label: "Scroll Up", fs: 10 },
+        "mwheeldown": { id: 108, token: "mwheeldown",    label: "Scroll Down", fs: 10 },
+
+        // -- controller (Xbox 360 style, see docs/missing-input-ids.md) --------
+        // Buttons are the engine's JOY codes; triggers/sticks/d-pad are the
+        // axis-direction and POV keys. Not in keybform.h, so ids continue on.
+        // Axis tokens contain spaces - they must stay quoted in cfg output,
+        // which CommandListModel already handles.
+        "joy1":       { id: 109, token: "joy1",          label: "A" },
+        "joy2":       { id: 110, token: "joy2",          label: "B" },
+        "joy3":       { id: 111, token: "joy3",          label: "X" },
+        "joy4":       { id: 112, token: "joy4",          label: "Y" },
+        "joy5":       { id: 113, token: "joy5",          label: "L Bumper" },
+        "joy6":       { id: 114, token: "joy6",          label: "R Bumper" },
+        "joy7":       { id: 115, token: "joy7",          label: "Back" },
+        "joy8":       { id: 116, token: "joy8",          label: "Start" },
+        "joy9":       { id: 117, token: "joy9",          label: "L3" },
+        "joy10":      { id: 118, token: "joy10",         label: "R3" },
+        "pov_up":     { id: 119, token: "pov_up",        label: "D UP", fs: 10 },
+        "pov_right":  { id: 120, token: "pov_right",     label: "D R", fs: 10 },
+        "pov_down":   { id: 121, token: "pov_down",      label: "D DN", fs: 10 },
+        "pov_left":   { id: 122, token: "pov_left",      label: "D L", fs: 10 },
+        "x axis pos": { id: 123, token: "x axis pos",    label: "LS R", fs: 10 },
+        "x axis neg": { id: 124, token: "x axis neg",    label: "LS L", fs: 10 },
+        "y axis pos": { id: 125, token: "y axis pos",    label: "LS DN", fs: 10 },
+        "y axis neg": { id: 126, token: "y axis neg",    label: "LS UP", fs: 10 },
+        "u axis pos": { id: 127, token: "u axis pos",    label: "RS R", fs: 10 },
+        "u axis neg": { id: 128, token: "u axis neg",    label: "RS L", fs: 10 },
+        "v axis pos": { id: 129, token: "v axis pos",    label: "RS DN", fs: 10 },
+        "v axis neg": { id: 130, token: "v axis neg",    label: "RS UP", fs: 10 },
+        "z axis pos": { id: 131, token: "z axis pos",    label: "LT" },
+        "z axis neg": { id: 132, token: "z axis neg",    label: "RT" }
     })
 
     // Layout, mirroring the widget build's frames (keybform.ui).
@@ -167,7 +209,89 @@ QtObject {
     ]
     readonly property var numpadRight: ["kpminus", "kpplus", "kpenter"]
 
+    // Mouse buttons/wheel, drawn below the keyboard: a mouse seen from above,
+    // rotated 90 degrees counter-clockwise so the front edge is the LEFT side.
+    // Absolute cell geometry (x/y/w/h in px), sized like the real thing:
+    //   - the front edge is the split main button - Right Click above, Left
+    //     Click below, identical halves;
+    //   - the wheel column: Scroll Up, Middle Click (the press), Scroll Down,
+    //     the two scrolls identical and flanking the press;
+    //   - the side buttons along the bottom edge - Forward then Back, identical,
+    //     Back rightmost.
+    // Both anchors hold: top-left = Right Click, bottom-right = Back.
+    readonly property var mouseCells: [
+        { name: "mouse2",     x: 0,   y: 0,   w: 96, h: 90 },
+        { name: "mouse1",     x: 0,   y: 94,  w: 96, h: 90 },
+        { name: "mwheelup",   x: 100, y: 0,   w: 112, h: 56 },
+        { name: "mouse3",     x: 100, y: 60,  w: 112, h: 64 },
+        { name: "mwheeldown", x: 100, y: 128, w: 112, h: 56 },
+        { name: "mouse5",     x: 13,  y: 188, w: 91, h: 48 },
+        { name: "mouse4",     x: 108, y: 188, w: 91, h: 48 }
+    ]
+    readonly property real mouseWidth: blockExtent(mouseCells, "x", "w")
+    readonly property real mouseHeight: blockExtent(mouseCells, "y", "h")
+
+    // Controller buttons/wheel block: an Xbox 360 pad seen from above with the
+    // trigger/bumper edge at the TOP. Absolute cell geometry (px), mirror-
+    // symmetric around x = 235; matching pairs share size:
+    //   - LT/RT and LB/RB along the top edge;
+    //   - left stick: four direction keys in a ring, L3 (joy9) as its center;
+    //   - ABXY diamond on the upper right, mirroring the stick ring;
+    //   - Back/Start pair centered between the halves;
+    //   - D-pad as a four-way plus on the lower left;
+    //   - right stick ring with R3 (joy10) as its center, mirroring the D-pad.
+    // Axis tokens spell the pressed direction per the SDK: X/U = horizontal,
+    // Y/V = vertical (negative = up), Z negative = right trigger.
+    readonly property var controllerCells: [
+        { name: "z axis pos", x: 130, y: 0,   w: 80,  h: 36 },  // LT
+        { name: "z axis neg", x: 260, y: 0,   w: 80,  h: 36 },  // RT
+        { name: "joy5",       x: 25,  y: 40,  w: 110, h: 40 },
+        { name: "joy6",       x: 335, y: 40,  w: 110, h: 40 },
+
+        { name: "y axis neg", x: 86,  y: 94,  w: 48, h: 40 },   // LS UP
+        { name: "x axis neg", x: 38,  y: 136, w: 48, h: 40 },   // LS L
+        { name: "joy9",       x: 94,  y: 140, w: 32, h: 32 },   // L3
+        { name: "x axis pos", x: 134, y: 136, w: 48, h: 40 },   // LS R
+        { name: "y axis pos", x: 86,  y: 178, w: 48, h: 40 },   // LS DN
+
+        // Back/Start sit centered at y 87: halfway between the R bumper and Y
+        // rows vertically (bumper center 60, Y center 114).
+        { name: "joy7",       x: 138, y: 71,  w: 88, h: 32 },  // Back
+        { name: "joy8",       x: 242, y: 71,  w: 88, h: 32 },  // Start
+
+        { name: "joy4",       x: 336, y: 94,  w: 48, h: 40 },  // Y
+        { name: "joy3",       x: 288, y: 136, w: 48, h: 40 },  // X
+        { name: "joy1",       x: 336, y: 178, w: 48, h: 40 },  // A
+        { name: "joy2",       x: 384, y: 136, w: 48, h: 40 },  // B
+
+        // D-pad and right stick sit 16px closer to the center line than the
+        // clusters above them, the way the real pad staggers them.
+        { name: "pov_up",     x: 102, y: 228, w: 48, h: 40 },
+        { name: "pov_left",   x: 54,  y: 270, w: 48, h: 40 },
+        { name: "pov_right",  x: 150, y: 270, w: 48, h: 40 },
+        { name: "pov_down",   x: 102, y: 312, w: 48, h: 40 },
+
+        { name: "v axis neg", x: 320, y: 228, w: 48, h: 40 },   // RS UP
+        { name: "u axis neg", x: 272, y: 270, w: 48, h: 40 },   // RS L
+        { name: "joy10",      x: 328, y: 274, w: 32, h: 32 },   // R3
+        { name: "u axis pos", x: 368, y: 270, w: 48, h: 40 },   // RS R
+        { name: "v axis pos", x: 320, y: 312, w: 48, h: 40 }    // RS DN
+    ]
+    readonly property real controllerWidth: blockExtent(controllerCells, "x", "w")
+    readonly property real controllerHeight: blockExtent(controllerCells, "y", "h")
+
     // -- queries ------------------------------------------------------------
+
+    /// Right/bottom extent of an absolutely positioned cap block.
+    function blockExtent(cells, first, second) {
+        let m = 0
+        for (const c of cells) {
+            const v = c[first] + c[second]
+            if (v > m)
+                m = v
+        }
+        return m
+    }
 
     /// Layout data for a cap, or null.
     function keyData(name) {

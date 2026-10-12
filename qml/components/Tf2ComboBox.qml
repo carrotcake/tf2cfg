@@ -34,6 +34,17 @@ ComboBox {
         font.pointSize: Theme.sizeUi
     }
 
+    // Hit zone for the drop-down indicator: an editable contentItem swallows
+    // presses near the right edge, so the icon area gets its own click target.
+    MouseArea {
+        z: 2
+        x: control.width - width
+        width: Theme.controlHeight
+        height: control.height
+        cursorShape: Qt.PointingHandCursor
+        onClicked: control.popup.opened ? control.popup.close() : control.popup.open()
+    }
+
     background: Rectangle {
         color: Theme.colorSurfaceSunken
         radius: Theme.radius

@@ -1,5 +1,18 @@
 #include "consolecommandmodel.h"
 
+#include <algorithm>
+
+// Build-A-Bind sort: names order by their alphanumeric characters only, so
+// "+attack" sorts as "attack". Case-insensitive.
+static QString commandSortKey(const QString &name) {
+    QString key;
+    for (const QChar c : name) {
+        if (c.isLetterOrNumber())
+            key.append(c.toLower());
+    }
+    return key;
+}
+
 ConsoleCommandModel::ConsoleCommandModel(QObject *parent)
     : QAbstractListModel(parent) {}
 
@@ -79,16 +92,70 @@ void ConsoleCommandModel::setPlatformFilter(const QString &platform) {
     endResetModel();
 }
 
+void ConsoleCommandModel::setShowCheats(bool show) {
+    if (m_showCheats == show)
+        return;
+    beginResetModel();
+    m_showCheats = show;
+    rebuild();
+    endResetModel();
+}
+
 void ConsoleCommandModel::rebuild() {
-    m_visible.clear();
+    QVector<QPair<QString, int>> keyed;
+    keyed.reserve(m_all.size());
     for (int i = 0; i < m_all.size(); ++i) {
         const cmd::ConVar *cmd = m_all.at(i);
         if (!m_contextFilter.isEmpty() && cmd->get_context() != m_contextFilter)
             continue;
         if (!m_platformFilter.isEmpty() && cmd->get_platform() != m_platformFilter)
             continue;
-        m_visible.append(i);
+        if (!m_showCheats && cmd->isCheat())
+            continue;
+        keyed.append({commandSortKey(cmd->get_name()), i});
     }
+    std::sort(keyed.begin(), keyed.end(),
+              [this](const QPair<QString, int> &a, const QPair<QString, int> &b) {
+        if (a.first != b.first)
+            return a.first < b.first;
+        return QString::compare(m_all.at(a.second)->get_name(),
+                                m_all.at(b.second)->get_name(), Qt::CaseInsensitive) < 0;
+    });
+    m_visible.resize(keyed.size());
+    for (int row = 0; row < keyed.size(); ++row)
+        m_visible[row] = keyed.at(row).second;
+}
+
+QVariantMap ConsoleCommandModel::findCommand(const QString &name) const {
+    for (const cmd::ConVar *cmd : m_all) {
+        if (QString::compare(cmd->get_name(), name, Qt::CaseInsensitive) == 0) {
+            QVariantMap map;
+            map.insert(QStringLiteral("name"), cmd->get_name());
+            map.insert(QStringLiteral("context"), cmd->get_context());
+            map.insert(QStringLiteral("platform"), cmd->get_platform());
+            map.insert(QStringLiteral("cheat"), cmd->isCheat());
+            return map;
+        }
+    }
+    return {};
+}
+
+QStringList ConsoleCommandModel::suggest(const QString &text, int limit) const {
+    QStringList out;
+    for (const cmd::ConVar *cmd : m_all) {
+        if (!m_contextFilter.isEmpty() && cmd->get_context() != m_contextFilter)
+            continue;
+        if (!m_platformFilter.isEmpty() && cmd->get_platform() != m_platformFilter)
+            continue;
+        if (!m_showCheats && cmd->isCheat())
+            continue;
+        if (cmd->get_name().contains(text, Qt::CaseInsensitive)) {
+            out.append(cmd->get_name());
+            if (out.size() >= limit)
+                break;
+        }
+    }
+    return out;
 }
 
 QVariantMap ConsoleCommandModel::commandAt(int row) const {

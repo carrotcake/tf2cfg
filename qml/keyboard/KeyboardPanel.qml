@@ -56,6 +56,19 @@ Item {
         return Theme.capGap + (mainRowWidth - rowWidth(names)) / (names.length - 1)
     }
 
+    /// X of a function-row group. Groups before the last sit at their natural
+    /// cumulative spots; the last (PrtScn/ScrLk/Pause) is centered over the
+    /// middle cluster below it, which starts at mainRowWidth + 2 cluster gaps.
+    function fnGroupX(index) {
+        const groups = KeyTable.fnRowGroups
+        if (index === groups.length - 1)
+            return mainRowWidth + Theme.capClusterGap * 2
+        let x = 0
+        for (let i = 0; i < index; ++i)
+            x += rowWidth(groups[i]) + Theme.capClusterGap
+        return x
+    }
+
     /// Set the zoom, clamped to [zoomMin, zoomMax]. The viewport centre is kept over
     /// the same key, so zooming does not throw the panel off to a corner.
     function setZoom(value) {
@@ -123,14 +136,22 @@ Item {
             spacing: Theme.capGap
 
             // -- function row --------------------------------------------------
-            Row {
-                spacing: Theme.capClusterGap
+            // Plain Item with computed x per group, so the last group (PrtScn,
+            // ScrLk, Pause) can center over the middle cluster below it instead
+            // of sitting at its natural cumulative offset.
+            Item {
+                width: fnGroupX(KeyTable.fnRowGroups.length - 1)
+                       + rowWidth(KeyTable.fnRowGroups[KeyTable.fnRowGroups.length - 1])
+                height: Theme.capSize
 
                 Repeater {
                     model: KeyTable.fnRowGroups
                     delegate: Row {
                         id: fnGroup
+                        required property int index
+                        required property var modelData
                         property var groupKeys: modelData
+                        x: panel.fnGroupX(index)
                         spacing: Theme.capGap
 
                         Repeater {
@@ -144,8 +165,13 @@ Item {
                 }
             }
 
+            // Tripled gap between the function row and the number row: the
+            // column's own capGap plus this spacer.
+            Item { width: 1; height: Theme.capGap * 2 }
+
             // -- main block | middle cluster | numpad --------------------------
             Row {
+                id: mainBlock
                 spacing: Theme.capClusterGap * 2
 
                 Column {
@@ -230,6 +256,79 @@ Item {
                                 keyName: modelData
                                 onActivated: function (keyId) { panel.keyActivated(keyId, token) }
                             }
+                        }
+                    }
+                }
+            }
+
+            // Tripled gap between the keyboard's bottom row and the mouse,
+            // with a thin separator bar marking the switch from keyboard to
+            // mouse sections. Symmetric: 12px on each side of the bar.
+            Item { width: 1; height: Theme.capGap * 2 }
+            Rectangle {
+                width: mainBlock.width
+                height: Theme.borderWidth
+                color: Theme.colorBorder
+            }
+            Item { width: 1; height: Theme.capGap * 2 }
+
+            // -- mouse | controller ------------------------------------------
+            // Both blocks below the keyboard, side by side, with the same thin
+            // separator style between them as the horizontal bar above.
+            Row {
+                spacing: Theme.capGap
+
+                Item { width: Theme.capGap * 2; height: 1 }
+
+                // Mouse buttons and wheel: same caps and activation path as the
+                // keyboard rows, arranged as a mouse rotated 90° CCW (front edge
+                // = left). Cell geometry comes from KeyTable.mouseCells. The Row
+                // only manages x, so center the shorter block vertically.
+                Item {
+                    width: KeyTable.mouseWidth
+                    height: KeyTable.mouseHeight
+                    y: (parent.height - KeyTable.mouseHeight) / 2
+
+                    Repeater {
+                        model: KeyTable.mouseCells
+                        delegate: KeyCap {
+                            required property var modelData
+                            keyName: modelData.name
+                            x: modelData.x
+                            y: modelData.y
+                            width: modelData.w
+                            height: modelData.h
+                            onActivated: function (keyId) { panel.keyActivated(keyId, token) }
+                        }
+                    }
+                }
+
+                Item { width: Theme.capGap * 2; height: 1 }
+
+                Rectangle {
+                    width: 1
+                    height: KeyTable.controllerHeight
+                    color: Theme.colorBorder
+                }
+
+                Item { width: Theme.capGap * 2; height: 1 }
+
+                // Controller: Xbox 360 style, triggers-up, mirror-symmetric.
+                // Cell geometry comes from KeyTable.controllerCells.
+                Item {
+                    width: KeyTable.controllerWidth
+                    height: KeyTable.controllerHeight
+
+                    Repeater {
+                        model: KeyTable.controllerCells
+                        delegate: KeyCap {
+                            required property var modelData
+                            keyName: modelData.name
+                            x: modelData.x
+                            y: modelData.y
+                            width: modelData.w
+                            height: modelData.h
+                            onActivated: function (keyId) { panel.keyActivated(keyId, token) }
                         }
                     }
                 }
