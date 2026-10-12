@@ -17,10 +17,8 @@ public:
         }
         QTextStream in(&in_file);
         while (!in.atEnd()) {
-            QString str = in.readLine().toLower();
-            if (str.contains("//")) {
-                str.chop(str.size() - str.indexOf("//"));
-            }
+            QString str = in.readLine();
+            preprocess(str);
             arr += str;
         }
         line = 0;
@@ -34,6 +32,10 @@ protected:
     int line, col;
     QFile in_file;
     QStringList arr;
+    /// Per-line massaging before the line enters the buffer. The base keeps lines
+    /// verbatim: descriptions in allcmds.csv must survive untouched (they carry
+    /// URLs and mixed case). cfgLex overrides this for case-insensitive .cfg files.
+    virtual void preprocess(QString &) {}
     inline void advanceOneChar() {
         if (line >= arr.size()) {
             return;
@@ -50,6 +52,16 @@ protected:
 class cfgLex : public Lexer {
 public:
     cfgLex(){};
+
+    // Config files are case-insensitive and have no comments of their own, so the
+    // line is folded to lower case and anything after // is dropped. (This used to
+    // live in Lexer::open, where it also corrupted allcmds.csv descriptions.)
+    void preprocess(QString &str) override {
+        if (str.contains("//")) {
+            str.chop(str.size() - str.indexOf("//"));
+        }
+        str = str.toLower();
+    }
 
     struct Token {
     public:
@@ -105,18 +117,28 @@ public:
     struct Token {
     public:
         enum TokenClass { TOK_ERR, TOK_EOF, TOK_CMD };
+        // allcmds.csv v5 layout: name, type, default, min, max, flags, docs,
+        // input type, platform, context (res/cfg/schema.md).
         Token(const QString n,
               const QString c,
               const QString d,
               const QString mi,
               const QString ma,
-              const QString docs)
+              const QString fl,
+              const QString docs,
+              const QString in,
+              const QString pl,
+              const QString cx)
             : cmd_name(n)
             , is_cmd(c)
             , def(d)
             , min(mi)
             , max(ma)
+            , flags(fl)
             , doc(docs)
+            , input(in)
+            , platformStr(pl)
+            , contextStr(cx)
             , type(TOK_CMD){};
         Token(const TokenClass t)
             : type(t){};
@@ -126,13 +148,19 @@ public:
         inline QString const &minVal() const { return min; }
         inline QString const &maxVal() const { return max; }
         inline QString const &docStr() const { return doc; }
+        inline QString const &flagsVal() const { return flags; }
+        inline QString const &inputType() const { return input; }
+        inline QString const &platform() const { return platformStr; }
+        inline QString const &context() const { return contextStr; }
         inline bool isCmd() const { return !is_cmd.isEmpty(); }
+        inline bool isBool() const { return input == QLatin1String("bool"); }
         inline bool hasDefault() const { return !def.isEmpty(); };
         inline bool hasRange() const { return !min.isEmpty() && !max.isEmpty(); }
-        inline bool hasUsage() const { return doc.contains("usage:"); };
+        inline bool hasUsage() const { return !input.isEmpty() && input != QLatin1String("none"); };
 
     private:
-        const QString cmd_name, is_cmd, def, min, max, doc;
+        const QString cmd_name, is_cmd, def, min, max, flags, doc, input;
+        QString platformStr, contextStr;
         const TokenClass type;
     };
 

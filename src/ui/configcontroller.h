@@ -8,6 +8,7 @@
 
 #include "gamecfg/gameconfig.h"
 #include "ui/commandlistmodel.h"
+#include "ui/consolecommandmodel.h"
 
 /**
  * The C++ face of the UI.
@@ -20,6 +21,7 @@ class ConfigController : public QObject {
     Q_OBJECT
 
     Q_PROPERTY(QAbstractItemModel *commandModel READ commandModel CONSTANT)
+    Q_PROPERTY(QAbstractItemModel *consoleModel READ consoleModel CONSTANT)
     Q_PROPERTY(QVariantList presets READ presets CONSTANT)
     Q_PROPERTY(QString cfgPath READ cfgPath NOTIFY cfgPathChanged)
     Q_PROPERTY(QString lastError READ lastError NOTIFY lastErrorChanged)
@@ -30,6 +32,8 @@ public:
     explicit ConfigController(QObject *parent = nullptr);
 
     QAbstractItemModel *commandModel();
+    /// The allcmds.csv catalog (Build-A-Bind source data).
+    QAbstractItemModel *consoleModel() { return &m_console; }
     QVariantList presets() const;
     QString cfgPath() const;
     QString lastError() const;
@@ -72,6 +76,7 @@ private:
 
     GameCfg m_cfg; ///< default ctor loads res/cfg/allcmds.csv once
     CommandListModel m_commands;
+    ConsoleCommandModel m_console;
     QString m_cfgPath;
     QString m_lastError;
 };

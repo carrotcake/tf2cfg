@@ -7,7 +7,7 @@ cmdLex::Token const cmdLex::nextToken() {
         return Token(Token::TOK_EOF);
     }
     const QString str = arr.at(line);
-    QStringList arr;
+    QStringList fields; // v5 CSV has ten fields (res/cfg/schema.md)
     QString temp("");
     LexState state = STATE_START;
     while (state != STATE_ERR) {
@@ -26,15 +26,19 @@ cmdLex::Token const cmdLex::nextToken() {
             }
             break;
         case STATE_COMMA:
-            arr.push_back(temp);
+            fields.push_back(temp);
             temp.clear();
             break;
         case STATE_END:
-            if (line > 2099) {
-                int a = 2 + 3;
-            }
             advanceOneChar();
-            return Token(arr[0], arr[1], arr[2], arr[3], arr[4], temp);
+            fields.push_back(temp);
+            // Tolerate short rows from hand-edited lines: missing trailing
+            // fields become empty strings instead of a parse error.
+            while (fields.size() < 10) {
+                fields.push_back(QString());
+            }
+            return Token(fields[0], fields[1], fields[2], fields[3], fields[4], fields[5],
+                         fields[6], fields[7], fields[8], fields[9]);
         default:
             break;
         }

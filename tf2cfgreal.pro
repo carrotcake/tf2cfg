@@ -19,6 +19,7 @@ SOURCES += \
     src/gamecfg/lex/cmdlexer.cpp \
     src/gamecfg/lex/configlexer.cpp \
     src/ui/commandlistmodel.cpp \
+    src/ui/consolecommandmodel.cpp \
     src/ui/configcontroller.cpp
 
 HEADERS += \
@@ -26,6 +27,7 @@ HEADERS += \
     src/gamecfg/gameconfig.h \
     src/gamecfg/lex/lexers.h \
     src/ui/commandlistmodel.h \
+    src/ui/consolecommandmodel.h \
     src/ui/configcontroller.h
 
 # The previous Qt Widgets UI is kept for reference but is not built.

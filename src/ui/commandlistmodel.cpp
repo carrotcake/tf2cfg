@@ -205,6 +205,8 @@ QString CommandListModel::typeName(cmd::CmdType type) {
         return QStringLiteral("float");
     case cmd::CMD_SVAR:
         return QStringLiteral("string");
+    case cmd::CMD_BVAR:
+        return QStringLiteral("bool");
     case cmd::CMD_CMD:
         return QStringLiteral("command");
     case cmd::CMD_BIND:

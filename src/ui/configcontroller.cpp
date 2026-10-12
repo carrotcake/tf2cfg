@@ -10,6 +10,9 @@ ConfigController::ConfigController(QObject *parent)
 
     // The bind map belongs to the model (it owns the rows); QML sees it as cfg.binds.
     connect(&m_commands, &CommandListModel::bindsChanged, this, &ConfigController::bindsChanged);
+
+    // Build-A-Bind browses the game's command catalog, not the parsed config.
+    m_console.setCommands(m_cfg.allCmds());
 }
 
 QAbstractItemModel *ConfigController::commandModel() {

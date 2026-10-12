@@ -114,9 +114,9 @@ Bind-mode is a per-bind user choice (decided). Generated text:
 
 - command: `name arg1 arg2 ...` (missing optional args omitted)
 - cvar, fixed value: `bind "k" "cvar value"`
-- cvar, toggle: `bind "k" "increment var cvar <min> <max> <step>"` — for bool that
-  reduces to `bind "k" "increment var cvar 0 1 1"`, byte-for-byte what TF2's own
-  `BindToggle` produces.
+- cvar, toggle: `bind "k" "incrementvar cvar <min> <max> <step>"` — for bool that
+  reduces to `bind "k" "incrementvar cvar 0 1 1"`, matching TF2's own `BindToggle`.
+  Note the engine command is spelled `incrementvar`, no space.
 
 The pane preview line and the dialog's OK path (`cfg.setBind`) are unchanged — the
 generated string lands in the same `Custom Command` buffer, keeping the two tabs
@@ -124,14 +124,14 @@ symmetrical.
 
 ## 5. Work items checklist
 
-- [ ] `lexers.h`: 10-field `cmdLex::Token`, new accessors
-- [ ] `cmdlexer.cpp`: push last field on `STATE_END`; remove debug block + shadowing
-- [ ] `lexers.h`: comment-chop and lowercasing scoped to `cfgLex`
-- [ ] `convars.h`: `BoolVar`/`CMD_BVAR`, platform/context on `ConVar`
-- [ ] `gameconfig.cpp`: type from column 8, empty-default strings kept, usage filled
-- [ ] `commandlistmodel.cpp`: `typeName()` gains `bool`
-- [ ] new `ConsoleCommandModel` (C++ side of 4.1)
-- [ ] `BindEditorDialog.qml`: dropdowns, filtered command list, generated arguments pane
+- [x] `lexers.h`: 10-field `cmdLex::Token`, new accessors
+- [x] `cmdlexer.cpp`: push last field on `STATE_END`; remove debug block + shadowing
+- [x] `lexers.h`: comment-chop and lowercasing scoped to `cfgLex`
+- [x] `convars.h`: `BoolVar`/`CMD_BVAR`, platform/context on `ConVar`
+- [x] `gameconfig.cpp`: type from column 8, empty-default strings kept, usage filled
+- [x] `commandlistmodel.cpp`: `typeName()` gains `bool`
+- [x] new `ConsoleCommandModel` (C++ side of 4.1)
+- [x] `BindEditorDialog.qml`: dropdowns, filtered command list, generated arguments pane
 - [ ] optional: surface new columns in `CommandOverviewTab`
 
 ## 6. Known data caveats (documented, not blockers)
