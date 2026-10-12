@@ -62,7 +62,10 @@ ComboBox {
         }
 
         background: Rectangle {
-            color: item.highlighted ? Theme.colorSurfaceSunken : "transparent"
+            // Highlighted row is the lighter surface, the list body the darker one.
+            // (It used to be the other way round, which read as "selected = recessed"
+            // on a dark theme.)
+            color: item.highlighted ? Theme.colorSurfaceRaised : "transparent"
         }
     }
 
@@ -81,7 +84,7 @@ ComboBox {
         }
 
         background: Rectangle {
-            color: Theme.colorSurfaceRaised
+            color: Theme.colorSurfaceSunken
             border.width: Theme.borderWidth
             border.color: Theme.colorBorderStrong
             radius: Theme.radius

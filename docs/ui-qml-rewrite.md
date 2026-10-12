@@ -266,6 +266,8 @@ Dark tool theme, TF2-adjacent palette. All values in `Theme.qml`.
 
 Rationale: the app is a game companion tool; the bundled TF2 fonts plus an orange-industrial accent on near-black surfaces read as TF2 without shipping any copyrighted artwork.
 
+Dropdown (combo popup) convention: the popup body is the dark `colorSurfaceSunken` and the highlighted row is the lighter `colorSurfaceRaised`. The highlight must be *lighter* than the list body — on a dark theme a darker highlight reads as "recessed" rather than "selected". The same rule applies to any future list-style popup.
+
 ## 10. Extension points for the known future work
 
 Mapped from `docs/pickle-inferences.md` §"What is unfinished" and `docs/CODE_REVIEW.md`.
