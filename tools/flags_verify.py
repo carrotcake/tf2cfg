@@ -11,7 +11,7 @@ def norm(f):
     return set(MAP.get(t, t) for t in toks if t and t != ':')
 
 dump = {}
-for line in open('./cvarlist_linux.txt', encoding='utf-8', errors='replace').read().splitlines()[1:]:
+for line in open('./data/cvarlist_linux.txt', encoding='utf-8', errors='replace').read().splitlines()[1:]:
     line = line.strip()
     if not line or line.startswith('cvar list') or line.startswith('----'): continue
     p = line.split(' : ')
@@ -40,7 +40,7 @@ FCVAR_MAP = {'FCVAR_GAMEDLL':'game','FCVAR_CLIENTDLL':'client','FCVAR_HIDDEN':'h
     'FCVAR_CLIENTCMD_CAN_EXECUTE':'clcmdcanexec','FCVAR_SERVER_CANNOT_QUERY':'svcannotquery',
     'FCVAR_PRINTABLEONLY':'printonly'}
 cs2 = {}
-for line in open('./cs2_cvarlist.md', encoding='utf-8', errors='replace').read().splitlines():
+for line in open('./data/cs2_cvarlist.md', encoding='utf-8', errors='replace').read().splitlines():
     m = re.match(r'^\s*([^\s|][^|]*?) *\| *([^|]*?) *\|', line)
     if not m: continue
     name = m.group(1).strip()

@@ -59,7 +59,7 @@ def norm_str(s):
 
 # ---------- parse Linux dump ----------
 dump_flags = {}
-for line in open('./cvarlist_linux.txt', encoding='utf-8', errors='replace').read().splitlines()[1:]:
+for line in open('./data/cvarlist_linux.txt', encoding='utf-8', errors='replace').read().splitlines()[1:]:
     line = line.strip()
     if not line or line.startswith('cvar list') or line.startswith('----'):
         continue
@@ -69,7 +69,7 @@ for line in open('./cvarlist_linux.txt', encoding='utf-8', errors='replace').rea
     dump_flags[parts[0].strip()] = norm_str(parts[2].strip())
 
 # ---------- parse CS2 dump ----------
-text = open('./cs2_cvarlist.md', encoding='utf-8', errors='replace').read()
+text = open('./data/cs2_cvarlist.md', encoding='utf-8', errors='replace').read()
 cs2 = {}
 for line in text.splitlines():
     m = re.match(r'^\s*([^\s|][^|]*?) *\| *([^|]*?) *\|', line)
