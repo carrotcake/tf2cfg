@@ -40,11 +40,11 @@ Numbered across all groups so you can say "fix 2 and 5".
 
 ### Should fix (risky code without test, real slowness, duplication, mixed jobs, dead code)
 
-10. ~~**No automated tests anywhere**~~ **FIXED** — `tests/tst_engine.cpp` + `tests/tests.pro` (Qt Test), 21 cases: cfgLex tokenization (quotes, escapes, comments, case folding, `;` inside quotes), cmdLex CSV mapping/round-trip/padding, `GameCfg` catalog load (one cvar of each type), and `CommandListModel` bind replay (`unbindall`, `unbind`, later-wins, empty command, `setBind` replace/idempotence/case/escaping, `clearBind`). Built and run separately from the app, so a red test never blocks a release build:
+10. ~~**No automated tests anywhere**~~ **FIXED** — `tests/tst_engine.cpp` + `tests/tests.pro` (Qt Test), 32 cases: cfgLex tokenization (quotes, escapes, comments, case folding, `;` inside quotes), cmdLex CSV mapping/round-trip/padding, the `allcmds.csv` load, `CommandListModel` bind replay (`unbindall`, `unbind`, later-wins, empty command, `setBind` replace/idempotence/case/escaping, `clearBind`), and `ConsoleCommandModel` sorting, the three filters, the per-combo cache, `suggest`, `findCommand` and `commandAt`. Built and run separately from the app, so a red test never blocks a release build:
    ```
    cd build-test && qmake ../tests/tests.pro && mingw32-make && release/tf2cfg_test.exe
    ```
-   Still untested: QML itself, and `ConsoleCommandModel` filtering/suggestion.
+   Still untested: the QML layer itself, which would mean QML Test and a new build target.
 
 11. **`GameCfg::loadAllCmds()` mixes CSV parsing, type inference, and object creation** (`src/gamecfg/gameconfig.cpp:44-105`)
     - **What this is:** One 60-line function reads the CSV, decides the C++ subclass (`ConCmd` vs `BoolVar` vs `IntVar`...), parses min/max/def, and `new`s the object. Hard to test in isolation; any change to the type logic requires a full parse.
@@ -92,7 +92,7 @@ Numbered across all groups so you can say "fix 2 and 5".
 
 ## Verdict
 
-**Healthy core, safety net now in place.** The engine and UI are functionally complete for the read-only use case. All nine "Must fix" items are resolved, `tests/tst_engine.cpp` guards the parser and bind logic, and the dead code is gone. The **biggest missing feature is save-to-disk**, which the docs already track.
+**Healthy core, safety net in place.** The engine and UI are functionally complete for the read-only use case. All nine "Must fix" items are resolved, `tests/tst_engine.cpp` guards the parser, the bind logic and the command catalog, and the dead code is gone. `docs/CODE_REVIEW.md` has no open findings left. The **biggest missing feature is save-to-disk**, which the docs already track.
 
 **Next up, in order:**
 1. CI (#22) — run `tf2cfg_test` and build the app on `ubuntu-latest` so half the player base is not the first to find a compile error.
@@ -111,7 +111,7 @@ Numbered across all groups so you can say "fix 2 and 5".
 - `qml/components/*.qml` (`Tf2ComboBox`, `Tf2Button`, `Panel`, `Tf2TabBar`, `Tf2Label`, `Tf2TextField`) — assumed correct; not read line by line.
 - `qml/pages/StartPage.qml`, `qml/pages/tabs/*.qml` — not read.
 - `tools/csvio.py` — read; simple and correct.
-- `docs/CODE_REVIEW.md` findings 3, 4, 12, 13, 14, 17, and its three "Info — verify intent" items. Findings 1, 2, 5, 6 are fixed now; see that document's status header.
+- `docs/CODE_REVIEW.md` — **no open findings left.** Every finding is fixed or was retired with the widget UI, and its three "Info" items are answered against the behaviour as built.
 - Linux build — not attempted; only Windows MinGW verified. **Note: added `concurrent` to QT in .pro for QtConcurrent.**
 - Accessibility (screen readers, high contrast) — not evaluated.
 - Packaging/installer — none exists; `deploy.ps1` (`windeployqt` folder copy) is the deploy, verified to run with no Qt on `PATH`.

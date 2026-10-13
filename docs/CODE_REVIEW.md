@@ -6,7 +6,7 @@ No fixes applied. This document records findings only.
 
 > Status after the QML rewrite (see `docs/legacy/ui-qml-rewrite.md`): findings 7–9 were in the widget UI, which was deleted once the rewrite shipped. Finding 8 is intentionally fixed in the new UI (deviation D3); findings 10–11 (missing include hygiene) are fixed.
 >
-> **Second pass, 2026-10-12:** the QML rewrite's "the engine parses exactly as before, and the UI pins the same values" constraint is gone — it existed so the new UI could reproduce the old behaviour, and that audit is done. Findings 1, 2, 5 and 6 are now fixed in the engine (audit #6 for the quoting work; CODE_REVIEW #1 for the case fold). Findings 3, 4, 12, 13, 14, 17 remain open, and the Info items below are still worth reading before trusting a parse.
+> **Status, 2026-10-12 (second pass).** The QML rewrite's "the engine parses exactly as before, and the UI pins the same values" constraint is gone — it existed so the new UI could reproduce the old behaviour, and that audit is done. Every finding below is now fixed or retired: 1, 2, 3, 4, 5, 6, 10, 11, 12, 13, 14, 15 and 17 are fixed in the engine, 8 is fixed in the QML UI (D3), and 7, 9 and 16 died with the widget UI. The parser and the bind logic have tests in `tests/tst_engine.cpp`; the three Info items at the bottom are answered there rather than left open.
 
 ## High
 
@@ -14,8 +14,8 @@ No fixes applied. This document records findings only.
 |---|---|---|---|
 | 1 | `src/gamecfg/lex/lexers.h` | ~~`Lexer::open` lowercases the whole file and truncates each line at the first `//`. Case-sensitive cvar values are destroyed, and any value containing `//` (URLs, paths) is silently cut.~~ **FIXED** — `cfgLex::preprocess` now folds only the command name (the first unquoted word) and treats `//` as a comment only outside a quoted token; `cmdLex` reads raw, so allcmds.csv descriptions are untouched. Argument case survives a load, which is what a save path needs. |
 | 2 | `src/gamecfg/lex/cmdlexer.cpp` | ~~`arr[0]`…`arr[4]` indexed without a size check when building the `Token`. A CSV row with fewer than 5 fields reads out of bounds; an empty `arr` reads `arr[0]` on an empty list. Undefined behavior / crash on `://cfg/allcmds.csv` drift.~~ **FIXED** — the row is scanned field by field and padded to 10, so a short row yields empty fields instead of an out-of-bounds read. Pinned by `tests/tst_engine.cpp` (`csvShortRowIsPadded`). |
-| 3 | `src/gamecfg/lex/cmdlexer.cpp:10` | Local `QStringList arr;` shadows the inherited `Lexer::arr` member. Legal C++ but a trap for maintainers and a static-analysis warning. | Rename the local (e.g. `fields`), or make the base member protected with a distinct name. |
-| 4 | `src/gamecfg/convars.h:39,44` | `IntVar(QString, QString, i64 def, i64 min, int max)` and `IntVar(QString, QString, int def)` take `int` where `defVal` and `Range` are `i64`. Callers at `src/gamecfg/gameconfig.cpp:66,69` pass `long long` values, so the conversion narrows silently. Large cvar ranges and defaults truncate. | Change both parameters to `cmd::i64`. |
+| 3 | `src/gamecfg/lex/cmdlexer.cpp` | ~~Local `QStringList arr;` shadows the inherited `Lexer::arr` member.~~ **FIXED** — renamed to `fields`. |
+| 4 | `src/gamecfg/convars.h` | ~~`IntVar(QString, QString, i64 def, i64 min, int max)` and `IntVar(QString, QString, int def)` take `int` where `defVal` and `Range` are `i64`, so large defaults and bounds narrow silently.~~ **FIXED** — both parameters are `i64`; `FltVar` takes `double` throughout. |
 
 ## Medium
 
@@ -33,24 +33,24 @@ No fixes applied. This document records findings only.
 
 | # | Location | Problem | Suggested fix |
 |---|---|---|---|
-| 12 | `src/gamecfg/lex/cmdlexer.cpp:33-35` | Dead debug code: `if (line > 2099) { int a = 2 + 3; }`. | Remove. |
-| 13 | `src/gamecfg/gameconfig.h:26`, `src/ui/editwindow.h:18`, `src/ui/bindeditdialog.h:17` | `const QString cmd` / `const QString filename` / `const QString str` passed by value where `const QString &` is intended. | Use `const QString &`. |
-| 14 | `src/gamecfg/lex/lexers.h:56-65,107-136` | Token types returned as `const Token`, which suppresses moves; `const QString` data members make the class non-assignable. | Return by plain value and drop `const` on members. |
-| 15 | `src/gamecfg/cvar.cpp` | Stub file containing only `#include "gamecfg/gameconfig.h"`. | Delete from `SOURCES`, or move the `GameCfg` implementation here instead of `gameconfig.cpp`. |
-| 16 | `src/ui/startwindow.h:31` | `CFG_STRINGS` exposes only 2 of the 4 bundled cfgs; `b4nny_defbinds.cfg` and `b4nny_nobinds.cfg` are packaged in `res/res.qrc` but unreachable from the UI. | **RETIRED** — widget UI not built; presets now driven from `ConfigController::presets` which includes all four. |
-| 17 | `src/gamecfg/gameconfig.cpp:99` | `printf("%s ", str.toStdString().c_str())` bypasses Qt logging and copies strings per token. | Use `qDebug()` / `qInfo()` with `qUtf8Printable()`. |
+| 12 | `src/gamecfg/lex/cmdlexer.cpp` | ~~Dead debug code: `if (line > 2099) { int a = 2 + 3; }`.~~ **FIXED** — removed. |
+| 13 | `src/gamecfg/gameconfig.h` | ~~`const QString cmd` / `const QString filename` / `const QString str` passed by value where `const QString &` is intended.~~ **FIXED** — `cmdToType` takes a reference; the other two instances were in the widget UI, now deleted. |
+| 14 | `src/gamecfg/lex/lexers.h` | ~~Token types returned as `const Token`, which suppresses moves; `const QString` data members make the class non-assignable.~~ **FIXED** — the `const` members went with audit #5 and both `nextToken()` now return a plain `Token`, so a row's 10 `QString`s move instead of being copied. |
+| 15 | `src/gamecfg/cvar.cpp` | ~~Stub file containing only `#include "gamecfg/gameconfig.h"`.~~ **FIXED** — deleted along with its `SOURCES` entry. |
+| 16 | `src/ui/startwindow.h` | ~~`CFG_STRINGS` exposes only 2 of the 4 bundled cfgs; `b4nny_defbinds.cfg` and `b4nny_nobinds.cfg` are packaged in `res/res.qrc` but unreachable from the UI.~~ **RETIRED** — widget UI deleted; all four presets are in `ConfigController::presets`. |
+| 17 | `src/gamecfg/gameconfig.cpp` | ~~`printf("%s ", str.toStdString().c_str())` bypasses Qt logging and copies strings per token.~~ **FIXED** — `printCfg` writes through a `QTextStream` on `stdout`, so the P12/D7 parity dump still lands on stdout while the QString is encoded in place as UTF-8. Verified byte-identical output. |
 
-## Info — verify intent, not confirmed defects
+## Info — answered against the behaviour as built
 
-- `src/gamecfg/lex/configlexer.cpp:22-32`: quoted tokens are returned **with** their quote characters, e.g. `"key"` rather than `key`. If `GameCfg::appendCfg` is expected to produce bare argument strings, the quotes leak into `cmd.args`.
-- `src/gamecfg/lex/configlexer.cpp` + `lexers.h`: lines are stored without a separator and tokenization synthesizes a trailing `'\n'` at the end of each line. Multi-line quoted values and comment-only lines rely on this behavior; confirm it matches the intended cfg grammar.
-- `src/gamecfg/lex/lexers.h:36-46`: `advanceOneChar()` increments `line` as a side effect of end-of-line, so `line`/`col` cursors are shared between `hasNext()` and tokenization. Confirm `hasNext()` remains correct if a token spans lines.
+- **Quoted tokens keep their quote characters**, e.g. `"key"` rather than `key`. Intentional: a token is the line as written, the Command Overview shows the line verbatim (P38/D16), and `CommandListModel::unquoted()` is the single place that strips them and reads `\"`/`\\`. Pinned by `setBindEscapesQuotesInRow`.
+- **Lines are stored without a separator and tokenization synthesizes a trailing `'\n'`.** That synthesized character is how the lexer recognises end-of-line without a sentinel in the buffer. A quoted token therefore cannot span two lines: an unterminated quote returns `TOK_ERR`, which is the same line-oriented grammar the game uses.
+- **`advanceOneChar()` increments `line` as a side effect of end-of-line, so `hasNext()` and tokenization share the cursor.** Still correct, because no token spans a line (above), so tokenization always lands the cursor on a line boundary before `hasNext()` is asked again. The tokenizer tests cover the line-by-line cases.
 
-## QML UI notes (new code, not reviewed in the original pass)
+## QML UI notes (new code, reviewed 2026-10-12)
 
-The QML layer (`qml/**`, `src/ui/consolecommandmodel.h/.cpp`, `src/ui/configcontroller.h/.cpp`) was not part of this review. Known items to review when time permits:
+All four items came out clean, and the first three were fixed along the way:
 
-- `ConsoleCommandModel::suggest()` rebuilds the suggestion list on every filter change — consider incremental filtering for large catalogs.
-- `ConfigController::loadCfg()` does a synchronous parse on the GUI thread; large configs may jank the UI.
-- `binds` QVariantMap is rebuilt from parsed rows on every `setBind`/`clearBind` — acceptable at current scale (≤60 binds), O(n) per edit.
-- `KeyCap` binds read from `cfg.binds` which notifies on every change — correct but creates a property binding per cap (104 caps). Negligible at this scale.
+- ~~`ConsoleCommandModel::suggest()` rebuilds the suggestion list on every filter change.~~ **FIXED** — `suggest()` walks the per-combo cached visible indices (audit #4). Covered by `suggestOnlyOffersVisibleNames`.
+- ~~`ConfigController::loadCfg()` does a synchronous parse on the GUI thread.~~ **FIXED** — parsing runs on a `QtConcurrent` worker and the model is swapped on the GUI thread (audit #3).
+- ~~`binds` QVariantMap is rebuilt from parsed rows on every `setBind`/`clearBind`.~~ **FIXED** — cached and invalidated on change (audit #2).
+- `KeyCap` binds read from `cfg.binds`, which notifies on every change: one property binding per cap, 104 caps, negligible at this scale. No action.
