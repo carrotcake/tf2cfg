@@ -412,9 +412,13 @@ Dialog {
     // argument pane instead of overflowing. A plain QML Dialog has no resize
     // handles, so dynamic sizing is never user-resizable.
     width: 640
+    readonly property real dialogChrome:
+        topPadding + bottomPadding + (header ? header.implicitHeight : 0)
+        + (footer ? footer.implicitHeight : 0)
     height: dialog.parent
-            ? Math.min(implicitHeight, dialog.parent.height - 2 * Theme.spacing)
-            : implicitHeight
+            ? Math.min(dialogContent.implicitHeight + dialogChrome,
+                       dialog.parent.height - 2 * Theme.spacing)
+            : dialogContent.implicitHeight + dialogChrome
     padding: Theme.spacingWide
     font.family: Theme.familyUi
     font.pointSize: Theme.sizeUi
@@ -512,6 +516,7 @@ Dialog {
     }
 
     ColumnLayout {
+        id: dialogContent
         spacing: Theme.spacing
 
         // -- existing bind (P31) ------------------------------------------------
