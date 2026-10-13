@@ -32,7 +32,13 @@ ApplicationWindow {
     // warning in the tree).
     title: "TF2 Config Manager"
 
+    /// True once the editor page is up. StackView.replace() keeps depth at 1, so
+    /// pageStack.depth cannot tell the pages apart - this flag is what the menu bar
+    /// hangs its visibility on.
+    property bool editorActive: false
+
     function goToEditor() {
+        editorActive = true
         pageStack.replace(editorComponent)
         // No width/height change: the editor opens at the size the start screen had.
         // The maximums go to the desktop so the editor can be dragged larger, onto a
@@ -45,7 +51,7 @@ ApplicationWindow {
     // Parity P21: File/Edit/View/Help, only on the editor screen. The File menu's save
     // pair is the first working actions the menus have carried (deviation D20).
     menuBar: MenuBar {
-        visible: pageStack.depth > 1
+        visible: editorActive
 
         Menu {
             title: "File"
