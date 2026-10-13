@@ -226,12 +226,14 @@ Dialog {
         return parts.join(" ")
     }
 
-    /// Push the generated bind into the shared Custom Command buffer.
+    /// Push the generated command into the shared Custom Command buffer. The buffer
+    /// holds the bare command - the same thing cfg.binds reports and OK applies -
+    /// because cfg.setBind adds the `bind "<key>"` prefix itself; putting a full bind
+    /// line here produced `bind "w" bind "w" +forward` on disk.
     function regen() {
         if (!commandInfo)
             return
-        const inner = innerCommand()
-        customCommand.text = inner === "" ? "" : 'bind "' + dialog.keyToken + '" "' + inner + '"'
+        customCommand.text = innerCommand()
     }
 
     Connections {
