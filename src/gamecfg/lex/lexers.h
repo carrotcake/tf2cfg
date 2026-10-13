@@ -4,6 +4,7 @@
 #include <QString>
 #include <QStringList>
 #include <QTextStream>
+#include <utility>
 
 namespace Lexers {
 
@@ -90,15 +91,17 @@ public:
     struct Token {
     public:
         enum TokenClass { TOK_ERR, TOK_EOF, TOK_STR, TOK_END };
-        Token(const QString s, const TokenClass t)
-            : str(s)
-            , type(t){};
+        // Non-const members so a Token is movable and assignable (matches cmdLex::Token;
+        // audit #4). str is moved on construction rather than copied.
+        Token(QString s, TokenClass t)
+            : str(std::move(s))
+            , type(t) {};
         inline bool isEndToken() const { return type == TOK_END; }
         inline QString const &string() const { return str; }
 
     private:
-        const QString str;
-        const TokenClass type;
+        QString str;
+        TokenClass type;
     };
 
     Token nextToken();
