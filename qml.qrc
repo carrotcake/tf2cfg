@@ -24,5 +24,6 @@
         <file>qml/pages/tabs/BindEditorTab.qml</file>
 
         <file>qml/dialogs/BindEditorDialog.qml</file>
+        <file>qml/dialogs/panels/VoiceMenuPanel.qml</file>
     </qresource>
 </RCC>

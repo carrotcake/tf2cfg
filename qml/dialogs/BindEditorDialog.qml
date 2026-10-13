@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import "../components"
 import "../theme"
+import "panels"
 
 // Bind editor. Parity P30-P36.
 Dialog {
@@ -47,6 +48,28 @@ Dialog {
         commandInfo !== null && commandInfo.isCvar
         && (commandInfo.input === "bool"
             || (commandInfo.min !== "" && commandInfo.max !== ""))
+
+    // Custom command panels (docs/DESIGN-custom-panels.md): commands whose
+    // Build-A-Bind authoring is particular get a hand-written QML panel that
+    // replaces the generic argument editors. Registry key = normalized command
+    // name; adding a panel is one qml/dialogs/panels file, one qrc entry and one
+    // line here.
+    readonly property string activePanelName:
+        commandInfo !== null && customPanels.hasOwnProperty(commandInfo.name.toLowerCase())
+        ? commandInfo.name.toLowerCase() : ""
+    readonly property bool customPanelActive: activePanelName !== ""
+    property var customPanels: ({
+        "voicemenu": voicemenuPanel
+    })
+
+    Component {
+        id: voicemenuPanel
+        VoiceMenuPanel {}
+    }
+
+    /// The key's bound command split into tokens (empty when unbound), for a custom
+    /// panel's initial state.
+    readonly property var boundParts: boundCommand === "" ? [] : boundCommand.trim().split(/\s+/)
 
     /// "[str] <flt> bool none" -> editor specs. [] = mandatory, <> = optional,
     /// bare tokens are cvar values; "none" means no arguments at all.
@@ -124,6 +147,14 @@ Dialog {
         if (!commandInfo)
             return
 
+        // A custom panel owns authoring for this command; hand it the parsed parts
+        // and skip the generic arg-model filling entirely.
+        if (dialog.customPanelActive) {
+            if (customPanelLoader.item)
+                customPanelLoader.item.prefill(parts)
+            return
+        }
+
         if (commandInfo.name.toLowerCase() === "incrementvar") {
             modeToggle.checked = true
             const values = parts.slice(1)
@@ -157,10 +188,22 @@ Dialog {
         }
     }
 
+    /// Hand the custom panel (if any) the key's bound arguments as its initial
+    /// state. Inline components load synchronously, so item is ready on this call.
+    function updateCustomPanel() {
+        if (!dialog.customPanelActive || !customPanelLoader.item)
+            return
+        const name = commandInfo.name.toLowerCase()
+        const bound = dialog.boundParts
+        customPanelLoader.item.initialArgs =
+            bound.length > 0 && bound[0].toLowerCase() === name ? bound.slice(1) : []
+    }
+
     /// Rebuild the argument editors from the selected command's signature.
     function rebuildArgs() {
         commandInfo = commandCombo.currentIndex >= 0
                 ? cfg.consoleModel.commandAt(commandCombo.currentIndex) : null
+        updateCustomPanel()
         argModel.clear()
         if (!commandInfo)
             return
@@ -335,8 +378,8 @@ Dialog {
     /// because cfg.setBind adds the `bind "<key>"` prefix itself; putting a full bind
     /// line here produced `bind "w" bind "w" +forward` on disk.
     function regen() {
-        if (!commandInfo)
-            return
+        if (!commandInfo || dialog.customPanelActive)
+            return // a custom panel is the author; the generator must not stomp it
         customCommand.text = innerCommand()
     }
 
@@ -779,6 +822,27 @@ Dialog {
                         width: argsScroll.availableWidth
                         spacing: Theme.spacingTight
 
+                        // Custom panel for commands with particular authoring
+                        // (voicemenu today); replaces the generic editors below.
+                        Loader {
+                            id: customPanelLoader
+                            Layout.fillWidth: true
+                            active: dialog.customPanelActive
+                            sourceComponent: dialog.customPanelActive
+                                             ? dialog.customPanels[dialog.activePanelName]
+                                             : null
+                            onLoaded: {
+                                item.authored.connect(function (text) {
+                                    customCommand.text = text
+                                })
+                            }
+                        }
+
+                        // Generic editors - hidden while a custom panel is active.
+                        ColumnLayout {
+                            visible: !dialog.customPanelActive
+                            spacing: Theme.spacingTight
+
                         // Toggle-vs-fixed choice for cvars that can be cycled with
                         // incrementvar (bool, or int/flt with a known range).
                         RowLayout {
@@ -887,6 +951,7 @@ Dialog {
                                   ? "This command takes no arguments." : ""
                             color: Theme.colorTextMuted
                             visible: text !== ""
+                        }
                         }
                     }
                 }
