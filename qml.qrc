@@ -25,5 +25,6 @@
 
         <file>qml/dialogs/BindEditorDialog.qml</file>
         <file>qml/dialogs/panels/VoiceMenuPanel.qml</file>
+        <file>qml/dialogs/panels/EnumChoicePanel.qml</file>
     </qresource>
 </RCC>

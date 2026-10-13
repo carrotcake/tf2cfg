@@ -49,22 +49,87 @@ Dialog {
         && (commandInfo.input === "bool"
             || (commandInfo.min !== "" && commandInfo.max !== ""))
 
-    // Custom command panels (docs/DESIGN-custom-panels.md): commands whose
-    // Build-A-Bind authoring is particular get a hand-written QML panel that
-    // replaces the generic argument editors. Registry key = normalized command
-    // name; adding a panel is one qml/dialogs/panels file, one qrc entry and one
-    // line here.
+    // Custom command panels (docs/DESIGN-custom-panels.md, docs/DESIGN-enum-panels.md):
+    // commands whose Build-A-Bind authoring is particular get a hand-written QML panel
+    // that replaces the generic argument editors. Registry key = normalized command
+    // name; the value carries the panel Component plus the data fields the panel type
+    // consumes (see the panel files' headers). Adding a panel is one
+    // qml/dialogs/panels file, one qrc entry and one entry here.
     readonly property string activePanelName:
         commandInfo !== null && customPanels.hasOwnProperty(commandInfo.name.toLowerCase())
         ? commandInfo.name.toLowerCase() : ""
     readonly property bool customPanelActive: activePanelName !== ""
+
+    property var classOptions: [
+        { value: "scout", label: "Scout" },
+        { value: "soldier", label: "Soldier" },
+        { value: "pyro", label: "Pyro" },
+        { value: "demoman", label: "Demoman" },
+        { value: "heavyweapons", label: "Heavy" },
+        { value: "engineer", label: "Engineer" },
+        { value: "medic", label: "Medic" },
+        { value: "sniper", label: "Sniper" },
+        { value: "spy", label: "Spy" },
+        { value: "random", label: "Random" },
+        { value: "auto", label: "Auto" }
+    ]
+    property var buildingOptions: [
+        { value: 0, label: "Dispenser" },
+        { value: 1, label: "Teleporter entrance" },
+        { value: 2, label: "Sentry gun" },
+        { value: 3, label: "Teleporter exit" }
+    ]
+
     property var customPanels: ({
-        "voicemenu": voicemenuPanel
+        "voicemenu": { component: voicemenuPanel },
+        "jointeam": { component: enumPanel, valueType: "str", options: [
+            { value: "red", label: "RED" },
+            { value: "blue", label: "BLU" },
+            { value: "auto", label: "Auto-assign" },
+            { value: "spectate", label: "Spectate" }
+        ] },
+        "joinclass": { component: enumPanel, valueType: "str", options: classOptions },
+        "join_class": { component: enumPanel, valueType: "str", options: classOptions },
+        "build": { component: enumPanel, valueType: "int", options: buildingOptions,
+                   compoundTemplate: "destroy {v}; build {v}" },
+        "destroy": { component: enumPanel, valueType: "int", options: buildingOptions,
+                     compoundTemplate: "destroy {v}; build {v}" },
+        "eureka_teleport": { component: enumPanel, valueType: "int", options: [
+            { value: 0, label: "Teleport home" },
+            { value: 1, label: "Teleporter exit" }
+        ] },
+        "coach_command": { component: enumPanel, valueType: "int", options: [
+            { value: 0, label: "Attack" },
+            { value: 1, label: "Defend" },
+            { value: 2, label: "Look" },
+            { value: 3, label: "Go" }
+        ] },
+        "next_map_vote": { component: enumPanel, valueType: "int", options: [
+            { value: 0, label: "Option 1" },
+            { value: 1, label: "Option 2" },
+            { value: 2, label: "Option 3" }
+        ] },
+        "loot_response": { component: enumPanel, valueType: "str", options: [
+            { value: "common", label: "Common" },
+            { value: "rare", label: "Rare" },
+            { value: "ultra_rare", label: "Ultra rare" }
+        ] },
+        "load_itempreset": { component: enumPanel, valueType: "int", options: [
+            { value: 0, label: "Preset A" },
+            { value: 1, label: "Preset B" },
+            { value: 2, label: "Preset C" },
+            { value: 3, label: "Preset D" }
+        ] }
     })
 
     Component {
         id: voicemenuPanel
         VoiceMenuPanel {}
+    }
+
+    Component {
+        id: enumPanel
+        EnumChoicePanel {}
     }
 
     /// The key's bound command split into tokens (empty when unbound), for a custom
@@ -188,14 +253,27 @@ Dialog {
         }
     }
 
-    /// Hand the custom panel (if any) the key's bound arguments as its initial
-    /// state. Inline components load synchronously, so item is ready on this call.
+    /// Hand the custom panel (if any) the registry data and the key's bound arguments
+    /// as its initial state. Inline components load synchronously, so item is ready
+    /// on this call. Panels that do not declare a field skip it (`voicemenu` is
+    /// bespoke and carries its own data).
     function updateCustomPanel() {
         if (!dialog.customPanelActive || !customPanelLoader.item)
             return
-        const name = commandInfo.name.toLowerCase()
+        const entry = dialog.customPanels[dialog.activePanelName]
+        const item = customPanelLoader.item
+        if ('commandName' in item)
+            item.commandName = dialog.activePanelName
+        if ('valueType' in item)
+            item.valueType = entry.valueType !== undefined ? entry.valueType : "str"
+        if ('options' in item)
+            item.options = entry.options !== undefined ? entry.options : []
+        if ('compoundTemplate' in item)
+            item.compoundTemplate = entry.compoundTemplate !== undefined
+                                    ? entry.compoundTemplate : ""
+        const name = dialog.activePanelName
         const bound = dialog.boundParts
-        customPanelLoader.item.initialArgs =
+        item.initialArgs =
             bound.length > 0 && bound[0].toLowerCase() === name ? bound.slice(1) : []
     }
 
@@ -856,7 +934,7 @@ Dialog {
                                 height: item ? item.implicitHeight : 0
                                 active: dialog.customPanelActive
                             sourceComponent: dialog.customPanelActive
-                                             ? dialog.customPanels[dialog.activePanelName]
+                                             ? dialog.customPanels[dialog.activePanelName].component
                                              : null
                             onLoaded: {
                                 item.authored.connect(function (text) {
