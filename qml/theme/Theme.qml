@@ -2,7 +2,7 @@ pragma Singleton
 
 import QtQuick
 
-// Design tokens for the whole UI. See docs/ui-qml-rewrite.md section 9.
+// Design tokens for the whole UI. See docs/legacy/ui-qml-rewrite.md section 9.
 // Aesthetic brief: dark, industrial, game-adjacent - the app is a companion tool for
 // Team Fortress 2, and the game's own fonts are already bundled.
 QtObject {

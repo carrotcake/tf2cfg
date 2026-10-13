@@ -73,7 +73,7 @@ the input type. Also: cvars with an **empty default are dropped entirely** today
 ## 4. Build-A-Bind (`qml/dialogs/BindEditorDialog.qml`, keyboard UI)
 
 The Build-A-Bind tab ("Category" + "Command" comboboxes, arguments pane) was an empty
-placeholder (deferred as a future feature in docs/ui-qml-rewrite.md, P33/D16). The
+placeholder (deferred as a future feature in docs/legacy/ui-qml-rewrite.md, P33/D16). The
 new columns are exactly the data it needs. Decisions below were confirmed with the
 project owner.
 

@@ -283,7 +283,7 @@ Dialog {
     // viewer. OK now applies the command authored in the Custom Command tab: a non-empty
     // command becomes bind "<key>" "<command>", an empty one removes the key's bind.
     // Either way the cap repaints, because cfg.binds notifies. Nothing is written to the
-    // .cfg file - the app has no save yet (docs/ui-qml-rewrite.md section 10).
+    // .cfg file - the app has no save yet (docs/legacy/ui-qml-rewrite.md section 10).
     onAccepted: {
         const command = customCommand.text.trim()
         if (command === "")

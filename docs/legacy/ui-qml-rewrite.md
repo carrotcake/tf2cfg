@@ -2,7 +2,7 @@
 
 Status: design (pre-implementation).
 Date: 2026-10-12.
-Supersedes: the widget `.ui`/`QMainWindow` UI described below, which is retained in `src/legacy/widgets/` but removed from the build.
+Supersedes: the widget `.ui`/`QMainWindow` UI described below, which lived in `src/legacy/widgets/` until it was deleted after this rewrite shipped (section 11).
 
 ## 1. Scope
 
@@ -295,16 +295,21 @@ Mapped from `docs/pickle-inferences.md` §"What is unfinished" and `docs/CODE_RE
 
 ## 11. Legacy handling
 
-- `src/ui/*.cpp`, `src/ui/*.h`, `src/ui/*.ui` → `src/legacy/widgets/` (`git mv`, history preserved).
-- `src/legacy/widgets/README.md` states: retired, not built, why, and the exact `.pro` lines needed to revive it (`QT += widgets`, the SOURCES/HEADERS/FORMS block).
+- `src/ui/*.cpp`, `src/ui/*.h`, `src/ui/*.ui` → `src/legacy/widgets/`, then deleted once the rewrite shipped. History preserved; nothing was rewritten in the move.
 - Removed from `tf2cfgreal.pro`; `QT += widgets` dropped.
-- The files stay on disk so the parity audit in section 3 can always be re-run against the source of truth.
+- The widget sources are the source of truth for the parity contract in section 3, so the file:line evidence in those tables now points into git rather than the working tree. To read one:
+  ```
+  git show 1f783bb^:src/legacy/widgets/keybform.ui      # or any commit before the deletion
+  git log --diff-filter=D --name-only -- src/legacy/widgets
+  ```
+  `keybform.h`'s `KeyId` enum and `KEYCODES[]` (section 7) are the other thing that only exists there.
+- The dataset tooling in `tools/` went the same way: `csvio.py` (a CSV reader/writer the tooling scripts used) and `field_dicts.py` (the `SIGS`/`INPUT_OVERRIDES` tables `res/cfg/schema.md` cites) stay, because the dataset is still the thing they describe; the one-off scripts that generated `allcmds.csv` were deleted and are recoverable the same way.
 
 ## 12. Verification results
 
 Performed against the MinGW Qt 6.12.0 build with the full automation run on 2026-10-12.
 
-1. Clean qmake build (`-spec win32-g++ "CONFIG+=release"`): compiles with zero new warnings; the only remaining warning is the pre-existing unused variable in `src/gamecfg/lex/cmdlexer.cpp:34` plus windeployqt's standard Direct3D note, which is ignorable.
+1. Clean qmake build (`-spec win32-g++ "CONFIG+=release"`): compiles with zero warnings; windeployqt's standard Direct3D note is ignorable. (This run predates the removal of the dead debug code in `cmdlexer.cpp` and of `src/gamecfg/cvar.cpp`, so the warning it mentions is gone.)
 2. Start screen: app launches to `TF2 Config Manager` (1000×500, fixed). Preset combo shows `< Choose a Preset >`; selecting `b4nny` sets the path to `:/cfg/b4nny.cfg` and enables Go.
 3. Load: Go triggers `printCfg` to stdout (274 lines for b4nny.cfg); the editor opens at 1573×807 (`Team Fortress 2 Config Editor`).
 4. Overview tab: ListView `count` = 274 = stdout dump line count, same `args.join(" ")` text; empty-state label hidden. **Correction:** the first pass of this check only compared the model `count`, which hid a real defect — the delegate declared `id: line`, which shadowed the model's `required property string line`, so `text: line` assigned the `Text` item itself and rendered nothing (Qt logged `Unable to assign QQuickText to QString`). The id is removed; a probe of the first three delegates now returns the expected rows (`unbindall`, `bind "0" "slot10"`, `bind "1" "slot1"`) and the warning is gone.

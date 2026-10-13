@@ -15,7 +15,7 @@
  * The C++ face of the UI.
  *
  * Owns the parsing engine and the command model, and exposes them to QML as the context
- * property `cfg`. QML never touches GameCfg directly. See docs/ui-qml-rewrite.md
+ * property `cfg`. QML never touches GameCfg directly. See docs/legacy/ui-qml-rewrite.md
  * section 6 for the full contract and section 10 for where future features plug in.
  */
 class ConfigController : public QObject {

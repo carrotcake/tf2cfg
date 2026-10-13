@@ -4,7 +4,7 @@ import QtQuick.Layouts
 import "../theme"
 
 // Bordered surface with an optional centered heading. Used for the banner and the two
-// start-screen panels (docs/ui-qml-rewrite.md section 8).
+// start-screen panels (docs/legacy/ui-qml-rewrite.md section 8).
 Rectangle {
     id: panel
 

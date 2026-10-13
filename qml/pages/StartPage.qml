@@ -5,7 +5,7 @@ import QtQuick.Layouts
 import "../components"
 import "../theme"
 
-// Start screen. Parity P2-P11 in docs/ui-qml-rewrite.md.
+// Start screen. Parity P2-P11 in docs/legacy/ui-qml-rewrite.md.
 Item {
     id: page
 

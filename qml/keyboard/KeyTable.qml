@@ -4,7 +4,7 @@ import QtQuick
 import "../theme"
 
 // The key table: one entry per physical cap, plus the row layout used to draw the
-// keyboard. See docs/ui-qml-rewrite.md sections 7 and 8.
+// keyboard. See docs/legacy/ui-qml-rewrite.md sections 7 and 8.
 //
 // `id` and `token` are a parity contract with the retired widget build
 // (keybform.h KeyId/KEYCODES). Do not renumber and do not "fix" token spellings -

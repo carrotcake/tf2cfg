@@ -92,7 +92,7 @@ QVector<cmd::Entry> EngineTest::parse(const QString &cfgText) {
 
 void EngineTest::quotedTokensKeepTheirQuotes() {
     // The quotes stay on: CommandListModel::unquoted() and the Command Overview both
-    // read the token as parsed (docs/ui-qml-rewrite.md D16).
+    // read the token as parsed (docs/legacy/ui-qml-rewrite.md D16).
     QCOMPARE(tokenize(QStringLiteral("bind \"a\" \"+moveleft\"")),
              QStringList({ "bind", "\"a\"", "\"+moveleft\"", "<end>" }));
 }

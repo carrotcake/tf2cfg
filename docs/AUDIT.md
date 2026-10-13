@@ -56,24 +56,15 @@ Numbered across all groups so you can say "fix 2 and 5".
     - **Fix:** Make `Lexer` a pure cursor over a `QStringList` (or `QStringView` of the whole file). Move file reading to a free function. `cfgLex` gets its own reader that lowercases/strips comments; `cmdLex` reads raw. No virtual dispatch.
     - **If we skip it:** Current design works; adding a third lexer (e.g. for VPK) would repeat the same coupling.
 
-13. **Filter logic duplicated between `ConsoleCommandModel::rebuild()` and `suggest()`** (`src/ui/consolecommandmodel.cpp:104-127, 143-159`)
-    - **What this is:** Both methods iterate `m_all` and apply the same three `if (!filter.isEmpty() && cmd->get_X() != filter) continue;` checks. If a filter changes, both must be updated.
-    - **Fix:** Extract `bool passesFilters(const cmd::ConVar*) const` and call it from both.
-    - **If we skip it:** Bug risk when adding a fourth filter (e.g. "show only cvars").
+13. ~~**Filter logic duplicated between `ConsoleCommandModel::rebuild()` and `suggest()`**~~ **NO LONGER TRUE** — the duplication was removed by the #4 fix (`d7dda22`): `suggest()` now walks the cached `visibleIndices` for the active filter combo and re-applies nothing. The three inline checks in `rebuild()` are the only copy left. Extract `passesFilters()` when a fourth filter actually arrives, not before.
 
-14. **Magic strings for bind-related commands scattered in multiple files**
-    - **Locations:** `commandlistmodel.cpp:32` (`isBindCommand` checks `"bind"`/`"bindtoggle"`), `commandlistmodel.cpp:103-110` (`"unbindall"`/`"unbind"`), `configlexer.cpp:18` (emits `"endcmd"` token). The engine lowercases everything so case-insensitive match is correct, but the strings are not centralized.
-    - **Fix:** Centralize in a namespace `BindSyntax` in `commandlistmodel.h` with `constexpr` `QStringView` constants. Use everywhere.
-    - **If we skip it:** A typo in one place desyncs the bind logic.
+14. ~~**Magic strings for bind-related commands scattered in multiple files**~~ **FIXED** — `BindSyntax` (`bind`, `bindtoggle`, `unbind`, `unbindall`) is now a set of `constexpr QLatin1StringView` constants in the anonymous namespace of `src/ui/commandlistmodel.cpp`, used by all five sites. Kept out of the header because no other translation unit needs them. One correction to the finding as written: the `"endcmd"` token in `configlexer.cpp` is the lexer's end-of-command marker, not a bind command, so it does not belong in that namespace. The `setBind()` writer and the `scanBinds()` reader now share one literal, which is the coupling that mattered.
 
-15. **`src/gamecfg/cvar.cpp` is a dead stub compiled into the binary** (`tf2cfgreal.pro:17`)
-    - **What this is:** File contains only `#include "gamecfg/gameconfig.h"`. No symbols, no code. Listed in `SOURCES` and built every time.
-    - **Fix:** Remove from `SOURCES` in `.pro`. Delete the file.
-    - **If we skip it:** Wasted compile time (negligible), dead file in tree.
+15. ~~**`src/gamecfg/cvar.cpp` is a dead stub compiled into the binary**~~ **FIXED** — deleted, and dropped from `SOURCES`.
 
 16. ~~**`CommandListModel::setBind()` lowercases the command, but TF2 aliases/commands can have case-sensitive arguments**~~ **FIXED** — only the first word is folded to lower case; the rest is stored as typed. Rows read from a file stay lower case, because `cfgLex` folds every line, so an edit applied twice still produces one identical row.
 
-17. **Theme.qml not reviewed for hardcoded duplication** — likely has color literals that could be centralized. (Did not read `qml/theme/Theme.qml`.)
+17. **Theme.qml not reviewed for hardcoded duplication** — **REVIEWED, NOTHING TO DO.** 76 lines, every literal a named token, each defined once; no colour or metric is duplicated anywhere in `qml/`.
 
 18. **`BindEditorDialog.qml` is 765 lines — a single component doing too many jobs**
     - **What this is:** Filter dropdowns, editable command combo with suggestion pop-down, argument editor factory, toggle-vs-fixed radio group, custom command text area, OK/Cancel handling, drag header, centering logic. All in one file.
@@ -82,40 +73,32 @@ Numbered across all groups so you can say "fix 2 and 5".
 
 ### Nice to have (small speed-ups, shorter forms, lean)
 
-19. **One-off data-prep scripts in `tools/` can be deleted** (`tools/populate_desc.py`, `tools/flags_verify.py`, `tools/flags_update.py`, `tools/desc_part*.py`, `tools/add_fields.py`)
-    - **What this is:** These were used to generate/enrich `allcmds.csv` from raw dumps. The CSV is now canonical and committed. The scripts are never run again unless the dataset is refreshed (which TF2 will never need — the game hasn't updated since 2017).
-    - **Fix:** `git rm tools/*.py` (keep `csvio.py` which is used by nothing now but could be useful for a future refresh). Or move to `tools/archive/`.
-    - **Lean:** -10 files, ~1500 lines.
+19. ~~**One-off data-prep scripts in `tools/` can be deleted**~~ **FIXED** — `populate_desc.py`, `flags_verify.py`, `flags_update.py`, `add_fields.py`, `desc_part1..8.py` deleted. Two files stayed and the audit's "keep `csvio.py`" was not the whole reason: `field_dicts.py` holds the `SIGS`/`INPUT_OVERRIDES` tables that `res/cfg/schema.md` cites by name, so deleting it would dangle the dataset's own documentation. -12 files, ~1500 lines.
 
 20. **`res/cfg/schema.md` and `flags.md` duplicate column meanings that could be a header row in the CSV**
     - **What this is:** The CSV is headerless by design (spec). The two `.md` files document the 10 columns and 32 flag tags. If the CSV ever gained a header row (commented or not), the docs could be generated from it.
     - **Fix:** Not worth changing the CSV format. Leave as is.
 
-21. **Widget UI in `src/legacy/widgets/` is dead code not built**
-    - **What this is:** 7 `.cpp`/`.h` files + 4 `.ui` files kept for "parity audit" per `docs/legacy/ui-qml-rewrite.md`. The QML rewrite is done and shipped.
-    - **Fix:** `git rm -r src/legacy/widgets/`. History preserves them.
-    - **Lean:** -11 files, ~3000 lines.
+21. ~~**Widget UI in `src/legacy/widgets/` is dead code not built**~~ **FIXED** — deleted (`git rm -r`), history preserved. The parity contract in `docs/legacy/ui-qml-rewrite.md` section 3 cites these files as evidence, so that document now says how to pull one back out of git. -11 files, ~3000 lines.
 
 22. **No Linux build verification in CI**
     - **What this is:** The `.pro` uses MinGW paths; Linux build assumes Qt 6 in standard paths. No GitHub Actions / GitLab CI to confirm it compiles on Ubuntu/Arch.
     - **Fix:** Add a minimal workflow: `ubuntu-latest`, install `qt6-base-dev`, `qmake`, `make`, run `qmllint`.
     - **If we skip it:** Linux users (half the TF2 player base) may hit compile errors on first try.
 
-23. **`windeployqt` command is not scripted**
-    - **What this is:** The deploy step (`windeployqt --release --compiler-runtime --qmldir qml`) lives only in tribal knowledge / AGENTS.md. A `deploy.ps1` or `deploy.sh` would make releases reproducible.
-    - **Fix:** Add a one-liner script at repo root.
+23. ~~**`windeployqt` command is not scripted**~~ **FIXED** — `deploy.ps1`: copies `build/<config>/tf2cfgreal.exe` into a clean `dist/`, runs `windeployqt --<config> --compiler-runtime --qmldir qml`, and fails loudly when the build or the Qt kit is missing. Verified: the deployed folder runs with no Qt directory on `PATH`. `-QtRoot`/`-Output`/`-Config` are parameters, not edits.
 
 ---
 
 ## Verdict
 
-**Healthy core, safety net now in place.** The engine and UI are functionally complete for the read-only use case. All nine "Must fix" items are resolved, and `tests/tst_engine.cpp` guards the parser and bind logic. The **biggest missing feature is save-to-disk**, which the docs already track.
+**Healthy core, safety net now in place.** The engine and UI are functionally complete for the read-only use case. All nine "Must fix" items are resolved, `tests/tst_engine.cpp` guards the parser and bind logic, and the dead code is gone. The **biggest missing feature is save-to-disk**, which the docs already track.
 
 **Next up, in order:**
-1. CI (#22) — run `tf2cfg_test` and `qmllint` on every push, and a Linux `qmake` so half the player base is not the first to find a compile error.
+1. CI (#22) — run `tf2cfg_test` and build the app on `ubuntu-latest` so half the player base is not the first to find a compile error.
 2. Save-to-disk (docs/legacy/ui-qml-rewrite.md section 10) — the editor has been writable in memory since D16 with nowhere to write.
-3. Remaining cheap wins: #13, #14, #15, #23.
-4. Not worth it unless something asks: #11 and #12 (refactors with no caller), #18 (cosmetic), #19/#21 (deletions only).
+3. `passesFilters()` (#13) — only when a fourth filter ships.
+4. Not worth it unless something asks: #11 and #12 (refactors with no caller), #18 (cosmetic), #20 (leave as is).
 
 ## Lean
 

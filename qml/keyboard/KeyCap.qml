@@ -3,7 +3,7 @@ import QtQuick.Controls
 import "../theme"
 
 // One key cap. All data comes from the KeyTable singleton, so adding/removing keys is
-// a data edit, not a UI edit (docs/ui-qml-rewrite.md section 10).
+// a data edit, not a UI edit (docs/legacy/ui-qml-rewrite.md section 10).
 Rectangle {
     id: cap
 
@@ -23,7 +23,7 @@ Rectangle {
 
     /// The command the loaded config binds to this cap's token, or "" when unbound.
     /// Read straight off the C++ bind map, so the cap repaints whenever a bind is added
-    /// or removed (docs/ui-qml-rewrite.md D16).
+    /// or removed (docs/legacy/ui-qml-rewrite.md D16).
     readonly property string boundCommand: {
         if (cap.token === "")
             return ""
@@ -32,7 +32,7 @@ Rectangle {
     }
     readonly property bool bound: cap.boundCommand !== ""
 
-    /// Emitted with the engine key id (see docs/ui-qml-rewrite.md section 7).
+    /// Emitted with the engine key id (see docs/legacy/ui-qml-rewrite.md section 7).
     signal activated(int keyId)
 
     implicitWidth: KeyTable.keyWidth(keyName)

@@ -14,10 +14,10 @@
  * One row per cmd::Entry, in parse order, so the "Command Overview" list shows exactly
  * what the widget build showed. Extra roles (command, arguments, type) exist so the
  * future typed editors, grouping and keyboard overlay do not need this class reopened.
- * See docs/ui-qml-rewrite.md section 6.
+ * See docs/legacy/ui-qml-rewrite.md section 6.
  *
  * The model stops being strictly read-only here: setBind()/clearBind() edit the rows so
- * the keyboard can paint the keys that have a bind (docs/ui-qml-rewrite.md D16).
+ * the keyboard can paint the keys that have a bind (docs/legacy/ui-qml-rewrite.md D16).
  */
 class CommandListModel : public QAbstractListModel {
     Q_OBJECT

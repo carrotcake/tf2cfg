@@ -3,7 +3,7 @@ import QtQuick.Controls
 import "../theme"
 
 // The keyboard. Four clusters, same arrangement as the widget build
-// (docs/ui-qml-rewrite.md section 8): function row, main block, middle cluster, numpad.
+// (docs/legacy/ui-qml-rewrite.md section 8): function row, main block, middle cluster, numpad.
 // Everything is data-driven from KeyTable.
 //
 // Usability additions over the widget build (section 13): the panel scrolls in both

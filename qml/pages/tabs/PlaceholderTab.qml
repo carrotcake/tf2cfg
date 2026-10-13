@@ -4,7 +4,7 @@ import "../../components"
 import "../../theme"
 
 // Tab 1: reserved. The widget build had an empty placeholder here (parity P17); the
-// renaming of its joke label is deviation D6 in docs/ui-qml-rewrite.md.
+// renaming of its joke label is deviation D6 in docs/legacy/ui-qml-rewrite.md.
 Panel {
     id: tab
 

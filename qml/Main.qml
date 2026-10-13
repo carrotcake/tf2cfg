@@ -5,7 +5,7 @@ import "theme"
 
 // Application shell. One window with a page stack, replacing the widget build's two
 // QMainWindow instances that hid/showed each other (deviation D1 in
-// docs/ui-qml-rewrite.md). Per-page layout and window sizes are unchanged (D2).
+// docs/legacy/ui-qml-rewrite.md). Per-page layout and window sizes are unchanged (D2).
 ApplicationWindow {
     id: window
 
