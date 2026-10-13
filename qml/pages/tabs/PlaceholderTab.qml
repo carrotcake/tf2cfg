@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import "../../components"
 import "../../theme"
+pragma ComponentBehavior: Bound
 
 // Tab 1: reserved. The widget build had an empty placeholder here (parity P17); the
 // renaming of its joke label is deviation D6 in docs/legacy/ui-qml-rewrite.md.

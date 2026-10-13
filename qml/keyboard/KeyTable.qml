@@ -2,6 +2,7 @@ pragma Singleton
 
 import QtQuick
 import "../theme"
+pragma ComponentBehavior: Bound
 
 // The key table: one entry per physical cap, plus the row layout used to draw the
 // keyboard. See docs/legacy/ui-qml-rewrite.md sections 7 and 8.

@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import "../components"
 import "../theme"
 import "panels"
+pragma ComponentBehavior: Bound
 
 // Bind editor. Parity P30-P36.
 Dialog {

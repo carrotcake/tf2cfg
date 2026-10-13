@@ -12,8 +12,13 @@ Assumed load: single user, local, one config at a time, no network.
 - `src/ui/` - Qt objects: `ConfigController` (load/save state machine), `CommandListModel`
   (parsed rows as a QAbstractListModel), `ConsoleCommandModel` (search).
 - `qml/` - the whole UI: `Main.qml` (shell, menus, save dialogs), `pages/`, `dialogs/`,
-  `keyboard/`, `theme/`, `components/`. Registered in `qml.qrc`.
-- `res/res.qrc` - resources incl. the command catalog `allcmds.csv` (~3800 rows) and
+  `keyboard/`, `theme/`, `components/`. Registered in `qml.qrc`. Custom Build-A-Bind
+  panels live in `dialogs/panels/` and are chosen by a per-command registry
+  (`customPanels` in `dialogs/BindEditorDialog.qml`); a new panel = one component file,
+  one qrc entry, one registry entry (contract in each panel's header comment).
+- `res/res.qrc` - resources incl. the command catalog `allcmds.csv` (~3800 rows), the
+  companion bounds file `cfg/argbounds.csv` (`command,argIndex,type,min,max`; loaded by
+  `gameconfig.cpp: loadArgBounds()`, consumed via the `argsSpec` model role), and
   bundled cfg presets under `:/`.
 - `tests/tst_engine.cpp` - one QtTest binary covering engine + controller.
 - `docs/` - see "Docs" below. `data/` holds reference dumps (`cvarlist_linux.txt`,
@@ -35,8 +40,19 @@ cd build-test && .\release\tf2cfg_test.exe -o testlog.txt,txt
   offline against temp paths; `QT += concurrent` and `RESOURCES += ../res/res.qrc` are
   required (tests read the catalog from the same resource the app uses).
 - `qmllint` must stay at 0 errors; 28 unqualified-access warnings are tolerated
-  (counted 2026-10-13, no `ComponentBehavior` advisories remain), do not add new ones.
+  (counted 2026-10-13, all are context-property `cfg` reads - a pragma sweep cannot
+  fix those), do not add new ones. All QML files carry
+  `pragma ComponentBehavior: Bound`; new files must too.
 - `pwsh -File deploy.ps1 [-Config debug] [-QtRoot ...]` packages a self-contained `dist/`.
+- Running the app for manual checks (from `build/release`, stderr is invisible without
+  `QT_FORCE_STDERR_LOGGING`):
+  ```pwsh
+  $env:PATH = "C:\Qt\6.12.0\mingw_64\bin;C:\Qt\Tools\mingw1310_64\bin;" + $env:PATH
+  $env:QT_FORCE_STDERR_LOGGING = "1"; .\tf2cfgreal.exe 2>err.txt
+  ```
+- **Kill a running `tf2cfgreal.exe` before linking** (`Stop-Process -Name tf2cfgreal`):
+  the exe is locked while running and the link fails with "Permission denied". QML
+  edits require a rebuild either way - they are qrc-embedded, not read from disk.
 
 ## Contracts (see docs/ARCHITECTURE.md)
 
@@ -50,6 +66,10 @@ rules: **the file on disk is the source of truth for lines the app does not own*
 ## Docs
 
 - `docs/ARCHITECTURE.md` - read before changing behavior (see above).
+- `docs/DESIGN-*.md` - designs for shipped features (save-backup, custom panels, enum
+  panels, arg bounds); `docs/argbounds-verification.md` is the ledger of applied and
+  still-unverified argument bounds. Update them when the feature changes, don't start
+  new ones for small work.
 - `docs/ROADMAP.md` - the single list of open work; do not re-raise dismissed items.
 - `docs/AUDIT.md` - the current audit's findings; open ones are mirrored in the roadmap.
   The 2026-10-12 audit is retired to `docs/legacy/`.

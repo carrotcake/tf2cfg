@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import "../theme"
+pragma ComponentBehavior: Bound
 
 // Bordered surface with an optional centered heading. Used for the banner and the two
 // start-screen panels (docs/legacy/ui-qml-rewrite.md section 8).

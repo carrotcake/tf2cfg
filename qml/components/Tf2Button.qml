@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import "../theme"
+pragma ComponentBehavior: Bound
 
 // Game-style push button. Primary (accent filled) by default, secondary with flat: true.
 Button {

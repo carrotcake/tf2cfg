@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import "../theme"
+pragma ComponentBehavior: Bound
 
 // Themed single-line field (config path, existing bind, future argument editors).
 TextField {

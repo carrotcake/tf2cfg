@@ -1,6 +1,7 @@
 pragma Singleton
 
 import QtQuick
+pragma ComponentBehavior: Bound
 
 // Design tokens for the whole UI. See docs/legacy/ui-qml-rewrite.md section 9.
 // Aesthetic brief: dark, industrial, game-adjacent - the app is a companion tool for

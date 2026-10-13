@@ -5,6 +5,7 @@ import "../components"
 import "../dialogs"
 import "../theme"
 import "tabs"
+pragma ComponentBehavior: Bound
 
 // Editor screen. Parity P13-P22 in docs/legacy/ui-qml-rewrite.md.
 Item {
