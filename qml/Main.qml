@@ -51,6 +51,12 @@ ApplicationWindow {
     // Parity P21: File/Edit/View/Help, only on the editor screen. The File menu's save
     // pair is the first working actions the menus have carried (deviation D20).
     menuBar: MenuBar {
+    background.implicitHeight: 24
+    // Basic style pins both the bar and each item's background at 40: both must
+    // shrink or the item row keeps the bar at 40.
+    delegate: MenuBarItem {
+        background.implicitHeight: 24
+    }
         visible: editorActive
 
         Menu {
