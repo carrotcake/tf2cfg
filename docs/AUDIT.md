@@ -96,23 +96,28 @@ Numbered across all groups so you can say "fix 2 and 5".
 
 **Next up, in order:**
 1. CI (#22) — run `tf2cfg_test` and build the app on `ubuntu-latest` so half the player base is not the first to find a compile error.
-2. Save-to-disk (docs/legacy/ui-qml-rewrite.md section 10) — the editor has been writable in memory since D16 with nowhere to write.
+2. Save-to-disk (docs/legacy/ui-qml-rewrite.md section 10) — the editor has been writable in memory since D16 with nowhere to write. Its prerequisite (argument case surviving a reload) is now in place; see the parse-fidelity note in `docs/CODE_REVIEW.md`.
 3. `passesFilters()` (#13) — only when a fourth filter ships.
 4. Not worth it unless something asks: #11 and #12 (refactors with no caller), #18 (cosmetic), #20 (leave as is).
 
 ## Lean
 
-- **~4500 lines removable:** `src/legacy/widgets/` (3000), `tools/*.py` except `csvio.py` (1500), `src/gamecfg/cvar.cpp` (1).
-- **0 dependencies removable:** Only Qt 6 (core, gui, quick, quickcontrols2) — already minimal.
-- **~500 lines to split:** `BindEditorDialog.qml` → 4 subcomponents.
+- **Done:** ~4500 lines of dead code removed — `src/legacy/widgets/` (3000), the one-off dataset scripts in `tools/` (1500), `src/gamecfg/cvar.cpp` (1).
+- **0 dependencies removable:** Only Qt 6 (core, gui, quick, quickcontrols2, concurrent) — already minimal.
+- **~500 lines to split** (still available, still not worth it): `BindEditorDialog.qml` → 4 subcomponents.
 
 ## Not checked
 
-- `qml/theme/Theme.qml` — only skimmed via imports; may have hardcoded duplication.
 - `qml/components/*.qml` (`Tf2ComboBox`, `Tf2Button`, `Panel`, `Tf2TabBar`, `Tf2Label`, `Tf2TextField`) — assumed correct; not read line by line.
 - `qml/pages/StartPage.qml`, `qml/pages/tabs/*.qml` — not read.
 - `tools/csvio.py` — read; simple and correct.
+- `docs/CODE_REVIEW.md` findings 3, 4, 12, 13, 14, 17, and its three "Info — verify intent" items. Findings 1, 2, 5, 6 are fixed now; see that document's status header.
 - Linux build — not attempted; only Windows MinGW verified. **Note: added `concurrent` to QT in .pro for QtConcurrent.**
-- `res/res.qrc` and `qml.qrc` resource packing — not audited for completeness.
 - Accessibility (screen readers, high contrast) — not evaluated.
-- Packaging/installer — none exists; `windeployqt` folder copy is the deploy.
+- Packaging/installer — none exists; `deploy.ps1` (`windeployqt` folder copy) is the deploy, verified to run with no Qt on `PATH`.
+
+## Checked since this audit was written
+
+- `qml/theme/Theme.qml` — 76 named tokens, nothing duplicated (#17).
+- `res/res.qrc` and `qml.qrc` — complete: all 17 `.qml` files and both `qmldir`s are packed, as are all four presets, all four fonts and `allcmds.csv`. `flags.md`/`schema.md` are correctly absent; no code reads them.
+- `res/cfg/allcmds.csv` — all 3825 rows carry exactly 10 fields under a real CSV parse.

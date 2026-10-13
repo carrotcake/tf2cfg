@@ -6,7 +6,7 @@ Supersedes: the widget `.ui`/`QMainWindow` UI described below, which lived in `s
 
 ## 1. Scope
 
-Rewrite the entire presentation layer in QML while keeping behavioural parity with the current widget UI, and structure it so the features described in `docs/pickle-inferences.md` can be added without re-cutting the architecture.
+Rewrite the entire presentation layer in QML while keeping behavioural parity with the current widget UI, and structure it so the features described in `docs/legacy/pickle-inferences.md` can be added without re-cutting the architecture.
 
 Goals:
 
@@ -280,7 +280,7 @@ Dropdown (combo popup) convention: the popup body is the dark `colorSurfaceSunke
 
 ## 10. Extension points for the known future work
 
-Mapped from `docs/pickle-inferences.md` §"What is unfinished" and `docs/CODE_REVIEW.md`.
+Mapped from `docs/legacy/pickle-inferences.md` §"What is unfinished" and `docs/CODE_REVIEW.md`.
 
 | Future feature | Where it lands | What is already in place after this rewrite |
 |---|---|---|
@@ -291,7 +291,7 @@ Mapped from `docs/pickle-inferences.md` §"What is unfinished" and `docs/CODE_RE
 | Command categories | `Command:` combo grouped by a new field | the combo is a component with a model-driven API, empty for now |
 | More presets (`b4nny_defbinds`, `b4nny_nobinds`) | `ConfigController::presets` list | presets come from one C++ list instead of being split between code and `.ui` labels |
 | Key table owned by C++ | move `KeyTable.qml` data into a `KeyTable` QObject, inject via context property | one data source today (D9), no duplicated table |
-| Parse-fidelity fixes | `src/gamecfg/lex/**` | untouched by design; the UI does not depend on the bugs being fixed |
+| Parse-fidelity fixes | `src/gamecfg/lex/**` | landed since: the case fold stops at the command name, `//` is quote-aware, quoted tokens honour `\"`/`\\`, and a short CSV row is padded instead of indexed blindly (`docs/CODE_REVIEW.md` #1, #2, #5, #6) |
 
 ## 11. Legacy handling
 

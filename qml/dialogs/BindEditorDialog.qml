@@ -388,7 +388,7 @@ Dialog {
             // Build-A-Bind: pick a command from the allcmds.csv catalog (filtered by
             // context and platform), then let the input-type signature drive argument
             // editors. The generated bind lands in the Custom Command buffer, so both
-            // tabs apply through the same OK path. Design: docs/allcmds-v5-migration.md.
+            // tabs apply through the same OK path. Design: docs/legacy/allcmds-v5-migration.md.
             ColumnLayout {
                 spacing: Theme.spacing
 
