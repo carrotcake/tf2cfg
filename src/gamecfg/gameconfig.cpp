@@ -45,7 +45,13 @@ bool GameCfg::appendCfg(const QString &filename) {
     return true;
 }
 
-inline cmd::CmdType GameCfg::cmdToType(const QString &cmd) const {
+void GameCfg::resetParsed() {
+    cmd_list.clear();
+    cmd_types.clear();
+}
+
+inline cmd::CmdType
+GameCfg::cmdToType(const QString &cmd) const {
     // Case-insensitive: cfgLex folds the command name, but a config may still spell it
     // `Bind`, and everything after a `;` on one line keeps its own case.
     const QString key = cmd.toLower();

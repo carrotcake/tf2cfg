@@ -19,6 +19,11 @@ public:
     /// the caller can report it instead of showing an empty list (review finding 6).
     bool appendCfg(const QString &filename);
 
+    /// Drop the parsed rows and the alias types the last parse collected. The command
+    /// catalog (allcmds.csv) is untouched - call before parsing a different file, since
+    /// appendCfg accumulates and a second parse would duplicate every row.
+    void resetParsed();
+
     void printCfg() const;
 
     void loadAllCmds();

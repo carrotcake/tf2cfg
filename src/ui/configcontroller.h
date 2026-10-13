@@ -111,6 +111,8 @@ private:
     bool writeConfig(const QString &path, const QString &source, QString *error);
     /// The `.bak`-then-`QSaveFile` tail both write paths share.
     bool commitWrite(const QString &path, const QByteArray &out, QString *error);
+    /// Rebuild rows + parse snapshot from the file just written; see the .cpp.
+    void resyncAfterSave();
     void recordFileStamp();
 
     GameCfg m_cfg; ///< default ctor loads res/cfg/allcmds.csv once

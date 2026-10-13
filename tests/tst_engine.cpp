@@ -725,6 +725,30 @@ void EngineTest::saveRefusesAResourcePath() {
     preset.close();
     QCOMPARE(savedText, presetText);
     QVERIFY(!savedText.isEmpty());
+    QVERIFY(!controller.isDirty());
+
+    // The saved-as path is now the source for further editing and saving. Bind a key
+    // that the preset does not bind, save, then rebind it: the second save must rewrite
+    // the line the first save inserted, not add a second one beside it - which is what
+    // happens when the model still indexes the old (preset) layout.
+    QVERIFY(controller.setBind(QStringLiteral("k"), QStringLiteral("+jump")));
+    QVERIFY(controller.saveCfg());
+    QVERIFY(!controller.isDirty()); // the resync cleared app ownership again
+
+    QFile second(target);
+    QVERIFY(second.open(QIODevice::ReadOnly | QIODevice::Text));
+    const QString afterFirst = QString::fromUtf8(second.readAll());
+    second.close();
+    QCOMPARE(afterFirst.count(QLatin1String("bind \"k\" \"+jump\"")), 1);
+
+    QVERIFY(controller.setBind(QStringLiteral("k"), QStringLiteral("+duck")));
+    QVERIFY(controller.saveCfg());
+    QFile third(target);
+    QVERIFY(third.open(QIODevice::ReadOnly | QIODevice::Text));
+    const QString afterSecond = QString::fromUtf8(third.readAll());
+    third.close();
+    QCOMPARE(afterSecond.count(QLatin1String("bind \"k\"")), 1);
+    QVERIFY(afterSecond.contains(QLatin1String("bind \"k\" \"+duck\"")));
 }
 
 void EngineTest::saveRecreatesAVanishedFile() {

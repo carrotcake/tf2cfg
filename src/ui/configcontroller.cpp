@@ -84,6 +84,7 @@ bool ConfigController::saveCfg() {
     setLastError(QString());
     recordFileStamp();
     emit saved(m_cfgPath);
+    resyncAfterSave();
     return true;
 }
 
@@ -108,7 +109,31 @@ bool ConfigController::saveCfgAs(const QString &path) {
     setLastError(QString());
     recordFileStamp();
     emit saved(path);
+    resyncAfterSave();
     return true;
+}
+
+/**
+ * The file just written is the new source of truth: rebuild the rows and the parse
+ * snapshot from it, so the next surgical save keys every row to the right line of the
+ * NEW layout (a save that inserted session rows or dropped deleted ones shifted the
+ * lines), `dirty` goes false until the next edit, and - the point of this request -
+ * after Save As the chosen path is the file all later editing and saving works on.
+ *
+ * Synchronous on purpose: a queued reload could land after the user's next edit and
+ * overwrite it. A parsed .cfg is a few hundred lines; the parse is microseconds.
+ */
+void ConfigController::resyncAfterSave() {
+    m_cfg.resetParsed();
+    if (!m_cfg.appendCfg(m_cfgPath)) {
+        // We just wrote the file successfully; a read failure here is filesystem-level
+        // (permissions racing). Report it, but keep the current rows rather than
+        // blanking the model over a save the user watched succeed.
+        setLastError(QStringLiteral("the saved file could not be re-read"));
+        return;
+    }
+    m_commands.setEntries(m_cfg.getCmdList());
+    m_parsed = m_cfg.getCmdList();
 }
 
 /**
@@ -392,6 +417,8 @@ void ConfigController::loadCfg(const QString &path) {
     m_loadFuture = QtConcurrent::run([this, path]() {
         // Review finding 6: the engine ignores Lexers::Lexer::open()'s result and would
         // silently produce an empty list. Same check, surfaced instead of swallowed.
+        // appendCfg accumulates, so a re-load must not stack rows on the previous file's.
+        m_cfg.resetParsed();
         const bool ok = m_cfg.appendCfg(path);
         if (ok)
             m_cfg.printCfg(); // parity P12/D7: the widget build dumped the parsed list to stdout
