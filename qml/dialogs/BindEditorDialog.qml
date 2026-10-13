@@ -407,8 +407,14 @@ Dialog {
 
     title: "Dialog"          // parity P30: the widget's dialog title really is "Dialog"
     modal: true              // parity P36: widget used exec()
+    // Size grows and shrinks with the content (the voicemenu panel is taller than
+    // the old fixed box), capped at the window so a too-small window scrolls the
+    // argument pane instead of overflowing. A plain QML Dialog has no resize
+    // handles, so dynamic sizing is never user-resizable.
     width: 640
-    height: 460
+    height: dialog.parent
+            ? Math.min(implicitHeight, dialog.parent.height - 2 * Theme.spacing)
+            : implicitHeight
     padding: Theme.spacingWide
     font.family: Theme.familyUi
     font.pointSize: Theme.sizeUi
