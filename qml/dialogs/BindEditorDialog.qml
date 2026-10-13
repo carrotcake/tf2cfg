@@ -840,10 +840,21 @@ Dialog {
 
                         // Custom panel for commands with particular authoring
                         // (voicemenu today); replaces the generic editors below.
-                        Loader {
-                            id: customPanelLoader
+                        Item {
+                            id: panelSlot
                             Layout.fillWidth: true
-                            active: dialog.customPanelActive
+                            // Loader's implicit size is read-only and does not reset
+                            // when the item unloads, which kept the dialog at the
+                            // panel's height after switching away; the slot derives
+                            // the height itself instead.
+                            implicitHeight: dialog.customPanelActive && customPanelLoader.item
+                                            ? customPanelLoader.item.implicitHeight : 0
+
+                            Loader {
+                                id: customPanelLoader
+                                width: parent.width
+                                height: item ? item.implicitHeight : 0
+                                active: dialog.customPanelActive
                             sourceComponent: dialog.customPanelActive
                                              ? dialog.customPanels[dialog.activePanelName]
                                              : null
@@ -851,6 +862,7 @@ Dialog {
                                 item.authored.connect(function (text) {
                                     customCommand.text = text
                                 })
+                            }
                             }
                         }
 
