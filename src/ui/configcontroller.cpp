@@ -410,6 +410,12 @@ void ConfigController::loadCfg(const QString &path) {
         return;
     }
 
+    if (m_loadFuture.isRunning()) {
+        // A load is already in flight: ignore the request instead of parsing a
+        // second file over the same GameCfg on another thread (docs/AUDIT.md #2).
+        return;
+    }
+
     setLoading(true);
     setLastError(QString());
 
