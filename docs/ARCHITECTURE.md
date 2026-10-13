@@ -113,7 +113,9 @@ wholesale model write would destroy user content. Therefore:
   case-insensitive, arguments are not - D18). Emits `bindsChanged`. As of the 2026-10-13
   audit fix (#1), the in-place path also drops every later `unbind`/`bindtoggle` row for
   the key, matching the append path. Overlapping `loadCfg` requests are ignored while a
-  load is in flight (`docs/AUDIT.md` #2).
+  load is in flight (`docs/AUDIT.md` #2). `setBindToggle(key, command)` writes the same
+  row with a `bindtoggle` head, and `bindingKind(key)`/`bindingKinds()` report whether
+  the effective binding is `bind` or `bindtoggle` (`docs/AUDIT.md` #6).
 - `binds()` replays the rows the way TF2 would: later bind wins; `unbindall`,
   `unbind "k"`, and an empty command clear. Returns lowercase key token → command.
 - Saving reads the model via `CommandListModel::entries()`, **not** `m_cfg.getCmdList()`.

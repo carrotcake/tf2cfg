@@ -98,5 +98,5 @@ Items #1 and #2 from `docs/AUDIT.md` are closed by the 2026-10-13 sweep (audit a
 Items #3 and #4 closed by the same 2026-10-13 sweep (audit annotated). Only data-edge
 and future-feature items remain:
 
-| 5 | nice | `cmdLex` CSV scan silently tolerates malformed quoting; data-edge note only (catalog verified clean) |
-| 6 | nice | `bindtoggle` modelled as a plain bind; fine today, needed for a future "what does this key do" mode |
+| 5 | nice | `cmdLex` CSV scan silently tolerates malformed quoting; data-edge note only (catalog verified clean, pinned by `catalogRowsHaveTenFields`) |
+`bindtoggle` modelling (#6) is implemented (audit annotated): `bindingKinds()`, `setBindToggle()` and the dialog/cap support are now first-class.

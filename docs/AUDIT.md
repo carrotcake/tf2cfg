@@ -72,10 +72,10 @@ the UI as built today.
    `readLine`). The catalog is machine-generated and verified clean (all 3825 rows have
    exactly 10 fields). Guarded by the test `catalogRowsHaveTenFields`, which pins that
    shipped contract; no parser behavior changed. Still a data-edge note, not a live bug.
-6. **`bindtoggle` is treated as a plain bind by `scanBinds()`** (key → command, no
-   toggle semantics). Fine for cap colouring and row identity, which is all the bind map
-   drives today; a future "show what this key does" mode (KeyCap.bindText) would need
-   real toggle modelling.
+6. **Fixed (2026-10-13, this sweep).** `bindtoggle` was treated as a plain bind by
+   `scanBinds()`. Now `binds()` still maps key → command, but `bindingKinds()` reports
+   "bind"/"bindtoggle" per effective row, `setBindToggle()` authors `bindtoggle` rows,
+   and the KeyCap overlay plus the bind dialog author/reopen bind toggles as such.
 
 ### Info
 
