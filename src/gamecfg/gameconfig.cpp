@@ -1,6 +1,8 @@
 #include "gameconfig.h"
 #include "lex/lexers.h"
 
+#include <QTextStream>
+
 GameCfg::GameCfg() {
     loadAllCmds();
 }
@@ -113,14 +115,17 @@ void GameCfg::loadAllCmds() {
     }
 }
 
+// Parity P12/D7: the widget build dumped the parsed list to stdout, so it still goes
+// there. QTextStream writes QString as UTF-8 in place; the printf this replaced
+// built a std::string per token just to print it (review finding 17).
 void GameCfg::printCfg() const {
+    QTextStream out(stdout);
     for (const cmd::Entry &cmd : cmd_list) {
         for (const QString &str : cmd.args) {
-            printf("%s ", str.toStdString().c_str());
+            out << str << ' ';
         }
-        printf(" (type: %d) \n", cmd.type);
+        out << " (type: " << static_cast<int>(cmd.type) << ") \n";
     }
-    fflush(stdout);
 }
 QVector<cmd::Entry> const &GameCfg::getCmdList() const {
     return cmd_list;

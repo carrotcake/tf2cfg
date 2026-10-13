@@ -2,7 +2,9 @@
 
 using namespace Lexers;
 
-cfgLex::Token const cfgLex::nextToken() {
+// Returned by value, not `const` value: a const return blocks the move and copies the
+// token's QString on every call (review finding 14).
+cfgLex::Token cfgLex::nextToken() {
     if (line >= arr.size()) {
         return Token("EOF", Token::TOK_EOF);
     }

@@ -10,6 +10,13 @@ uint qHash(const ConsoleCommandModel::FilterKey &key, uint seed = 0) noexcept {
     return h;
 }
 
+/// Bounds and defaults for the argument editors. QString::number's default 'g' format
+/// renders 10000000.0 as "1e+07" (sensitivity's maximum), so the precision is raised far
+/// enough to print whole numbers in full; 15 significant digits still round-trips a double.
+QString number(double value) {
+    return QString::number(value, 'g', 15);
+}
+
 // Build-A-Bind sort: names order by their alphanumeric characters only, so
 // "+attack" sorts as "attack". Case-insensitive.
 static QString commandSortKey(const QString &name) {
@@ -50,9 +57,9 @@ QVariant ConsoleCommandModel::data(const QModelIndex &index, int role) const {
     case DefaultRole:
         return cmd->defaultStr();
     case MinRole:
-        return cmd->hasRange() ? QString::number(cmd->minVal()) : QString();
+        return cmd->hasRange() ? number(cmd->minVal()) : QString();
     case MaxRole:
-        return cmd->hasRange() ? QString::number(cmd->maxVal()) : QString();
+        return cmd->hasRange() ? number(cmd->maxVal()) : QString();
     default:
         return {};
     }
@@ -194,8 +201,8 @@ QVariantMap ConsoleCommandModel::commandAt(int row) const {
     map.insert(QStringLiteral("context"), cmd->get_context());
     map.insert(QStringLiteral("cheat"), cmd->isCheat());
     map.insert(QStringLiteral("def"), cmd->defaultStr());
-    map.insert(QStringLiteral("min"), cmd->hasRange() ? QString::number(cmd->minVal()) : QString());
-    map.insert(QStringLiteral("max"), cmd->hasRange() ? QString::number(cmd->maxVal()) : QString());
+    map.insert(QStringLiteral("min"), cmd->hasRange() ? number(cmd->minVal()) : QString());
+    map.insert(QStringLiteral("max"), cmd->hasRange() ? number(cmd->maxVal()) : QString());
     // A bare type (bool/int/flt/str, no brackets) is a cvar value; commands carry a
     // signature with []/<>/none. The arguments pane switches on this.
     const QString input = cmd->get_usage();

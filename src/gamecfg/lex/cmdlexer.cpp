@@ -2,7 +2,7 @@
 
 using namespace Lexers;
 
-cmdLex::Token const cmdLex::nextToken() {
+cmdLex::Token cmdLex::nextToken() {
     if (line >= arr.size()) {
         return Token(Token::TOK_EOF);
     }

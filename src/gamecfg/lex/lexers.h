@@ -97,7 +97,7 @@ public:
         const TokenClass type;
     };
 
-    const Token nextToken();
+    Token nextToken();
 
 private:
     enum LexState {
@@ -184,7 +184,7 @@ public:
         TokenClass type;
     };
 
-    const Token nextToken();
+    Token nextToken();
 
 private:
     // The old DFA errored out on every unquoted field (plain text like

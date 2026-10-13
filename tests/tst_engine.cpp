@@ -5,6 +5,45 @@
 #include "gamecfg/gameconfig.h"
 #include "gamecfg/lex/lexers.h"
 #include "ui/commandlistmodel.h"
+#include "ui/consolecommandmodel.h"
+
+/**
+ * A hand-built catalog, so a filter or sort test does not depend on allcmds.csv drifting.
+ * Owns its entries; the model only borrows them, exactly as GameCfg does.
+ */
+struct CatalogFixture {
+    std::vector<std::unique_ptr<cmd::ConVar>> owned;
+
+    QVector<cmd::ConVar *> make() {
+        auto add = [this](cmd::ConVar *entry) {
+            owned.emplace_back(entry);
+            return entry;
+        };
+        add(new cmd::ConCmd(QStringLiteral("bind"), QStringLiteral("Bind a key."),
+                             QStringLiteral("[str] [str]"), QStringLiteral("norecord"),
+                             QStringLiteral("universal"), QStringLiteral("engine")));
+        add(new cmd::ConCmd(QStringLiteral("+attack"), QStringLiteral("Fire weapon."),
+                             QStringLiteral("none"), QStringLiteral("client"),
+                             QStringLiteral("universal"), QStringLiteral("client controls")));
+        add(new cmd::ConCmd(QStringLiteral("+jump"), QStringLiteral("Jump."),
+                             QStringLiteral("none"), QStringLiteral("cheat client"),
+                             QStringLiteral("universal"), QStringLiteral("client controls")));
+        add(new cmd::ConCmd(QStringLiteral("zapper"), QStringLiteral("Linux only."),
+                             QStringLiteral("none"), QStringLiteral("client"),
+                             QStringLiteral("linux"), QStringLiteral("client render")));
+        add(new cmd::FltVar(QStringLiteral("sensitivity"), QStringLiteral("Mouse sensitivity."),
+                            3.0, 0.0001, 10000000.0, QStringLiteral("client archive"),
+                            QStringLiteral("universal"), QStringLiteral("client settings")));
+        add(new cmd::BoolVar(QStringLiteral("_fov"), QStringLiteral("Automates fov."), false,
+                             QStringLiteral("client"), QStringLiteral("universal"),
+                             QStringLiteral("client settings")));
+
+        QVector<cmd::ConVar *> out;
+        for (const auto &entry : owned)
+            out << entry.get();
+        return out;
+    }
+};
 
 /**
  * Covers the parsing engine and the bind logic the keyboard UI depends on
@@ -46,6 +85,16 @@ private slots:
     void setBindKeepsArgumentCase();
     void setBindEscapesQuotesInRow();
     void clearBindRemovesRows();
+
+    // ConsoleCommandModel - the Build-A-Bind browse list
+    void catalogSortsByAlphanumericName();
+    void contextAndPlatformFiltersNarrowRows();
+    void cheatRowsAreHiddenUnlessAsked();
+    void filtersSurviveBeingSwitchedBackAndForth();
+    void suggestOnlyOffersVisibleNames();
+    void suggestNeedsSomeText();
+    void findCommandIgnoresCaseAndFilters();
+    void commandAtCarriesTheArgumentMetadata();
 
 private:
     QTemporaryDir m_dir;
@@ -348,6 +397,140 @@ void EngineTest::clearBindRemovesRows() {
     QVERIFY(model.binds().isEmpty());
     QVERIFY(!model.clearBind(QStringLiteral("a")));
     QVERIFY(model.clearBind(QStringLiteral("never_bound")) == false);
+}
+
+// --- ConsoleCommandModel ---
+
+void EngineTest::catalogSortsByAlphanumericName() {
+    CatalogFixture fixture;
+    ConsoleCommandModel model;
+    model.setCommands(fixture.make());
+
+    // Sort key drops `+`/`_` and folds case, so these read attack, bind, fov, jump,
+    // sensitivity, zapper - not the raw names.
+    QStringList names;
+    for (int row = 0; row < model.rowCount(); ++row)
+        names << model.data(model.index(row, 0), ConsoleCommandModel::NameRole).toString();
+    QCOMPARE(names, QStringList({ "+attack", "bind", "_fov", "+jump", "sensitivity", "zapper" }));
+}
+
+void EngineTest::contextAndPlatformFiltersNarrowRows() {
+    CatalogFixture fixture;
+    ConsoleCommandModel model;
+    model.setCommands(fixture.make());
+
+    model.setContextFilter(QStringLiteral("client controls"));
+    QCOMPARE(model.rowCount(), 2);
+
+    model.setPlatformFilter(QStringLiteral("linux"));
+    QCOMPARE(model.rowCount(), 0); // nothing in client controls is linux-only
+
+    model.setContextFilter(QStringLiteral("client render"));
+    QCOMPARE(model.rowCount(), 1);
+    QCOMPARE(model.data(model.index(0, 0), ConsoleCommandModel::NameRole).toString(),
+             QStringLiteral("zapper"));
+
+    model.setPlatformFilter(QString());
+    QCOMPARE(model.rowCount(), 1); // zapper, which is still client render
+
+    model.setContextFilter(QString());
+    QCOMPARE(model.rowCount(), 6);
+}
+
+void EngineTest::cheatRowsAreHiddenUnlessAsked() {
+    CatalogFixture fixture;
+    ConsoleCommandModel model;
+    model.setCommands(fixture.make());
+
+    model.setShowCheats(false);
+    QCOMPARE(model.rowCount(), 5);
+    model.setContextFilter(QStringLiteral("client controls"));
+    QCOMPARE(model.rowCount(), 1); // +jump is flagged cheat
+    QCOMPARE(model.data(model.index(0, 0), ConsoleCommandModel::NameRole).toString(),
+             QStringLiteral("+attack"));
+
+    model.setShowCheats(true);
+    QCOMPARE(model.rowCount(), 2);
+}
+
+void EngineTest::filtersSurviveBeingSwitchedBackAndForth() {
+    // The visible list is cached per filter combo, so a stale entry would show here.
+    CatalogFixture fixture;
+    ConsoleCommandModel model;
+    model.setCommands(fixture.make());
+
+    model.setContextFilter(QStringLiteral("client settings"));
+    QCOMPARE(model.rowCount(), 2);
+    model.setContextFilter(QString());
+    QCOMPARE(model.rowCount(), 6);
+    model.setPlatformFilter(QStringLiteral("linux"));
+    QCOMPARE(model.rowCount(), 1);
+    model.setContextFilter(QStringLiteral("client settings"));
+    QCOMPARE(model.rowCount(), 0); // _fov and sensitivity are universal
+}
+
+void EngineTest::suggestOnlyOffersVisibleNames() {
+    CatalogFixture fixture;
+    ConsoleCommandModel model;
+    model.setCommands(fixture.make());
+
+    // Follows the sorted visible order and stops at the limit.
+    QCOMPARE(model.suggest(QStringLiteral("a"), 5),
+             QStringList({ "+attack", "zapper" }));
+    QCOMPARE(model.suggest(QStringLiteral("ATT"), 5), QStringList({ "+attack" }));
+
+    model.setContextFilter(QStringLiteral("client settings"));
+    QCOMPARE(model.suggest(QStringLiteral("a"), 5), QStringList());
+    QCOMPARE(model.suggest(QStringLiteral("S"), 5), QStringList({ "sensitivity" }));
+
+    model.setContextFilter(QString());
+    QCOMPARE(model.suggest(QStringLiteral("a"), 1), QStringList({ "+attack" }));
+}
+
+void EngineTest::suggestNeedsSomeText() {
+    CatalogFixture fixture;
+    ConsoleCommandModel model;
+    model.setCommands(fixture.make());
+    QVERIFY(model.suggest(QString(), 5).isEmpty());
+    QVERIFY(model.suggest(QStringLiteral("nothing-matches-this"), 5).isEmpty());
+}
+
+void EngineTest::findCommandIgnoresCaseAndFilters() {
+    CatalogFixture fixture;
+    ConsoleCommandModel model;
+    model.setCommands(fixture.make());
+    model.setContextFilter(QStringLiteral("client settings"));
+
+    // Looked up in the whole catalog, not the filtered list: the Build-A-Bind pane
+    // resolves a typed name that its own filters would hide.
+    const QVariantMap found = model.findCommand(QStringLiteral("SENSITIVITY"));
+    QCOMPARE(found.value(QStringLiteral("name")).toString(), QStringLiteral("sensitivity"));
+    QCOMPARE(found.value(QStringLiteral("context")).toString(), QStringLiteral("client settings"));
+    QVERIFY(model.findCommand(QStringLiteral("no_such_command")).isEmpty());
+}
+
+void EngineTest::commandAtCarriesTheArgumentMetadata() {
+    CatalogFixture fixture;
+    ConsoleCommandModel model;
+    model.setCommands(fixture.make());
+
+    const QVariantMap flt = model.commandAt(4); // sensitivity, sorted order
+    QCOMPARE(flt.value(QStringLiteral("name")).toString(), QStringLiteral("sensitivity"));
+    QCOMPARE(flt.value(QStringLiteral("def")).toString(), QStringLiteral("3"));
+    // Whole numbers stay whole: QString::number's default format would give "1e+07" here,
+    // which is what the argument editor's spin box would then show.
+    QCOMPARE(flt.value(QStringLiteral("min")).toString(), QStringLiteral("0.0001"));
+    QCOMPARE(flt.value(QStringLiteral("max")).toString(), QStringLiteral("10000000"));
+    QVERIFY(flt.value(QStringLiteral("isCvar")).toBool());
+
+    // A command with a signature is not a cvar, so the pane shows no argument editors.
+    const QVariantMap cmd = model.commandAt(1); // bind
+    QCOMPARE(cmd.value(QStringLiteral("name")).toString(), QStringLiteral("bind"));
+    QCOMPARE(cmd.value(QStringLiteral("input")).toString(), QStringLiteral("[str] [str]"));
+    QVERIFY(!cmd.value(QStringLiteral("isCvar")).toBool());
+
+    QVERIFY(model.commandAt(-1).isEmpty());
+    QVERIFY(model.commandAt(99).isEmpty());
 }
 
 QTEST_MAIN(EngineTest)
