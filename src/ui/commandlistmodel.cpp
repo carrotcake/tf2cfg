@@ -17,14 +17,36 @@ QHash<int, QByteArray> makeRoleNames() {
 /// parses as three arguments: `bind`, `"0"` and `"slot10"`. Both directions are needed:
 /// read a key/command out of a parsed row, and write a row the parser would reparse the
 /// same way. See docs/ui-qml-rewrite.md D16.
+///
+/// The lexer keeps the backslashes a quoted token carries, so this is the one place that
+/// reads them - which is why a row setBind() wrote and the same row read back from a file
+/// both come out as one identical command.
 QString unquoted(const QString &arg) {
-    if (arg.size() >= 2 && arg.startsWith(QLatin1Char('"')) && arg.endsWith(QLatin1Char('"')))
-        return arg.mid(1, arg.size() - 2);
-    return arg;
+    QString body = arg;
+    if (body.size() >= 2 && body.startsWith(QLatin1Char('"')) && body.endsWith(QLatin1Char('"')))
+        body = body.mid(1, body.size() - 2);
+
+    QString out;
+    for (int i = 0; i < body.size(); ++i) {
+        QChar c = body.at(i);
+        // \" and \\ stand for one character; a backslash in front of anything else is
+        // ordinary text and is kept.
+        if (c == QLatin1Char('\\') && i + 1 < body.size()
+            && (body.at(i + 1) == QLatin1Char('"') || body.at(i + 1) == QLatin1Char('\\')))
+            c = body.at(++i);
+        out.append(c);
+    }
+    return out;
 }
 
 QString quoted(const QString &arg) {
-    return QLatin1Char('"') + arg + QLatin1Char('"');
+    QString out;
+    for (const QChar c : arg) {
+        if (c == QLatin1Char('"') || c == QLatin1Char('\\'))
+            out.append(QLatin1Char('\\'));
+        out.append(c);
+    }
+    return QLatin1Char('"') + out + QLatin1Char('"');
 }
 
 /// True for the two commands that put a command on a key: `bind` and `bindtoggle`
@@ -154,9 +176,14 @@ CommandListModel::BindScanResult CommandListModel::scanBinds() const {
 
 bool CommandListModel::setBind(const QString &key, const QString &command) {
     const QString cleanKey = unquoted(key).toLower();
-    // The parser lowercases every line it reads, so a row written here has to match or the
-    // same edit applied twice would produce two different rows.
-    const QString cleanCommand = command.trimmed().toLower();
+    // The command name is case-insensitive, its arguments are not: `say "Hello"` must not
+    // become `say "hello"`. Rows read from a file are all lowercase anyway, because cfgLex
+    // folds every line, so this only ever preserves what the user has just typed.
+    const QString trimmed = command.trimmed();
+    int nameEnd = 0;
+    while (nameEnd < trimmed.size() && !trimmed.at(nameEnd).isSpace())
+        ++nameEnd;
+    const QString cleanCommand = trimmed.left(nameEnd).toLower() + trimmed.mid(nameEnd);
 
     if (cleanKey.isEmpty())
         return false;

@@ -53,12 +53,21 @@ class cfgLex : public Lexer {
 public:
     cfgLex(){};
 
-    // Config files are case-insensitive and have no comments of their own, so the
-    // line is folded to lower case and anything after // is dropped. (This used to
+    // Config files are case-insensitive, so the line is folded to lower case. `//`
+    // starts a comment only outside a quoted token, the way the game's own tokenizer
+    // treats it, so a URL in `alias x "echo http://host/"` survives. (This used to
     // live in Lexer::open, where it also corrupted allcmds.csv descriptions.)
     void preprocess(QString &str) override {
-        if (str.contains("//")) {
-            str.chop(str.size() - str.indexOf("//"));
+        bool quoted = false;
+        for (int i = 0; i < str.size(); ++i) {
+            const QChar c = str.at(i);
+            if (c == QLatin1Char('"')) {
+                quoted = !quoted;
+            } else if (!quoted && c == QLatin1Char('/') && i + 1 < str.size()
+                       && str.at(i + 1) == QLatin1Char('/')) {
+                str.truncate(i);
+                break;
+            }
         }
         str = str.toLower();
     }
