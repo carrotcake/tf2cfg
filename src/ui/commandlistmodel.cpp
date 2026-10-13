@@ -215,6 +215,15 @@ bool CommandListModel::setBind(const QString &key, const QString &command) {
         const QString head = unquoted(m_entries.at(row).args.value(0)).toLower();
         if (head != BindSyntax::Bind)
             continue; // unbind rows stay put; they are dropped at save with the key gone
+        // A later unbind/bindtoggle row for the same key would replay after this one
+        // and override the new command (audit docs/AUDIT.md #1), so drop them too; the
+        // append path already drops every row for the key.
+        for (int j = rows.size() - 1; j > i; --j) {
+            const int laterRow = rows.at(j);
+            beginRemoveRows(QModelIndex(), laterRow, laterRow);
+            m_entries.remove(laterRow);
+            endRemoveRows();
+        }
         cmd::Entry &entry = m_entries[row];
         entry.appOwned = true; // now the app owns this line
         entry.args.clear();
