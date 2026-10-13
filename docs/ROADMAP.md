@@ -50,7 +50,8 @@ items (W1-W8); the priorities:
 
 ## 3. QML cleanup
 
-- 10 of 17 QML files still lack `pragma ComponentBehavior: Bound` (2026-10-13).
+- ~~Pragma sweep~~ done 2026-10-13 (`68fa1cc`): all QML files carry
+  `pragma ComponentBehavior: Bound`; new files must too (AGENTS.md bar).
 - 28 unqualified-access advisories (counted 2026-10-13): context-property reads
   (`cfg.loaded`, `cfg.presets`) and same-component function references (`rowWidth`,
   `fnGroupX`) qmllint cannot prove statically. All resolve at runtime; clearing them
