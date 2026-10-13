@@ -91,10 +91,10 @@ Where each future feature lands, and what is already in place:
 
 Details and fix directions in `docs/AUDIT.md`.
 
+Items #1 and #2 from `docs/AUDIT.md` are closed by the 2026-10-13 sweep (audit annotated and scope archived there). Only open items remain:
+
 | # | Severity | Item |
 |---|----------|------|
-| 1 | should fix | `setBind` in-place rebind can be overridden by a later `unbind`/`bindtoggle` row for the same key - drop the later rows (or append-only) |
-| 2 | should fix | `loadCfg` has no re-entrancy guard: two rapid loads race on the shared `GameCfg` and can leave stale rows; gate on `loading`/`m_loadFuture.isRunning()` |
 | 3 | nice | `loadCfg`'s worker lambda captures raw `this`; guard with `QPointer` against shutdown mid-load |
 | 4 | nice | `cfgLex::Token` still has `const` members (non-movable); finish the de-const `docs/legacy/CODE_REVIEW.md` #14 recorded for `cmdLex::Token` only |
 | 5 | nice | `cmdLex` CSV scan silently tolerates malformed quoting; data-edge note only (catalog verified clean) |

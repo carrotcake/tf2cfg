@@ -110,16 +110,18 @@ wholesale model write would destroy user content. Therefore:
   `bind "<key>" "<command>"` row - so a key never ends up with two competing rows and a
   reload is indistinguishable from the edit. It stores the **bare command**, not a
   composed bind line, and lowercases only the first word (console names are
-  case-insensitive, arguments are not - D18). Emits `bindsChanged`. Known gap:
-  `docs/AUDIT.md` #1 - later `unbind`/`bindtoggle` rows for the same key are not
-  dropped in the in-place path.
+  case-insensitive, arguments are not - D18). Emits `bindsChanged`. As of the 2026-10-13
+  audit fix (#1), the in-place path also drops every later `unbind`/`bindtoggle` row for
+  the key, matching the append path. Overlapping `loadCfg` requests are ignored while a
+  load is in flight (`docs/AUDIT.md` #2).
 - `binds()` replays the rows the way TF2 would: later bind wins; `unbindall`,
   `unbind "k"`, and an empty command clear. Returns lowercase key token → command.
 - Saving reads the model via `CommandListModel::entries()`, **not** `m_cfg.getCmdList()`.
 - `loadCfg` parses on a worker thread (`QtConcurrent::run`); the model swap happens on
   the GUI thread via `QMetaObject::invokeMethod`. Failed loads must not blank the old
   rows, and `lastError` is checked before `loaded` (`loaded` = `rowCount() > 0`, so a
-  failed reload would otherwise win the success branch).
+  failed reload would otherwise win the success branch). A load already in flight makes
+  subsequent `loadCfg` calls no-ops rather than racing on the shared `GameCfg`.
 
 ### `ConsoleCommandModel` (the catalog for Build-A-Bind)
 

@@ -41,18 +41,14 @@ the UI as built today.
 
 ### Should fix (correctness gap reachable via edge inputs, risky code without guard)
 
-1. **`CommandListModel::setBind` in-place rebind can be silently overridden by a later
-   `unbind`/`bindtoggle` row for the same key.** The in-place path rewrites the most
-   recent plain `bind` row and leaves any later rows for that key alone
-   (`commandlistmodel.cpp`, the loop that skips heads != `bind`). `binds()` replays
-   rows in order with later-wins, and an `unbind` row or a later `bindtoggle` row after
-   the rebound line removes/replaces the new command - so `setBind` returns true while
-   the bind map (and the painted keyboard) shows the key unbound or holding the old
-   command. Reachable only from a hand-written config that mixes `bind`, `unbind` or
-   `bindtoggle` for the same key; no bundled preset does. Fix: when rebinding in place,
-   also drop every later row for that key (the append path already does), or append-only
-   when the key's last row is not the rebound `bind`.
-2. **`ConfigController::loadCfg` has no re-entrancy guard.** The Load button is gated on
+1. **Fixed (2026-10-13, this sweep).** `CommandListModel::setBind` in-place rebind could
+   be silently overridden by a later `unbind`/`bindtoggle` row for the same key. The
+   in-place path rewrote only the most recent plain `bind` row and left later rows for
+   that key; `binds()` replays later-wins. Fixed by dropping every later row for the key
+   on the in-place path (the append path already drops all rows for the key); a
+   regression test (`setBindDropsLaterRowsForKey`) pins the behaviour.
+2. **Fixed (2026-10-13, this sweep).** `ConfigController::loadCfg` had no re-entrancy
+   guard. The Load button is gated on
    the path being non-empty, not on `loading` (`StartPage.qml`), so two rapid loads run
    `m_cfg.resetParsed()` + `appendCfg()` on two worker threads against the same
    `GameCfg` - a data race - and both queued GUI lambdas then run, so the older load can
