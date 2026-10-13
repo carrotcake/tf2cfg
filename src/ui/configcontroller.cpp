@@ -4,6 +4,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QMultiHash>
+#include <QPointer>
 #include <QSaveFile>
 #include <QSet>
 #include <QVariantMap>
@@ -419,31 +420,43 @@ void ConfigController::loadCfg(const QString &path) {
     setLoading(true);
     setLastError(QString());
 
+    // Keep a weak reference so a load that outlives the controller (app shutdown) cannot
+    // run its queued completion on a destroyed object (docs/AUDIT.md #3).
+    QPointer<ConfigController> self = this;
+
     // Run parsing on a worker thread so the GUI stays responsive.
-    m_loadFuture = QtConcurrent::run([this, path]() {
+    m_loadFuture = QtConcurrent::run([path, self]() {
+        if (!self)
+            return;
+
         // Review finding 6: the engine ignores Lexers::Lexer::open()'s result and would
         // silently produce an empty list. Same check, surfaced instead of swallowed.
         // appendCfg accumulates, so a re-load must not stack rows on the previous file's.
-        m_cfg.resetParsed();
-        const bool ok = m_cfg.appendCfg(path);
-        if (ok)
-            m_cfg.printCfg(); // parity P12/D7: the widget build dumped the parsed list to stdout
+        self->m_cfg.resetParsed();
+        const bool ok = self->m_cfg.appendCfg(path);
+        if (ok && self)
+            self->m_cfg.printCfg(); // parity P12/D7: the widget build dumped the parsed list to stdout
+
+        if (!self)
+            return;
 
         // Must update the model on the GUI thread.
-        QMetaObject::invokeMethod(this, [this, path, ok]() {
+        QMetaObject::invokeMethod(self, [self, path, ok]() {
+            if (!self)
+                return;
             if (!ok) {
-                setLastError(QStringLiteral("file could not be read"));
-                setLoading(false);
-                emit loadedChanged();
+                self->setLastError(QStringLiteral("file could not be read"));
+                self->setLoading(false);
+                emit self->loadedChanged();
                 return;
             }
-            m_commands.setEntries(m_cfg.getCmdList());
-            m_parsed = m_cfg.getCmdList(); // deletion baseline for the surgical save
-            setCfgPath(path);
-            recordFileStamp(); // baseline for the disk-changed check at save time
-            setLastError(QString());
-            setLoading(false);
-            emit loadedChanged();
+            self->m_commands.setEntries(self->m_cfg.getCmdList());
+            self->m_parsed = self->m_cfg.getCmdList(); // deletion baseline for the surgical save
+            self->setCfgPath(path);
+            self->recordFileStamp(); // baseline for the disk-changed check at save time
+            self->setLastError(QString());
+            self->setLoading(false);
+            emit self->loadedChanged();
         }, Qt::QueuedConnection);
     });
 }
