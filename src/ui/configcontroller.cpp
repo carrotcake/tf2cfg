@@ -303,13 +303,33 @@ bool ConfigController::commitWrite(const QString &path, const QByteArray &out,
     const QFileInfo info(path);
     const QString backup = info.dir().filePath(info.fileName() + QStringLiteral(".bak"));
     if (info.exists()) {
-        QFile backupFile(backup);
-        if (backupFile.exists())
-            backupFile.remove();
-        if (!QFile::copy(path, backup)) {
+        // Keep the old restore point intact until the new backup is fully written:
+        // only the cheap rename phase touches the existing `.bak`.
+        const QString newBackup = backup + QStringLiteral(".new");
+        const QString oldBackup = backup + QStringLiteral(".old");
+        QFile::remove(newBackup);
+        QFile::remove(oldBackup);
+
+        if (!QFile::copy(path, newBackup)) {
+            *error = QStringLiteral("cannot write the backup %1").arg(backup);
+            QFile::remove(newBackup);
+            return false;
+        }
+
+        const bool hadBackup = QFile::exists(backup);
+        if (hadBackup && !QFile::rename(backup, oldBackup)) {
+            *error = QStringLiteral("cannot write the backup %1").arg(backup);
+            QFile::remove(newBackup);
+            return false;
+        }
+        if (!QFile::rename(newBackup, backup)) {
+            if (hadBackup)
+                QFile::rename(oldBackup, backup);
             *error = QStringLiteral("cannot write the backup %1").arg(backup);
             return false;
         }
+
+        QFile::remove(oldBackup);
     }
 
     QSaveFile out2(path);
