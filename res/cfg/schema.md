@@ -68,3 +68,21 @@ overrides → flags (`game` ⇒ server side) → name prefixes/keywords → fall
 Player-action commands that execute server-side (`voicemenu`, `jointeam`,
 `build`, `callvote`, ...) are `client controls` — they are usable from any
 client on any server, which is what separates them from `server commands`.
+
+
+## argbounds.csv (companion file)
+
+Headerless, one row per bounded argument of a command (docs/DESIGN-arg-bounds.md):
+
+| # | Field | Example | Notes |
+|---|-------|---------|-------|
+| 1 | command | load_itempreset | must be a cmd row in allcmds.csv |
+| 2 | argIndex | 0 | 0-based position in the usage signature |
+| 3 | type | int | int or flt - the editor mode |
+| 4 | min | 0 | empty = no lower bound (one-sided allowed) |
+| 5 | max | 3 | empty = no upper bound |
+
+These are **authoring bounds only**: the engine never clamps command arguments, so
+they shape the Build-A-Bind editors and nothing enforces them in-game. Rows are added
+only after in-game verification; a missing file is normal and leaves commands
+unbounded. incrementvar stays out (its min/max/delta are user-authored).

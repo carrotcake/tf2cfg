@@ -133,6 +133,12 @@ wholesale model write would destroy user content. Therefore:
   `FilterCache` of sorted visible indices; `suggest()` walks only that subset. `rebuild()`
   and `suggest()` must keep using identical filter logic - extract a shared helper if a
   fourth filter ships.
+- Per-argument bounds (`docs/DESIGN-arg-bounds.md`): `GameCfg` attaches `cmd::ArgSpec`s
+  from `res/cfg/argbounds.csv` after the catalog loads (companion file, hand-verified
+  rows only); the model exposes them through the `argsSpec` role and inside
+  `commandAt`/`findCommand` maps. Cvar ranges keep flowing through `min`/`max`, now
+  one-sided (a lone min or max survives). Bounds are authoring metadata only - the
+  engine never clamps command arguments.
 
 ### `ConfigController` (context property `cfg`)
 
