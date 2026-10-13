@@ -91,6 +91,8 @@ private slots:
     void setBindEscapesQuotesInRow();
     void clearBindRemovesRows();
     void setBindDropsLaterRowsForKey();
+    void bindingKindReportsImportedToggle();
+    void setBindToggleWritesToggleRow();
 
     // ConsoleCommandModel - the Build-A-Bind browse list
     void catalogSortsByAlphanumericName();
@@ -467,6 +469,24 @@ void EngineTest::setBindDropsLaterRowsForKey() {
     QVERIFY(model.setBind(QStringLiteral("a"), QStringLiteral("+duck")));
     QCOMPARE(model.binds().value(QStringLiteral("a")).toString(), QStringLiteral("+duck"));
     QCOMPARE(model.rowCount(), 1);
+}
+
+void EngineTest::bindingKindReportsImportedToggle() {
+    CommandListModel model;
+    model.setEntries(parse(QStringLiteral("bind \"a\" \"+moveleft\"\nbindtoggle \"b\" \"+attack\"\n")));
+    QCOMPARE(model.bindingKind(QStringLiteral("a")), QStringLiteral("bind"));
+    QCOMPARE(model.bindingKind(QStringLiteral("b")), QStringLiteral("bindtoggle"));
+    QCOMPARE(model.binds().value(QStringLiteral("b")).toString(), QStringLiteral("+attack"));
+}
+
+void EngineTest::setBindToggleWritesToggleRow() {
+    CommandListModel model;
+    QVERIFY(model.setBindToggle(QStringLiteral("k"), QStringLiteral("cl_showfps")));
+    QCOMPARE(model.bindingKind(QStringLiteral("k")), QStringLiteral("bindtoggle"));
+    QCOMPARE(model.rowCount(), 1);
+    QCOMPARE(model.data(model.index(0, 0), CommandListModel::CommandRole).toString(),
+             QStringLiteral("bindtoggle"));
+    QVERIFY(!model.setBindToggle(QStringLiteral("k"), QStringLiteral("cl_showfps")));
 }
 
 // --- ConsoleCommandModel ---
