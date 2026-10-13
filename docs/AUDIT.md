@@ -77,7 +77,7 @@ the reason recorded — these are not a to-do list and should not be re-raised),
 22. **No Linux build verification in CI** — the only open finding here.
     - **What this is:** The `.pro` uses MinGW paths; Linux build assumes Qt 6 in standard paths. No GitHub Actions / GitLab CI to confirm it compiles on Ubuntu/Arch.
     - **Fix:** Add a minimal workflow: `ubuntu-latest`, install `qt6-base-dev`, `qmake`, `make`, run `qmllint`.
-    - **Note added since:** `qmllint` is clean of errors today but reports 23 `ComponentBehavior` advisories, so a gate has to tolerate warnings rather than fail on them. The test target should be fine on Linux — it links only Qt core + testlib and the same resource bundle — but nothing has run there yet, which is the point of this finding.
+    - **Note added since:** `qmllint` is clean of errors today but reports 27 `ComponentBehavior`/unqualified-access advisories, so a gate has to tolerate warnings rather than fail on them. The test target should be fine on Linux - it links only Qt core + testlib and the same resource bundle - but nothing has run there yet, which is the point of this finding.
     - **If we skip it:** Linux users (half the TF2 player base) may hit compile errors on first try.
 
 23. ~~**`windeployqt` command is not scripted**~~ **FIXED** — `deploy.ps1`: copies `build/<config>/tf2cfgreal.exe` into a clean `dist/`, runs `windeployqt --<config> --compiler-runtime --qmldir qml`, and fails loudly when the build or the Qt kit is missing. Verified: the deployed folder runs with no Qt directory on `PATH`. `-QtRoot`/`-Output`/`-Config` are parameters, not edits.
@@ -111,7 +111,7 @@ Closed by decision and not to be re-raised: #11, #12, #13, #17, #18, #20 — eac
 
 ## QML layer read-through (2026-10-12)
 
-`qml/components/*.qml` (6 files) and `qml/pages/**` (5 files, ~750 lines) read line by line for the first time, followed by a leftovers pass over the rest of the tree. `qmllint` reports **0 errors**; its 23 remaining warnings are all `pragma ComponentBehavior: Bound` advisories, down from 41 before the pragma was added to the seven files that needed it.
+`qml/components/*.qml` (6 files) and `qml/pages/**` (5 files, ~750 lines) read line by line for the first time, followed by a leftovers pass over the rest of the tree. `qmllint` reports **0 errors**; its remaining warnings are all `pragma ComponentBehavior: Bound` / unqualified-access advisories, down from 41 before the pragma was added to the seven files that needed it.
 
 **Fixed**
 
@@ -130,7 +130,7 @@ Closed by decision and not to be re-raised: #11, #12, #13, #17, #18, #20 — eac
 
 - **Accessibility** — evaluated and sized in `docs/accessibility.md`. Put off deliberately.
 - `Tf2TabBar` has no keyboard path — no `activeFocusOnTab`, no `Keys`, no `KeyNavigation`; it is `Item` + `MouseArea`, so the three editor tabs are mouse-only. Prev/Next buttons still work, so it is not a dead end. Folded into `docs/accessibility.md` (finding A2) rather than tracked twice.
-- The remaining 18 `ComponentBehavior` advisories: context-property reads (`cfg.loaded`, `cfg.presets`) and `KeyboardPanel` delegates reaching an enclosing component's IDs. Both need a structural change — injecting the controller as a QML singleton, or threading properties through the panel's delegates — not a pragma.
+- The remaining `ComponentBehavior` advisories: context-property reads (`cfg.loaded`, `cfg.presets`) and same-component function references (`rowWidth`, `fnGroupX`) qmllint cannot prove statically. All of them resolve at runtime; none are model data. The `KeyboardPanel` delegates that *did* read `modelData` without `required property` under `Bound` were a real breakage - the main block, middle cluster and numpad rendered without keys - and are migrated now; a standalone `qml`-runtime probe counts 135 caps before and 50 after the fix (the old build rendered only the function row, mouse and controller).
 
 ## Checked since this audit was written
 

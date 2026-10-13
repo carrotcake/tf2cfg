@@ -159,6 +159,7 @@ Item {
                         Repeater {
                             model: fnGroup.groupKeys
                             delegate: KeyCap {
+                                required property var modelData
                                 keyName: modelData
                                 onActivated: function (keyId) { panel.keyActivated(keyId, token) }
                             }
@@ -183,12 +184,14 @@ Item {
                         model: KeyTable.mainRows
                         delegate: Row {
                             id: mainRow
+                            required property var modelData
                             property var rowKeys: modelData
                             spacing: panel.mainRowSpacing(rowKeys)
 
                             Repeater {
                                 model: mainRow.rowKeys
                                 delegate: KeyCap {
+                                    required property var modelData
                                     keyName: modelData
                                     onActivated: function (keyId) { panel.keyActivated(keyId, token) }
                                 }
@@ -204,6 +207,7 @@ Item {
                         model: KeyTable.middleRows
                         delegate: Item {
                             id: midRow
+                            required property var modelData
                             property var rowKeys: modelData
                             width: panel.middleClusterWidth
                             height: Theme.capSize
@@ -216,6 +220,7 @@ Item {
                                 Repeater {
                                     model: midRow.rowKeys
                                     delegate: KeyCap {
+                                        required property var modelData
                                         keyName: modelData
                                         onActivated: function (keyId) { panel.keyActivated(keyId, token) }
                                     }
@@ -235,12 +240,14 @@ Item {
                             model: KeyTable.numpadMain
                             delegate: Row {
                                 id: numRow
+                                required property var modelData
                                 property var rowKeys: modelData
                                 spacing: Theme.capGap
 
                                 Repeater {
                                     model: numRow.rowKeys
                                     delegate: KeyCap {
+                                        required property var modelData
                                         keyName: modelData
                                         onActivated: function (keyId) { panel.keyActivated(keyId, token) }
                                     }
@@ -255,6 +262,7 @@ Item {
                         Repeater {
                             model: KeyTable.numpadRight
                             delegate: KeyCap {
+                                required property var modelData
                                 keyName: modelData
                                 onActivated: function (keyId) { panel.keyActivated(keyId, token) }
                             }
