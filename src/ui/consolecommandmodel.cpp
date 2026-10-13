@@ -17,6 +17,56 @@ QString number(double value) {
     return QString::number(value, 'g', 15);
 }
 
+/// Per-argument authoring bounds for one command row (docs/DESIGN-arg-bounds.md §7):
+/// one entry per usage-signature token, bounds filled from the command's ArgSpecs
+/// where the companion file provided them, "" where a side is unbounded. Cvars carry
+/// no argument specs (their range flows through MinRole/MaxRole).
+QVariantList argSpecList(const cmd::ConVar *cmd) {
+    const QStringList tokens =
+        cmd->get_usage().split(QLatin1Char(' '), Qt::SkipEmptyParts);
+    bool hasArgs = false;
+    for (const QString &t : tokens) {
+        if (t.startsWith(QLatin1Char('[')) || t.startsWith(QLatin1Char('<'))) {
+            hasArgs = true;
+            break;
+        }
+    }
+    if (!hasArgs)
+        return {};
+
+    const auto *cmdCmd = dynamic_cast<const cmd::ConCmd *>(cmd);
+    const QVector<cmd::ArgSpec> specs = cmdCmd ? cmdCmd->argSpecs() : QVector<cmd::ArgSpec>();
+
+    QVariantList out;
+    int index = 0;
+    for (const QString &token : tokens) {
+        if (!token.startsWith(QLatin1Char('[')) && !token.startsWith(QLatin1Char('<')))
+            continue;
+        const cmd::ArgSpec *spec = nullptr;
+        for (const cmd::ArgSpec &s : specs) {
+            if (s.index == index) {
+                spec = &s;
+                break;
+            }
+        }
+        QVariantMap entry;
+        entry.insert(QStringLiteral("index"), index);
+        entry.insert(QStringLiteral("optional"), token.startsWith(QLatin1Char('<')));
+        // The spec's type wins; an unbounded arg falls back to what the signature says.
+        entry.insert(QStringLiteral("isFloat"),
+                     spec ? spec->isFloat : token.contains(QLatin1String("flt")));
+        entry.insert(QStringLiteral("hasMin"), spec && spec->hasMin);
+        entry.insert(QStringLiteral("min"),
+                     spec && spec->hasMin ? number(spec->min) : QString());
+        entry.insert(QStringLiteral("hasMax"), spec && spec->hasMax);
+        entry.insert(QStringLiteral("max"),
+                     spec && spec->hasMax ? number(spec->max) : QString());
+        out.append(entry);
+        ++index;
+    }
+    return out;
+}
+
 // Build-A-Bind sort: names order by their alphanumeric characters only, so
 // "+attack" sorts as "attack". Case-insensitive.
 static QString commandSortKey(const QString &name) {
@@ -60,6 +110,8 @@ QVariant ConsoleCommandModel::data(const QModelIndex &index, int role) const {
         return cmd->hasMinBound() ? number(cmd->minVal()) : QString();
     case MaxRole:
         return cmd->hasMaxBound() ? number(cmd->maxVal()) : QString();
+    case ArgsSpecRole:
+        return argSpecList(cmd);
     default:
         return {};
     }
@@ -77,6 +129,7 @@ QHash<int, QByteArray> ConsoleCommandModel::roleNames() const {
         h[DefaultRole] = "def";
         h[MinRole] = "min";
         h[MaxRole] = "max";
+        h[ArgsSpecRole] = "argsSpec";
         return h;
     }();
     return names;
@@ -170,6 +223,7 @@ QVariantMap ConsoleCommandModel::findCommand(const QString &name) const {
     map.insert(QStringLiteral("context"), cmd->get_context());
     map.insert(QStringLiteral("platform"), cmd->get_platform());
     map.insert(QStringLiteral("cheat"), cmd->isCheat());
+    map.insert(QStringLiteral("argsSpec"), argSpecList(cmd));
     return map;
 }
 
@@ -211,6 +265,7 @@ QVariantMap ConsoleCommandModel::commandAt(int row) const {
     map.insert(QStringLiteral("def"), cmd->defaultStr());
     map.insert(QStringLiteral("min"), cmd->hasMinBound() ? number(cmd->minVal()) : QString());
     map.insert(QStringLiteral("max"), cmd->hasMaxBound() ? number(cmd->maxVal()) : QString());
+    map.insert(QStringLiteral("argsSpec"), argSpecList(cmd));
     // A bare type (bool/int/flt/str, no brackets) is a cvar value; commands carry a
     // signature with []/<>/none. The arguments pane switches on this.
     const QString input = cmd->get_usage();

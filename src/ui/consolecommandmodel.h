@@ -33,8 +33,10 @@ public:
         ContextRole,  ///< column 10: client controls/settings/render, server ...
         CheatRole,    ///< flags contain "cheat"
         DefaultRole,  ///< cvar default as string, "" when none
-        MinRole,      ///< range lower bound as string, "" when unbounded
-        MaxRole,      ///< range upper bound as string, "" when unbounded
+        MinRole,      ///< cvar range lower bound as string, "" when unbounded
+        MaxRole,      ///< cvar range upper bound as string, "" when unbounded
+        ArgsSpecRole, ///< per-argument specs of a command: list of {index, isFloat,
+                      ///< hasMin, min, hasMax, max, optional}; empty for cvars
     };
     Q_ENUM(Role)
 

@@ -83,6 +83,7 @@ private slots:
     void oneSidedCvarBoundsKeepTheirSide();
     void argBoundsAttachFromCompanionFile();
     void argBoundsTolerateAMissingFile();
+    void argsSpecRoleCarriesPerArgumentBounds();
 
     // CommandListModel
     void appendCfgReportsAnUnreadableFile();
@@ -474,6 +475,63 @@ void EngineTest::argBoundsTolerateAMissingFile() {
     cmd::ConCmd *lip = findLip();
     QVERIFY(lip);
     QCOMPARE(lip->argSpecs().size(), 1); // the resource-loaded spec survives
+}
+
+void EngineTest::argsSpecRoleCarriesPerArgumentBounds() {
+    CatalogFixture fixture;
+    QVector<cmd::ConVar *> cmds = fixture.make();
+
+    // Give `bind` ([str] [str]) bounds on its first argument only, to prove the role
+    // reports per-argument, one-sided data instead of one range per row.
+    for (cmd::ConVar *cv : cmds) {
+        if (cv->get_name() == QStringLiteral("bind")) {
+            cmd::ArgSpec spec;
+            spec.index = 0;
+            spec.isFloat = false;
+            spec.hasMin = true;
+            spec.min = 0.0;
+            spec.hasMax = true;
+            spec.max = 3.0;
+            static_cast<cmd::ConCmd *>(cv)->setArgSpecs({spec});
+        }
+    }
+
+    ConsoleCommandModel model;
+    model.setCommands(cmds);
+
+    // The model sorts rows, so find `bind` by name rather than trusting row 0.
+    int bindRowIdx = -1;
+    int sensRowIdx = -1;
+    for (int r = 0; r < model.rowCount(); ++r) {
+        const QString name = model.commandAt(r).value(QStringLiteral("name")).toString();
+        if (name == QStringLiteral("bind"))
+            bindRowIdx = r;
+        if (name == QStringLiteral("sensitivity"))
+            sensRowIdx = r;
+    }
+    QVERIFY(bindRowIdx >= 0);
+    const QVariantMap bindRow = model.commandAt(bindRowIdx);
+    const QVariantList bindSpec = bindRow.value(QStringLiteral("argsSpec")).toList();
+    QCOMPARE(bindSpec.size(), 2);
+    const QVariantMap first = bindSpec.at(0).toMap();
+    QCOMPARE(first.value(QStringLiteral("index")).toInt(), 0);
+    QVERIFY(!first.value(QStringLiteral("optional")).toBool());
+    QVERIFY(first.value(QStringLiteral("hasMin")).toBool());
+    QCOMPARE(first.value(QStringLiteral("min")).toString(), QStringLiteral("0"));
+    QVERIFY(first.value(QStringLiteral("hasMax")).toBool());
+    QCOMPARE(first.value(QStringLiteral("max")).toString(), QStringLiteral("3"));
+    const QVariantMap second = bindSpec.at(1).toMap();
+    QCOMPARE(second.value(QStringLiteral("index")).toInt(), 1);
+    QVERIFY(!second.value(QStringLiteral("hasMin")).toBool());
+    QVERIFY(!second.value(QStringLiteral("hasMax")).toBool());
+
+    // findCommand carries the same payload, and a cvar carries none.
+    QCOMPARE(model.findCommand(QStringLiteral("BIND"))
+                 .value(QStringLiteral("argsSpec")).toList().size(), 2);
+    QVERIFY(model.findCommand(QStringLiteral("sensitivity"))
+                 .value(QStringLiteral("argsSpec")).toList().isEmpty());
+    QVERIFY(sensRowIdx >= 0); // the cvar is visible; its role is empty, not unknown
+    QVERIFY(model.commandAt(sensRowIdx).value(QStringLiteral("argsSpec")).toList().isEmpty());
 }
 
 // --- CommandListModel ---
