@@ -10,9 +10,6 @@ import "tabs"
 Item {
     id: page
 
-    // Window sizing contract with Main.qml (parity P13 / deviation D2).
-    readonly property int preferredWidth: Theme.editorWidth
-    readonly property int preferredHeight: Theme.editorHeight
     readonly property string pageTitle: "Team Fortress 2 Config Editor"
 
     /// Status-strip hint, mirroring the widget build's status tips (P20).

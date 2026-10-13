@@ -37,7 +37,7 @@ Every row is a behaviour of the widget build, with its evidence and its QML repl
 | # | Widget behaviour | Evidence | QML counterpart |
 |---|---|---|---|
 | P1 | Four application fonts registered before the first window | `main.cpp:11-14` | same call in `main.cpp` before `engine.load()` |
-| P2 | Start screen 1000×500, non-resizable-ish (max = min = 1000×500) | `startwindow.ui:4-24` | `ApplicationWindow` sized 1000×500 while `StartPage` is active |
+| P2 | Start screen 1000×500, non-resizable-ish (max = min = 1000×500) | `startwindow.ui:4-24` | the shared window size; fixed while `StartPage` is active (D2) |
 | P3 | Banner panel with `TF2 Config Manager` in TF2 font 40pt, centered, styled/raised frame | `startwindow.ui:37-80` | `Panel` component + `Label`, `Theme.fontTitle` |
 | P4 | Left panel heading `Open your TF2 Configuration File...` (TF2 Professor 28pt) | `startwindow.ui:275-323` | `Panel` + `Label` |
 | P5 | Left panel: read-only path field, placeholder `< Path To TF2 config.cfg >`, drag enabled | `startwindow.ui:341-363` | `TextField` with `readOnly: true`, `selectByMouse: true` |
@@ -48,7 +48,7 @@ Every row is a behaviour of the widget build, with its evidence and its QML repl
 | P10 | Preset index 0/1 → path becomes `:/cfg/b4nny.cfg` / `:/cfg/default.cfg`, Go enabled | `startwindow.h:31`, `startwindow.cpp:27-38` | same mapping, from `ConfigController::presets` |
 | P11 | Go button starts disabled; labelled `Load Selected Config` | `startwindow.ui:406-425` | `Tf2Button`, `enabled: path.length > 0` |
 | P12 | Go → parse file, dump to stdout, fill command list, hide start, show editor | `startwindow.cpp:50-57`, `editwindow.cpp:16-23` | `pageStack` push + `cfg.loadCfg(path)`, model binds the list |
-| P13 | Editor window 1573×807, title `Team Fortress 2 Config Editor` | `editwindow.ui:4-21` | `ApplicationWindow` sized 1573×807 while `EditorPage` is active |
+| P13 | Editor window 1573×807, title `Team Fortress 2 Config Editor` | `editwindow.ui:4-21` | same window, title from `EditorPage.pageTitle`; opens at the shared 1000×500 and is resizable (D2) |
 | P14 | Editor has a 3-tab bar; tab 0 active... actually index 1 is pre-selected by the `.ui`, then `editwindow.cpp:9` forces index 0 at construction | `editwindow.ui:29-30`, `editwindow.cpp:9` | `TabBar` with `currentIndex: 0` |
 | P15 | Tab 0 `Command Overview`: groupbox titled `Commands` containing a scrollable monospaced list of every parsed line | `editwindow.ui:32-133` | `CommandOverviewTab`: `Panel` + `ListView` on `cfg.commandModel`, role `line` |
 | P16 | List uses Liberation Mono 12pt, pointing-hand cursor | `editwindow.ui:74-89` | `Theme.fontMono`, `cursorShape: Qt.PointingHandCursor` |
@@ -82,7 +82,7 @@ Each is small, and each is listed so parity can be audited. D15 and D16 are the 
 | # | Deviation | Reason |
 |---|---|---|
 | D1 | One `ApplicationWindow` with a page stack instead of two `QMainWindow`s swapped by `hide()`/`show()` | The widget build never showed both at once; a single window removes the second hidden top-level and the stale `changeWindow()` dead code. Layout per page is unchanged. |
-| D2 | Window size follows the active page (1000×500 / 1573×807), min = max like the widget build | Same visual result as the `.ui` `maximumSize` constraints. |
+| D2 | One window size for both screens (1000×500, the start screen's). The start screen is fixed (minimum = maximum); the editor opens at the same size and is resizable from there up, so switching pages never resizes the window | The widget build resized between screens, so a user who had dragged the editor to fit their layout lost that size on every reload. The editor no longer needs its old 1573×807 default because the keyboard scrolls and zooms (D15, section 13), and its old 1180×700 floor would have clamped the window the moment the editor became resizable - the jump this deviation removes. `Main.qml` releases the maximums to the desktop size on the page change and keeps the minimums at the shared default. |
 | D3 | `Go` is enabled exactly when the path is non-empty | Reproduces P11/P7/P10 and fixes review finding 8 (the widget left Go enabled after the combo was cleared to `-1`). Consequence: clearing the combo now also disables Go. |
 | D4 | Cap labels normalised (`f3`→`F3`, `Prt\nScn`→`PrtScn`, `KP\nEnter`→`KP Enter`) | The widget labels were inconsistent in case and used hard line breaks; a game-style UI labels keys the way the keyboard does. Tokens (section 7) are untouched. |
 | D5 | Tall numpad keys expressed as `rowspan: 2` instead of the widget's 130 px and 140 px heights | Same visual intent, ignores the 10 px inconsistency between `+` and `Enter`. |
@@ -97,7 +97,7 @@ Each is small, and each is listed so parity can be audited. D15 and D16 are the 
 | D14 | The bind dialog opens centred on the window and is dragged by its title bar, clamped inside the window | A stock QML `Dialog` has no drag behaviour and sits at (0,0); the widget `QDialog` was moved by the window manager, which could leave the screen. In-window bounds are what the tool needs. |
 | D15 | The keyboard panel scrolls in both directions when the window is too small for it, and the keyboard alone can be zoomed (`Ctrl`+wheel, `Ctrl`+`+`/`-`/`0`) | Requested usability additions: the keyboard is 1632 px wide and does not fit even the default editor width (1573 px), so the outer keys were previously unreachable. See section 13. |
 | D16 | A cap whose key the loaded config binds is filled burnt orange; OK in the bind dialog edits the bind instead of logging it | P31/P34/P35 left the dialog inert and `BoundKeyRole` empty, so the keyboard was a viewer. The user asked for the caps to show their binds and for OK to add/remove one. The Custom Command text is the command applied (an empty field removes the bind); `Existing Bind:` becomes display-only. Nothing is written to disk — there is still no save path (section 10) — so the edit lives in the loaded model until the next load. |
-| D17 | The window is pinned to the top-left corner of the primary screen at startup instead of opening wherever the OS puts it | On a multi-monitor desktop the OS could open the window straddling two screens, pushing part of it (and of the editor's 1573 px width) outside any single-monitor capture. Pinning the frame to the primary screen's origin makes every launch start from the same, fully visible spot. Only the position is fixed; a page change still resizes the window (P2/P13) and keeps the frame's top-left. See section 14. |
+| D17 | The window is pinned to the top-left corner of the primary screen at startup instead of opening wherever the OS puts it | On a multi-monitor desktop the OS could open the window straddling two screens, pushing part of it outside any single-monitor capture. Pinning the frame to the primary screen's origin makes every launch start from the same, fully visible spot. Only the position is fixed; a page change keeps the frame's top-left and, since D2, does not resize the window either. See section 14. |
 | D18 | `setBind` lowercases only the first word of the command; the arguments keep the case the user typed | Console command names are case-insensitive, arguments are not: `say "Hello"` became `say "hello"`. Rows read from a file stay lowercase because `cfgLex` folds every line, so the same edit applied twice still yields one identical row. Fix for audit #16. |
 | D19 | `\"` and `\\` inside a quoted token no longer end it, and `//` starts a comment only outside a quoted token | The widget build split `alias t "say \"hi\""` into two arguments, cut any line at a `//` inside quotes (a URL), and then appended an `error` token. Both now match the game's tokenizer; the two escapes are read and written only by `CommandListModel::unquoted()`/`quoted()`, so a bind survives a write/read round trip. Fix for audit #6; token text is unchanged for every config that contains neither. |
 
@@ -307,7 +307,7 @@ Mapped from `docs/legacy/pickle-inferences.md` §"What is unfinished" and `docs/
 
 ## 12. Verification results
 
-Performed against the MinGW Qt 6.12.0 build with the full automation run on 2026-10-12.
+Performed against the MinGW Qt 6.12.0 build with the full automation run on 2026-10-12. Items 2, 3, 7, 10 and 14 record the window sizes that were in force then; D2 has since replaced them (one shared size, editor resizable), so read those numbers as a record of that run, not the current behaviour.
 
 1. Clean qmake build (`-spec win32-g++ "CONFIG+=release"`): compiles with zero warnings; windeployqt's standard Direct3D note is ignorable. (This run predates the removal of the dead debug code in `cmdlexer.cpp` and of `src/gamecfg/cvar.cpp`, so the warning it mentions is gone.)
 2. Start screen: app launches to `TF2 Config Manager` (1000×500, fixed). Preset combo shows `< Choose a Preset >`; selecting `b4nny` sets the path to `:/cfg/b4nny.cfg` and enables Go.
@@ -329,7 +329,7 @@ Performed against the MinGW Qt 6.12.0 build with the full automation run on 2026
 | P38 (overview text) | ListView count == `printCfg` stdout lines (274), same join, same order; also the first three delegates read back `unbindall` / `bind "0" "slot10"` / `bind "1" "slot1"` with no `Unable to assign` warning |
 | P25/P27/P29 (key ids + click → dialog) | automated click on Space → `id=71 token=space`, dialog prefill `bind "space"` |
 | P11/P7/P10 (Go enable) | Go enabled exactly when path non-empty (probed state before/after preset selection) |
-| P2/P13 (window sizes) | start 1000×500, editor 1573×807, fixed min=max per page |
+| P2/P13 (window sizes) | start 1000×500, editor 1573×807, fixed min=max per page — **superseded by D2**, which gives both screens one size and only makes the editor resizable |
 | P21/P22 (menus, status strip) | present on the editor page, absent/hidden on the start page |
 | P30/P36 (dialog) | opens centred; drag clamped to the window (D14); Escape rejects; outside press blocked |
 | D15 (scroll + zoom) | see items 10–12 of this section |

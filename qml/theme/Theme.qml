@@ -71,11 +71,9 @@ QtObject {
     readonly property int capSize: 64
     readonly property int capGap: 4
     readonly property int capClusterGap: 24
+    // One window size for both screens. The start screen is fixed at this size; the editor
+// opens at it too and is resizable, with this as its floor.
+readonly property int windowWidth: 1000
+    readonly property int windowHeight: 500
     readonly property int panelMaxWidth: 480
-    readonly property int startWidth: 1000
-    readonly property int startHeight: 500
-    readonly property int editorWidth: 1573
-    readonly property int editorHeight: 807
-    readonly property int editorMinWidth: 1180
-    readonly property int editorMinHeight: 700
 }

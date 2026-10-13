@@ -9,9 +9,6 @@ import "../theme"
 Item {
     id: page
 
-    // Window sizing contract with Main.qml (parity P2 / deviation D2).
-    readonly property int preferredWidth: Theme.startWidth
-    readonly property int preferredHeight: Theme.startHeight
     readonly property string pageTitle: "TF2 Config Manager"
 
     /// Selected config path: an absolute file path from Browse, or a ":/cfg/..." preset.
