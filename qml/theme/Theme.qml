@@ -63,6 +63,11 @@ QtObject {
     readonly property int radius: 4
     readonly property int borderWidth: 1
     readonly property int controlHeight: 32
+    readonly property int comboDefaultWidth: 200
+    readonly property int popupMaxHeight: 300
+    readonly property int tabHeight: 34
+    readonly property int tabMinWidth: 140
+    readonly property int statusBarHeight: 26
     readonly property int capSize: 64
     readonly property int capGap: 4
     readonly property int capClusterGap: 24

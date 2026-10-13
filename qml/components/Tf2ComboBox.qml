@@ -10,7 +10,7 @@ ComboBox {
     property string placeholderText: ""
 
     implicitHeight: Theme.controlHeight
-    implicitWidth: 200
+    implicitWidth: Theme.comboDefaultWidth
     hoverEnabled: true
     font.family: Theme.familyUi
     font.pointSize: Theme.sizeUi
@@ -38,6 +38,8 @@ ComboBox {
     // presses near the right edge, so the icon area gets its own click target.
     MouseArea {
         z: 2
+        // Follows the combo's enabled state: a disabled combo must not open its popup.
+        enabled: control.enabled
         x: control.width - width
         width: Theme.controlHeight
         height: control.height
@@ -92,7 +94,7 @@ ComboBox {
     popup: Popup {
         y: control.height
         width: control.width
-        implicitHeight: Math.min(contentItem.implicitHeight + 2, 300)
+        implicitHeight: Math.min(contentItem.implicitHeight + 2 * padding, Theme.popupMaxHeight)
         padding: 1
 
         contentItem: ListView {

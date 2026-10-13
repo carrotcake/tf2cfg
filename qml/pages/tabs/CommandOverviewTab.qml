@@ -26,7 +26,18 @@ Panel {
             clip: true
             reuseItems: true
             model: cfg.commandModel
-            ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+            ScrollBar.vertical: ScrollBar {
+                id: overviewScroll
+                policy: ScrollBar.AsNeeded
+                hoverEnabled: true
+                contentItem: Rectangle {
+                    implicitWidth: Theme.spacingTight + 2
+                    radius: implicitWidth / 2
+                    color: overviewScroll.pressed ? Theme.colorAccent
+                          : overviewScroll.hovered ? Theme.colorTextMuted
+                          : Theme.colorBorderStrong
+                }
+            }
 
             delegate: Text {
                 // Role "line" is args.join(" "), exactly what the widget list showed.
@@ -40,10 +51,10 @@ Panel {
                 font.pointSize: Theme.sizeMono
                 elide: Text.ElideRight
 
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                }
+                // Parity P16: the widget list showed a pointing-hand cursor. A handler,
+                // not a MouseArea - the rows are not clickable, and a MouseArea here
+                // would swallow every press for nothing.
+                HoverHandler { cursorShape: Qt.PointingHandCursor }
             }
         }
 

@@ -61,8 +61,9 @@ Dialog {
         })
     }
 
-    function validBottom(bound) { return bound === "" ? -2147483647 : parseInt(bound) }
-    function validTop(bound) { return bound === "" ? 2147483647 : parseInt(bound) }
+    // Radix 10 on purpose: without it "0x10" parses as 16.
+    function validBottom(bound) { return bound === "" ? -2147483647 : parseInt(bound, 10) }
+    function validTop(bound) { return bound === "" ? 2147483647 : parseInt(bound, 10) }
 
     /// Rebuild the argument editors from the selected command's signature.
     function rebuildArgs() {

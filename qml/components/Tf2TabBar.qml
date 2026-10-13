@@ -16,7 +16,7 @@ Item {
 
     signal activated(int index)
 
-    implicitHeight: 34
+    implicitHeight: Theme.tabHeight
     implicitWidth: tabRow.implicitWidth
 
     function titleAt(index) {
@@ -40,8 +40,8 @@ Item {
 
                 readonly property bool isCurrent: control.currentIndex === index
 
-                implicitWidth: Math.max(140, tabLabel.implicitWidth + Theme.spacingSection)
-                implicitHeight: 34
+                implicitWidth: Math.max(Theme.tabMinWidth, tabLabel.implicitWidth + Theme.spacingSection)
+                implicitHeight: Theme.tabHeight
                 width: implicitWidth
                 height: implicitHeight
 

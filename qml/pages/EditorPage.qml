@@ -59,7 +59,7 @@ Item {
         // -- status strip (P20/P22) -------------------------------------------
         Rectangle {
             Layout.fillWidth: true
-            implicitHeight: 26
+            implicitHeight: Theme.statusBarHeight
             color: Theme.colorSurface
 
             Rectangle {

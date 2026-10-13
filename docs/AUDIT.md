@@ -108,16 +108,38 @@ Numbered across all groups so you can say "fix 2 and 5".
 
 ## Not checked
 
-- `qml/components/*.qml` (`Tf2ComboBox`, `Tf2Button`, `Panel`, `Tf2TabBar`, `Tf2Label`, `Tf2TextField`) — assumed correct; not read line by line.
-- `qml/pages/StartPage.qml`, `qml/pages/tabs/*.qml` — not read.
+- `qml/keyboard/*.qml`, `qml/dialogs/BindEditorDialog.qml` — read where the work touched them, not end to end.
 - `tools/csvio.py` — read; simple and correct.
 - `docs/CODE_REVIEW.md` — **no open findings left.** Every finding is fixed or was retired with the widget UI, and its three "Info" items are answered against the behaviour as built.
 - Linux build — not attempted; only Windows MinGW verified. **Note: added `concurrent` to QT in .pro for QtConcurrent.**
-- Accessibility (screen readers, high contrast) — not evaluated.
+- Accessibility — see the QML read-through below; evaluated, and the gap is real.
 - Packaging/installer — none exists; `deploy.ps1` (`windeployqt` folder copy) is the deploy, verified to run with no Qt on `PATH`.
+
+## QML layer read-through (2026-10-12)
+
+`qml/components/*.qml` (6 files) and `qml/pages/**` (5 files, 719 lines) read line by line for the first time. `qmllint` over the whole `qml/` tree reports no errors; its 41 remaining warnings are all the same `pragma ComponentBehavior: Bound` advisory, which predates this pass.
+
+**Fixed**
+
+1. `StartPage.localPath()` stripped the leading `/` from Unix paths (`file:///home/user/x.cfg` → `home/user/x.cfg`), so **every config picked through Browse failed on Linux** — a platform the app targets. The regex is now `^file:\/\/` plus a drive-letter test.
+2. A failed load was never reported once a config was already loaded: `cfg.loaded` is `rowCount() > 0` and a failure leaves the old rows, so the success branch won. `lastError` is checked first now.
+3. `CommandOverviewTab`'s delegates carried a `MouseArea` with a pointing-hand cursor and no click handler — parity P16 kept the cursor, but the area swallowed every press for nothing. Now a `HoverHandler`, which gives the cursor without taking input.
+4. `Tf2ComboBox`'s indicator hit zone ignored `control.enabled`, so a disabled combo would still open its popup. Latent — no caller disables a combo today.
+5. Six metrics moved into `Theme` (tab height and minimum width, combo default width, popup max height, status bar height) and the combo popup height stopped hardcoding `+ 2` for its own padding.
+6. `CommandOverviewTab`'s scroll bar was the app's only unstyled scrollbar; it uses Theme colours now. The dialog's suggestion indicator and horizontal scroll bar are still default-styled.
+7. `parseInt` in `BindEditorDialog.validBottom/validTop` had no radix, so `0x10` parsed as 16.
+
+**Open, in order of value**
+
+- **No `Accessible.*` anywhere in `qml/`** — zero of six components and five pages carry an accessible name or role. Every button, combo, field and the custom tab strip is invisible to assistive tech. No engine test will ever catch this.
+- **`Tf2TabBar` has no keyboard path** — no `activeFocusOnTab`, no `Keys`, no `KeyNavigation`; it is `Item` + `MouseArea`, so the three editor tabs are mouse-only. Prev/Next buttons still work, so it is not a dead end. The dialog's command combo is the only `Keys` handler in the app.
+- **`Main.qml:18` — the one real `qmllint` warning:** `pageStack.currentItem.pageTitle` is a member lookup on `QQuickItem`, which has no such property. It works at runtime because both pages declare it, but the type system does not check it.
+- `StartPage.localPath()` calls `decodeURIComponent` unguarded, so a filename containing a bare `%` raises a `URIError` and breaks the JS handler. Rare.
+- The 41 `ComponentBehavior: Bound` advisories. Cosmetic, repo-wide, and each needs a decision per file rather than a blanket change.
 
 ## Checked since this audit was written
 
-- `qml/theme/Theme.qml` — 76 named tokens, nothing duplicated (#17).
+- `qml/theme/Theme.qml` — 84 named tokens, nothing duplicated (#17).
 - `res/res.qrc` and `qml.qrc` — complete: all 17 `.qml` files and both `qmldir`s are packed, as are all four presets, all four fonts and `allcmds.csv`. `flags.md`/`schema.md` are correctly absent; no code reads them.
 - `res/cfg/allcmds.csv` — all 3825 rows carry exactly 10 fields under a real CSV parse.
+- `qml/components/*.qml` and `qml/pages/**` — see the QML layer read-through below.

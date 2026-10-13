@@ -22,11 +22,18 @@ Item {
     /// Emitted after a successful load; Main.qml switches to the editor.
     signal loaded()
 
-    /// "file:///C:/..." -> "C:/..."; anything already local passes through untouched.
+    /// "file:///C:/..." -> "C:/..." and "file:///home/user/x.cfg" -> "/home/user/x.cfg";
+    /// anything already local passes through untouched.
     function localPath(url) {
         let s = url.toString()
-        if (s.indexOf("file:") === 0)
-            s = decodeURIComponent(s.replace(/^file:\/{2,3}/, ""))
+        if (s.indexOf("file:") === 0) {
+            s = decodeURIComponent(s.replace(/^file:\/\//, ""))
+            // The URL has an empty authority, so what is left starts with a slash the
+            // path itself does not have - but only for a Windows drive letter. A Unix
+            // path is "/home/..." and that leading slash is part of it.
+            if (/^\/[A-Za-z]:/.test(s))
+                s = s.slice(1)
+        }
         return s
     }
 
@@ -44,11 +51,12 @@ Item {
     Connections {
         target: cfg
         function onLoadedChanged() {
-            if (cfg.loaded) {
-                page.loaded()
-            } else if (cfg.lastError.length > 0) {
+            // A failed load leaves the previously parsed rows in place, so cfg.loaded is
+            // still true and the success branch would swallow the error.
+            if (cfg.lastError.length > 0)
                 page.errorText = "Could not load " + page.cfgPath + " (" + cfg.lastError + ")"
-            }
+            else if (cfg.loaded)
+                page.loaded()
         }
         function onLastErrorChanged() {
             if (cfg.lastError.length > 0 && !cfg.loaded) {
