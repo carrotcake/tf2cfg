@@ -53,10 +53,12 @@ class cfgLex : public Lexer {
 public:
     cfgLex(){};
 
-    // Config files are case-insensitive, so the line is folded to lower case. `//`
-    // starts a comment only outside a quoted token, the way the game's own tokenizer
-    // treats it, so a URL in `alias x "echo http://host/"` survives. (This used to
-    // live in Lexer::open, where it also corrupted allcmds.csv descriptions.)
+    // A config line is folded to lower case only as far as its command name: the console
+    // looks commands up case-insensitively, but an argument is text, so `say "Hello"` and
+    // a say-text alias must keep their case or the loaded config no longer matches what the
+    // file says. `//` starts a comment only outside a quoted token, the way the game's own
+    // tokenizer treats it, so a URL in `alias x "echo http://host/"` survives. (Both used to
+    // live in Lexer::open, where the case fold also corrupted allcmds.csv descriptions.)
     void preprocess(QString &str) override {
         bool quoted = false;
         for (int i = 0; i < str.size(); ++i) {
@@ -69,7 +71,16 @@ public:
                 break;
             }
         }
-        str = str.toLower();
+
+        // The name is the first unquoted word. A line that starts with a quote has no bare
+        // command name to fold, and neither has a blank or comment-only line.
+        int nameStart = 0;
+        while (nameStart < str.size() && str.at(nameStart).isSpace())
+            ++nameStart;
+        if (nameStart < str.size() && str.at(nameStart) == QLatin1Char('"'))
+            return;
+        for (int i = nameStart; i < str.size() && !str.at(i).isSpace(); ++i)
+            str[i] = str.at(i).toLower();
     }
 
     struct Token {

@@ -5,15 +5,19 @@ GameCfg::GameCfg() {
     loadAllCmds();
 }
 
-GameCfg::GameCfg(const QString &filename) {
-    this->appendCfg(filename);
+GameCfg::GameCfg(const QString &filename)
+    : GameCfg() {
+    appendCfg(filename);
 }
 
-void GameCfg::appendCfg(const QString &filename) {
+bool GameCfg::appendCfg(const QString &filename) {
     Lexers::cfgLex lex;
     cmd::Entry cmd;
 
-    lex.open(filename);
+    if (!lex.open(filename)) {
+        qWarning("GameCfg: cannot read %s", qPrintable(filename));
+        return false;
+    }
 
     while (lex.hasNext()) {
         const auto tok = lex.nextToken();
@@ -21,7 +25,7 @@ void GameCfg::appendCfg(const QString &filename) {
             cmd.type = cmdToType(tok.string());
         }
         if (cmd.args.size() == 1 && !cmd.args.front().compare("alias")) {
-            cmd_types[tok.string()] = cmd::CMD_ALIAS;
+            cmd_types[tok.string().toLower()] = cmd::CMD_ALIAS;
         }
         if (tok.isEndToken()) {
             if (!cmd.args.empty()) {
@@ -32,18 +36,23 @@ void GameCfg::appendCfg(const QString &filename) {
             cmd.args.push_back(tok.string());
         }
     }
+    return true;
 }
 
-inline cmd::CmdType GameCfg::cmdToType(const QString cmd) const {
-    if (cmd_types.find(cmd) != cmd_types.end()) {
-        return cmd_types[cmd];
-    }
-    return cmd::CMD_UNKWN;
+inline cmd::CmdType GameCfg::cmdToType(const QString &cmd) const {
+    // Case-insensitive: cfgLex folds the command name, but a config may still spell it
+    // `Bind`, and everything after a `;` on one line keeps its own case.
+    const QString key = cmd.toLower();
+    auto it = cmd_types.constFind(key);
+    return it == cmd_types.cend() ? cmd::CMD_UNKWN : it.value();
 }
 
 void GameCfg::loadAllCmds() {
     Lexers::cmdLex lex;
-    lex.open("://cfg/allcmds.csv");
+    if (!lex.open("://cfg/allcmds.csv")) {
+        qWarning("GameCfg: cannot read the command catalog from the resource bundle");
+        return;
+    }
     while (lex.hasNext()) {
         const auto tok = lex.nextToken();
         if (tok.name().isEmpty()) {

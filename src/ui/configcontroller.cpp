@@ -110,11 +110,20 @@ void ConfigController::loadCfg(const QString &path) {
 
     // Run parsing on a worker thread so the GUI stays responsive.
     m_loadFuture = QtConcurrent::run([this, path]() {
-        m_cfg.appendCfg(path);
-        m_cfg.printCfg(); // parity P12/D7: the widget build dumped the parsed list to stdout
+        // Review finding 6: the engine ignores Lexers::Lexer::open()'s result and would
+        // silently produce an empty list. Same check, surfaced instead of swallowed.
+        const bool ok = m_cfg.appendCfg(path);
+        if (ok)
+            m_cfg.printCfg(); // parity P12/D7: the widget build dumped the parsed list to stdout
 
         // Must update the model on the GUI thread.
-        QMetaObject::invokeMethod(this, [this, path]() {
+        QMetaObject::invokeMethod(this, [this, path, ok]() {
+            if (!ok) {
+                setLastError(QStringLiteral("file could not be read"));
+                setLoading(false);
+                emit loadedChanged();
+                return;
+            }
             m_commands.setEntries(m_cfg.getCmdList());
             setCfgPath(path);
             setLastError(QString());

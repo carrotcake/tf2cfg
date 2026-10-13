@@ -25,6 +25,8 @@ private slots:
     void backslashEscapeInsideQuotes();
     void commentStrippedOutsideQuotesOnly();
     void lineIsFoldedToLowerCase();
+    void argumentsKeepTheirCase();
+    void mixedCaseCommandNameStillTypesTheRow();
     void semicolonInsideQuotesIsNotASeparator();
 
     // cmdLex
@@ -34,6 +36,7 @@ private slots:
     void catalogLoadsEveryRowAsACommand();
 
     // CommandListModel
+    void appendCfgReportsAnUnreadableFile();
     void laterBindWins();
     void unbindallClearsEarlierBinds();
     void unbindClearsOneKey();
@@ -106,9 +109,10 @@ void EngineTest::escapedQuoteStaysInToken() {
 
 void EngineTest::backslashEscapeInsideQuotes() {
     // `\\` is one escaped backslash and does not escape the following quote, so this
-    // stays a single token instead of ending at the second backslash.
+    // stays a single token instead of ending at the second backslash. The path keeps its
+    // case: only the command name is folded.
     QCOMPARE(tokenize(QStringLiteral("alias t \"C:\\\\path\"")),
-             QStringList({ "alias", "t", "\"c:\\\\path\"", "<end>" }));
+             QStringList({ "alias", "t", "\"C:\\\\path\"", "<end>" }));
 }
 
 void EngineTest::commentStrippedOutsideQuotesOnly() {
@@ -123,6 +127,40 @@ void EngineTest::commentStrippedOutsideQuotesOnly() {
 void EngineTest::lineIsFoldedToLowerCase() {
     QCOMPARE(tokenize(QStringLiteral("SV_Cheats 1")),
              QStringList({ "sv_cheats", "1", "<end>" }));
+    // Leading whitespace and a trailing comment do not hide the name from the fold.
+    QCOMPARE(tokenize(QStringLiteral("   Bind \"a\" \"+jump\" // go")),
+             QStringList({ "bind", "\"a\"", "\"+jump\"", "<end>" }));
+}
+
+void EngineTest::argumentsKeepTheirCase() {
+    // CODE_REVIEW #1: only the command name is case-insensitive. `say "Hello"` used to
+    // parse as `say "hello"`, so a saved config would not survive its own reload.
+    QCOMPARE(tokenize(QStringLiteral("alias t \"Say Hello\" \"Nice to meet you\"")),
+             QStringList({ "alias", "t", "\"Say Hello\"", "\"Nice to meet you\"", "<end>" }));
+    // A quoted first token is text, not a command name, and is left alone.
+    QCOMPARE(tokenize(QStringLiteral("\"Say Hello\" x")),
+             QStringList({ "\"Say Hello\"", "x", "<end>" }));
+}
+
+void EngineTest::mixedCaseCommandNameStillTypesTheRow() {
+    // The lexer folds only the first name on a line, so a command after a `;` keeps its
+    // case. The type lookup folds case itself, so the row is still typed correctly.
+    const auto rows = parse(QStringLiteral("sv_cheats 1; Bind \"a\" \"+jump\"\n"));
+    QCOMPARE(rows.size(), 2);
+    QCOMPARE(rows.at(1).type, cmd::CMD_CMD);
+    QCOMPARE(rows.at(1).args.first(), QStringLiteral("Bind"));
+
+    // And the bind scanner still reads it: `UnbindAll` after a `;` clears the earlier row.
+    CommandListModel model;
+    model.setEntries(parse(QStringLiteral("Bind \"a\" \"+jump\"\nsv_cheats 1; UnbindAll\n")));
+    QVERIFY(!model.binds().contains(QStringLiteral("a")));
+}
+
+void EngineTest::appendCfgReportsAnUnreadableFile() {
+    GameCfg cfg;
+    QVERIFY(cfg.appendCfg(writeFile(QStringLiteral("ok.cfg"), QStringLiteral("bind \"a\" \"+jump\"\n"))));
+    QCOMPARE(cfg.getCmdList().size(), 1);
+    QVERIFY(!cfg.appendCfg(m_dir.filePath(QStringLiteral("does-not-exist.cfg"))));
 }
 
 void EngineTest::semicolonInsideQuotesIsNotASeparator() {
