@@ -119,8 +119,8 @@ Dialog {
         if (idx < 0)
             return
         commandCombo.currentIndex = idx
+        commandCombo.editText = name
         rebuildArgs()
-
         if (!commandInfo)
             return
 
