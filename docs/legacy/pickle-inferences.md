@@ -53,7 +53,7 @@ Three of the four start with `unbindall`, standard TF2 cfg practice, consistent 
 
 ### EditWindow — tabbed editor
 
-- **Command Overview**: dumps every parsed entry, one per line, monospaced. This is scaffolding, not a designed feature — `GameCfg::printCfg()` (`gameconfig.cpp:96`) does the same via `printf`, and the tab holds a leftover Designer item, `editwindow.ui:92` `"test_item asdf"`.
+- **Command Overview**: dumps every parsed entry, one per line, monospaced. This is scaffolding, not a designed feature — `GameCfg::printCfg()` (`gameconfig.cpp`) does the same via `qInfo`, and the tab holds a leftover Designer item, `editwindow.ui:92` `"test_item asdf"`.
 - **Third tab**: `editwindow.ui:136` `"Fuck if I know what should go here"`. Genuinely unwritten.
 - **Edit Binds**: hosts `KeybForm` as a promoted custom widget (`editwindow.ui:282-292`), and the header path in the Designer metadata, `src/ui/keybform.h`, confirms it is the project's own component rather than a stock one.
 - **Menu bar**: `File`, `Edit`, `View`, `Help` exist with **no actions at all** (`editwindow.ui:255-278`). This is where a Save/Save As would be expected to land.

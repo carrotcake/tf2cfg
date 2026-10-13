@@ -1,7 +1,7 @@
 #include "gameconfig.h"
 #include "lex/lexers.h"
 
-#include <QTextStream>
+#include <QDebug>
 
 GameCfg::GameCfg() {
     loadAllCmds();
@@ -115,16 +115,18 @@ void GameCfg::loadAllCmds() {
     }
 }
 
-// Parity P12/D7: the widget build dumped the parsed list to stdout, so it still goes
-// there. QTextStream writes QString as UTF-8 in place; the printf this replaced
-// built a std::string per token just to print it (review finding 17).
+// Parity P12/D7: the widget build dumped the parsed list on load, so it still happens.
+// It goes through qInfo rather than raw printf: no std::string per token, and the
+// category is what a future `QT_LOGGING_RULES` can silence (review finding 17).
+// The line text is unchanged; the channel is not - Qt logs to stderr.
 void GameCfg::printCfg() const {
-    QTextStream out(stdout);
     for (const cmd::Entry &cmd : cmd_list) {
+        QString line;
         for (const QString &str : cmd.args) {
-            out << str << ' ';
+            line += str + ' ';
         }
-        out << " (type: " << static_cast<int>(cmd.type) << ") \n";
+        line += QStringLiteral(" (type: %1) ").arg(static_cast<int>(cmd.type));
+        qInfo().noquote() << line;
     }
 }
 QVector<cmd::Entry> const &GameCfg::getCmdList() const {
