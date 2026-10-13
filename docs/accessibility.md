@@ -37,7 +37,7 @@ which are user-visible text or control boundaries.
 | Status hint (prev/next names) | hover-driven (`EditorPage.qml:94,102`) | **no** — hover only | n/a | n/a |
 | Bind dialog controls | stock Controls (`ComboBox`, `CheckBox`, `RadioButton`, `TextArea`, Ok/Cancel) | yes | style/palette driven | from text |
 | Dialog suggestion list | stock popup + `Keys` up/down/return (`BindEditorDialog.qml:494-500`) | yes | yes | from text |
-| Menu bar | 4 empty `Menu`s (`Main.qml:31-35`) | yes | yes | announced as empty — parity P21 |
+| Menu bar | `File` with `Save`/`Save As.` actions, `Edit`/`View`/`Help` empty (`Main.qml`) | yes | yes | actions announce text + Ctrl+S / Ctrl+Shift+S; the three empty menus still announce as empty - parity P21 |
 
 Stock controls inherit a dark palette (`src/main.cpp:16-47`), so the un-themed ones
 (CheckBox, RadioButton, ToolTip, menu popups) are legible; they simply do not match the rest
@@ -122,11 +122,12 @@ Two caveats, so these numbers are not read as gospel:
 The two that are not arguable are `colorRed` (that is error text a user must read) and
 `colorBorderStrong` (that is the only focus ring on a combo box).
 
-### A8 — The menu bar announces four empty menus (low, and intentional)
+### A8 - The menu bar announces empty menus (low, mostly resolved)
 
-Parity P21: `File`, `Edit`, `View`, `Help` exist with no actions. A screen reader announces
-four empty menus. This is deliberate parity with the widget build, so changing it is a
-deviation decision, not a bug fix.
+Parity P21: `File`, `Edit`, `View`, `Help` existed with no actions. The `File` menu now
+carries `Save` and `Save As.` (deviation D20), so three menus remain empty and a screen
+reader announces those as empty. Finishing the job - removing the three stubs or giving
+them content - is a deviation decision, not a bug fix.
 
 ## 3. What the fixes entail
 

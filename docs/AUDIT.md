@@ -7,7 +7,7 @@ Assumed load: **single user, local desktop app, one config at a time, 3825 comma
 
 ## What this repo does
 
-TF2 Config Manager is a Qt/QML desktop tool for viewing and editing Team Fortress 2 `.cfg` files. You load a config (or a bundled preset), browse the parsed commands, click a key on a visual keyboard/mouse/controller, and a dialog helps you construct a valid `bind` line. The engine parses configs and a 3800-row command catalog (`allcmds.csv`) with type/min/max/flags/platform/context metadata. Edits are saved with a surgical save (`docs/legacy/ui-qml-rewrite.md` section 10.1): the file on disk stays the source of truth for everything the app does not own, and File > Save / Save As write through it.
+TF2 Config Manager is a Qt/QML desktop tool for viewing and editing Team Fortress 2 `.cfg` files. You load a config (or a bundled preset), browse the parsed commands, click a key on a visual keyboard/mouse/controller, and a dialog helps you construct a valid `bind` line. The engine parses configs and a 3800-row command catalog (`allcmds.csv`) with type/min/max/flags/platform/context metadata. Edits are saved with a surgical save (`docs/legacy/ui-qml-rewrite.md` section 10.1): the file on disk stays the source of truth for everything the app does not own, and File > Save / Save As write through it - every save ends by re-parsing the saved file, so the saved path is the source for all later editing and the model always describes what is on disk.
 
 ## Findings
 

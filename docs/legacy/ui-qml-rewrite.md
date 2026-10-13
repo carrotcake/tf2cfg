@@ -165,7 +165,9 @@ Mirrors one `cmd::Entry` per row. Row order = insertion order = parse order, so 
 
 `setEntries(const QVector<cmd::Entry> &)` replaces the contents with `beginResetModel`/`endResetModel`.
 
-`binds()`, `setBind()` and `clearBind()` keep the model's view of the binds in step with its rows. `binds()` replays the rows the way TF2 would — a later bind wins, and `unbindall`, `unbind "k"` and an empty command (`bind "r" ""`, which `b4nny.cfg` uses) all clear — and returns lowercase key token → command. `setBind`/`clearBind` edit the rows themselves and emit `bindsChanged`, so any view reading the map repaints. `setBind` rebinds the key's most recent `bind` row in place when it has one (keeping its file line, which is what lets the surgical save rewrite the line where it stands - section 10.1) and otherwise drops every earlier row for that key and appends one `bind "<key>" "<command>"` row typed `CMD_CMD`, the type the parser gives an identical line in a config file, so a key never ends up with two competing rows and a reload is indistinguishable from the edit. Key tokens are lowercased in both directions, because `cfgLex` folds every line it reads; the *command* keeps its case apart from its first word (D18). `quoted()`/`unquoted()` are the only places that read or write `\"` and `\\`, so the command shown in the dialog, the row in the model and the same row read back from a file are one identical string (D19). See D16.
+`binds()`, `setBind()` and `clearBind()` keep the model's view of the binds in step with its rows. `binds()` replays the rows the way TF2 would — a later bind wins, and `unbindall`, `unbind "k"` and an empty command (`bind "r" ""`, which `b4nny.cfg` uses) all clear — and returns lowercase key token → command. `setBind`/`clearBind` edit the rows themselves and emit `bindsChanged`, so any view reading the map repaints. `setBind` rebinds the key's most recent `bind` row in place when it has one (keeping its file line, which is what lets the surgical save rewrite the line where it stands - section 10.1) and otherwise drops every earlier row for that key and appends one `bind "<key>" "<command>"` row typed `CMD_CMD`, the type the parser gives an identical line in a config file, so a key never ends up with two competing rows and a reload is indistinguishable from the
+edit - a property the surgical save now relies on: every save ends by re-parsing the saved
+file (section 10.1 step 10), so the model always describes the file on disk. Key tokens are lowercased in both directions, because `cfgLex` folds every line it reads; the *command* keeps its case apart from its first word (D18). `quoted()`/`unquoted()` are the only places that read or write `\"` and `\\`, so the command shown in the dialog, the row in the model and the same row read back from a file are one identical string (D19). See D16.
 
 ### `ConfigController` (QObject, exposed to QML as the context property `cfg`)
 
@@ -176,16 +178,16 @@ Mirrors one `cmd::Entry` per row. Row order = insertion order = parse order, so 
 | `loadCfg(path)` | `Q_INVOKABLE bool` | calls `GameCfg::appendCfg` + `printCfg` (D7), fills the model, sets `cfgPath`, returns success; failure sets `lastError` |
 | `clear()` | `Q_INVOKABLE void` | empties the model and load state |
 | `commandModel` | `Q_PROPERTY QAbstractItemModel*` | the model above, `CONSTANT` |
-| `cfgPath` | `Q_PROPERTY QString` | last successfully loaded path; used by the future save path |
+| `cfgPath` | `Q_PROPERTY QString` | the file being edited; Save writes here, Save As re-points it (a `:/` preset is refused as a save target) |
 | `loaded` | `Q_PROPERTY bool` | `commandModel.rowCount() > 0` |
 | `lastError` | `Q_PROPERTY QString` | empty on success; `Lexers::Lexer::open` failure is currently silent, so this is set from the same check the widget build ignored (review finding 6, surfaced not fixed) |
 | `binds` | `Q_PROPERTY QVariantMap` | active binds: lowercase key token → command, derived from the parsed rows; notifies on every change, so the caps recolour (D16) |
 | `setBind(key, command)` | `Q_INVOKABLE bool` | bind `command` to TF2 key token `key`, replacing earlier binds; an empty command removes instead; false when nothing changed. Reaches the file on the next save (D16, D20) |
 | `clearBind(key)` | `Q_INVOKABLE bool` | remove key token `key`'s bind row(s); false when it had none |
-| `dirty` | `Q_PROPERTY bool` | true when any app-owned row exists, i.e. Save would change the file |
+| `dirty` | `Q_PROPERTY bool` | true when any app-owned row exists, i.e. Save would change the file; the post-save resync clears it until the next edit |
 | `canSave()` / `saveBlockReason()` | `Q_INVOKABLE` | false plus a reason string when saving is impossible (nothing loaded, or the path is a bundled `:/` preset) |
 | `needsConfirm()` | `Q_INVOKABLE bool` | true when the file changed on disk, is read-only or has vanished since load; the QML confirm dialog sits between the question and the write |
-| `saveCfg()` / `saveCfgAs(path)` | `Q_INVOKABLE bool` | the surgical save (section 10.1); Save As re-points `cfgPath` at the new file. Emits `saved(path)` on success |
+| `saveCfg()` / `saveCfgAs(path)` | `Q_INVOKABLE bool` | the surgical save (section 10.1); Save As re-points `cfgPath` at the new file and that file becomes the source for later edits - the saved file is re-parsed and the rows rebuilt from it. Emits `saved(path)` on success |
 
 `GameCfg`, `cmd::*`, `Lexers::*` are unchanged apart from removing two unused `#include <QApplication>` lines that only existed because the widgets module was in the build.
 
@@ -348,14 +350,26 @@ app never showed. The design below is built around that fact.
    what lands on disk; a line that was app-owned but whose row is gone (user deleted the bind)
    is dropped; every other line is copied verbatim.
 7. Rows with `sourceLine == -1` (binds added in this session) are inserted immediately after
-   the last app-owned line, in row order — so new binds stay with the binds — or at end of file
-   if the config has none.
+   the last bind line - whichever ranks last among app-owned rows and parsed `bind`/
+   `bindtoggle` rows - in row order, so new binds stay with the binds; at end of file when
+   the config has no binds at all.
 8. Write through `QSaveFile`; on failure set `lastError` and leave the `.bak` in place.
 9. On success re-record mtime/size so the next Save is silent again.
+10. On success re-parse the file just written and rebuild the model rows and the parse
+    snapshot from it (`resyncAfterSave`). A save that inserted session rows or dropped
+    deleted lines shifted the layout; without this the next surgical save keyed rows to
+    the old layout and re-emitted an edited session bind as a second line beside its old
+    one. After the resync the saved path is the source for all later editing and saving,
+    every row carries its true file line again, and `dirty` is false until the next edit.
+    The re-parse is synchronous on purpose: a queued reload could land after the user's
+    next edit and overwrite it.
 
 **UI.** The `File` menu gains `Save` (Ctrl+S) and `Save As…` (Ctrl+Shift+S) — see deviation
 D20. Save As writes to a user-chosen path, then `cfgPath` becomes that path and the mtime/size
-record is refreshed. No dirty tracking and no prompt-on-close in the first cut.
+record is refreshed. There is no prompt-on-close; `dirty` is only the Save action's enable
+flag, not a tracked before/after diff. The menu bar hangs its visibility on an explicit
+`editorActive` flag, because `goToEditor()` swaps pages with `StackView.replace()` and
+`pageStack.depth` never grows.
 
 **Known reorder, accepted:** a comment sitting *between* two bind lines stays at its own file
 position while the binds around it are re-rendered in place, so it stays between them; the
@@ -411,7 +425,7 @@ Performed against the MinGW Qt 6.12.0 build with the full automation run on 2026
 | D15 (scroll + zoom) | see items 10–12 of this section |
 | D16 (bound caps + dialog edit) | loaded-config colouring confirmed visually and by the pixel scan in item 13 (47 visible bound caps == the on-screen keys `default.cfg` binds; numpad all grey); the dialog's OK is wired to `cfg.setBind`/`cfg.clearBind`, whose `bindsChanged` signal is what repaints the caps |
 | D17 (startup position) | confirmed visually, and by the `GetWindowRect` probe in item 14 (frame top-left at the primary screen's origin) |
-| D20 (save pair) | the surgical save is covered offline by eight `EngineTest` cases (owned-line round trip, CRLF + missing final newline, deleted-row drop, session-row placement, idempotent re-save, `.bak`, `:/` refusal + Save As, disk-change detection); the menus/dialog/toast are compiler-, lint- and smoke-verified only (no config can be loaded without UI interaction) |
+| D20 (save pair) | the surgical save is covered offline by nine `EngineTest` cases (owned-line round trip, CRLF + missing final newline, deleted-row drop, session-row placement, idempotent re-save, `.bak`, `:/` refusal + Save As whose content is asserted equal to the preset, vanished-file recreation, disk-change detection); the Save-As case also drives the post-save resync - bind before Save As, save, rebind, save, and exactly one `bind "k"` line survives. The menus/dialog/toast are compiler-, lint- and smoke-verified only (no config can be loaded without UI interaction) |
 
 ## 13. Keyboard usability: scrolling and zoom
 
