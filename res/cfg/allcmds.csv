@@ -1139,7 +1139,7 @@ listip,cmd,,,,,List IP addresses on the ban list.,none,universal,server commands
 listissues,cmd,,,,game,List all the issues that can be voted on.,none,universal,server commands
 listmodels,cmd,,,,,List loaded models.,none,universal,engine
 load,cmd,,,,norecord,Load a saved game.,[str],universal,engine
-load_itempreset,cmd,,,,client,Equip all items for a given preset on the player.,none,universal,engine
+load_itempreset,cmd,,0,3,client,Equip all items for a given preset on the player.,[int],universal,engine
 loadcommentary,cmd,,,,client,Load developer commentary data.,none,universal,engine
 loader_dump_table,cmd,,,,,Dump the file loader table.,none,universal,engine
 loader_spew_info,,0,,,,"0:Off, 1:Timing, 2:Completions, 3:Late Completions, 4:Purges, -1:All",bool,universal,client settings
