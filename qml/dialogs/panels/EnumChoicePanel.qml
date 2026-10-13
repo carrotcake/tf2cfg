@@ -65,12 +65,17 @@ Item {
         return words[words.length - 1]
     }
 
+    /// {v} appears twice in the template; String.replace only replaces the first.
+    function filledTemplate(value) {
+        return compoundTemplate.split("{v}").join(value)
+    }
+
     function authoredText() {
         if (selectedIndex < 0)
             return ""
         const value = String(options[selectedIndex].value)
         return rebuild && compoundTemplate !== ""
-            ? compoundTemplate.replace("{v}", value)
+            ? filledTemplate(value)
             : commandName + " " + value
     }
 
@@ -153,8 +158,9 @@ Item {
             id: rebuildCheck
 
             visible: panel.compoundTemplate !== ""
-            text: "Rebuild: " + panel.compoundTemplate.replace("{v}", panel.selectedIndex >= 0
-                                                                     ? String(panel.options[panel.selectedIndex].value) : "?")
+            text: "Rebuild: " + (panel.selectedIndex >= 0
+                                 ? panel.filledTemplate(String(panel.options[panel.selectedIndex].value))
+                                 : panel.compoundTemplate)
             checked: panel.rebuild
             onToggled: {
                 panel.rebuild = rebuildCheck.checked
