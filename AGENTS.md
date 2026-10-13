@@ -16,7 +16,8 @@ Assumed load: single user, local, one config at a time, no network.
 - `res/res.qrc` - resources incl. the command catalog `allcmds.csv` (~3800 rows) and
   bundled cfg presets under `:/`.
 - `tests/tst_engine.cpp` - one QtTest binary covering engine + controller.
-- `docs/` - see "Docs" below. `data/cfg/` holds sample TF2 configs.
+- `docs/` - see "Docs" below. `data/` holds reference dumps (`cvarlist_linux.txt`,
+  `cs2_cvarlist.md`) the catalog was built from, not sample configs.
 
 ## Build, test, lint
 
@@ -33,56 +34,30 @@ cd build-test && .\release\tf2cfg_test.exe -o testlog.txt,txt
 - The test suite is the gate: all cases green before every commit. It parses real files
   offline against temp paths; `QT += concurrent` and `RESOURCES += ../res/res.qrc` are
   required (tests read the catalog from the same resource the app uses).
-- `qmllint` must stay at 0 errors; ~27 unqualified-access/ComponentBehavior warnings are
-  tolerated, do not add new ones.
+- `qmllint` must stay at 0 errors; 28 unqualified-access warnings are tolerated
+  (counted 2026-10-13, no `ComponentBehavior` advisories remain), do not add new ones.
 - `pwsh -File deploy.ps1 [-Config debug] [-QtRoot ...]` packages a self-contained `dist/`.
 
-## Architecture contracts
+## Contracts (see docs/ARCHITECTURE.md)
 
-- **Surgical save** (`docs/legacy/ui-qml-rewrite.md` section 10.1, implemented): the file
-  on disk is the source of truth for lines the app does not own. `cmd::Entry` carries
-  `sourceLine` (from the lexer's `cfgLex::currentLine()`; `-1` = created this session) and
-  `appOwned` (set when this session edited the row). `writeConfig(path, baseline, error)`
-  copies non-owned lines verbatim (preserving CRLF and missing final newline), re-renders
-  owned lines from `args.join(" ")`, drops lines whose rows were deleted, inserts session
-  rows after the last bind line, writes `.bak`, commits via `QSaveFile`. Baseline is the
-  target for Save, the loaded config for Save As; empty baseline -> render everything.
-- **Post-save resync**: every successful save re-parses the saved file synchronously
-  (`ConfigController::resyncAfterSave`) and rebuilds rows + the `m_parsed` snapshot, so
-  row bookkeeping always matches the file on disk and the saved path is the source for
-  later edits. `dirty` (NOTIFY `bindsChanged`) clears until the next edit.
-- **`GameCfg::appendCfg` accumulates** - always `resetParsed()` before parsing another
-  file into the same instance. `loadCfg` does this.
-- `CommandListModel::setBind` rebinds a parsed `bind` row in place (keeps `sourceLine`,
-  sets `appOwned`); it stores the **bare command**, not a composed bind line. Head-token
-  test `isBindCommand` classifies bind rows (parsed binds are typed `CMD_CMD`).
-- Saving reads the model via `CommandListModel::entries()`, not `m_cfg.getCmdList()`.
-- `loadCfg` parses on a worker thread (`QtConcurrent::run`); model swap happens on the GUI
-  thread via `QMetaObject::invokeMethod`. Failed loads must not blank the old rows.
+`docs/ARCHITECTURE.md` is the single source for the live contracts: parser semantics
+(the game's tokenizer is the acceptance bar), surgical save + post-save resync, model
+contracts (`CommandListModel`, `ConsoleCommandModel`, `ConfigController`), QML rules,
+and the numbered deviations **D1..D20** (cite these when deviating). The two hardest
+rules: **the file on disk is the source of truth for lines the app does not own**, and
+**lexer changes must reproduce the game's tokenizer** and keep the test suite green.
 
-## QML rules
+## Docs
 
-- Every QML file starts `pragma ComponentBehavior: Bound`; delegates declare
-  `required property var modelData`. Keep this on new delegates or rendering breaks at
-  runtime, not compile time.
-- Qt 6.12 runtime: `MenuItem` has no `shortcut` property - use `Action`s for menu
-  shortcuts (File menu: Ctrl+S / Ctrl+Shift+S).
-- `StackView.replace()` keeps `pageStack.depth` at 1 - page identity comes from the
-  explicit `editorActive` property in `Main.qml`, not depth.
-- QML files are embedded in the qrc: **QML edits need an app rebuild to take effect**.
-- Console output on Windows needs `QT_FORCE_STDERR_LOGGING=1` to reach stderr.
-
-## Docs (read before changing behavior)
-
-- `docs/legacy/ui-qml-rewrite.md` - the design: parity contract with the old widget UI
-  (section 3), numbered deviations **D1..D20** (cite these when deviating), C++ API
-  contract (section 6), save algorithm (section 10.1), verification records (section 12).
-- `docs/AUDIT.md` - audit findings. Items marked "closed with no change" are decisions,
-  not a to-do list - do not re-raise them. Currently open: #22 (CI workflow).
-- `docs/CODE_REVIEW.md` - engine review; finding 1 (lexer) is fixed.
+- `docs/ARCHITECTURE.md` - read before changing behavior (see above).
+- `docs/ROADMAP.md` - the single list of open work; do not re-raise dismissed items.
+- `docs/AUDIT.md` - the current audit's findings; open ones are mirrored in the roadmap.
+  The 2026-10-12 audit is retired to `docs/legacy/`.
 - `docs/accessibility.md` - deferred A1-A8/W1-W8 items; priorities are W1 (Tf2Button
   focus ring) and W2 (KeyCap focus/keys).
-- `docs/legacy/*.md` other files are dated records - do not edit them.
+- `docs/legacy/*.md` - dated records (audit, code review, migrations, the original
+  QML-rewrite design): historical evidence and verification logs. Do not edit them; the
+  live versions of their contracts and open items are in the two files above.
 
 ## Workflow
 
@@ -93,5 +68,6 @@ cd build-test && .\release\tf2cfg_test.exe -o testlog.txt,txt
   rewrites LF to CRLF. Use the edit tools, or `.Replace()` + `[IO.File]::WriteAllText`
   to strip CR if you must round-trip.
 - The parser is the acceptance bar: lexer changes must reproduce the game's tokenizer
-  (see CODE_REVIEW #1 for the verified escape/comment semantics) and keep the test suite
-  green. UI behavior is verified by the user manually; lint + build + tests are your gate.
+  (see `docs/ARCHITECTURE.md` section 2, verified in `docs/legacy/CODE_REVIEW.md` #1)
+  and keep the test suite green. UI behavior is verified by the user manually; lint +
+  build + tests are your gate.

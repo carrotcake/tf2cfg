@@ -50,7 +50,7 @@ struct CatalogFixture {
 
 /**
  * Covers the parsing engine and the bind logic the keyboard UI depends on
- * (docs/AUDIT.md #10). No GUI: everything here is a plain class or model.
+ * (docs/legacy/AUDIT.md #10). No GUI: everything here is a plain class or model.
  *
  * A test that pins a bug fix is named after the fix, so a future regression names
  * itself.
@@ -295,7 +295,7 @@ void EngineTest::csvFieldWithCommaStaysOneField() {
 
 void EngineTest::csvShortRowIsPadded() {
     // Hand-edited rows may be short; the token fills the missing fields instead of
-    // reading past the end (docs/CODE_REVIEW.md #2).
+    // reading past the end (docs/legacy/CODE_REVIEW.md #2).
     Lexers::cmdLex lex;
     QVERIFY(lex.open(writeFile(QStringLiteral("short.csv"), QStringLiteral("x,cmd,,\n"))));
     const auto row = lex.nextToken();

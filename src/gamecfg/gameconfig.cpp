@@ -75,7 +75,7 @@ void GameCfg::loadAllCmds() {
         const QString key = tok.name().toLower();
 
         // Owning pointers: value storage in the QVector would slice the typed
-        // subclasses. Never freed - GameCfg lives for the whole app run.
+        // subclasses. Freed in ~GameCfg (audit #1).
         if (tok.isCmd()) {
             known_cmds.push_back(new cmd::ConCmd(tok.name(), tok.docStr(), tok.inputType(),
                                                  tok.flagsVal(), tok.platform(), tok.context()));

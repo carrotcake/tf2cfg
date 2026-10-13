@@ -60,7 +60,7 @@ Rectangle {
                 : bound ? Theme.colorKeyCapBoundBorder
                 : Theme.colorKeyCapBorder
     // A bound key is burnt orange. The two caps the widget build could not bind keep
-    // their dimmed fill even when bound - PrtScn has no token at all, Pause does (D16).
+    // their dimmed fill even when bound - PrtScn and Menu both carry no token (D16).
     color: bound ? cap.fillWhenBound
          : bindable ? cap.fillWhenUnbound
          : Theme.colorKeyCapDisabled

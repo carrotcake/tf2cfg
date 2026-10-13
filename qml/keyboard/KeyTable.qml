@@ -146,7 +146,7 @@ QtObject {
         "mwheelup":   { id: 107, token: "mwheelup",      label: "Scroll Up", fs: 10 },
         "mwheeldown": { id: 108, token: "mwheeldown",    label: "Scroll Down", fs: 10 },
 
-        // -- controller (Xbox 360 style, see docs/missing-input-ids.md) --------
+        // -- controller (Xbox 360 style, see docs/legacy/missing-input-ids.md) --
         // Buttons are the engine's JOY codes; triggers/sticks/d-pad are the
         // axis-direction and POV keys. Not in keybform.h, so ids continue on.
         // Axis tokens contain spaces - they must stay quoted in cfg output,
