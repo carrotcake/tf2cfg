@@ -165,16 +165,23 @@ Dialog {
         if (!commandInfo)
             return
         const specs = parseSignature(commandInfo.input)
+        // Per-argument authoring bounds from the catalog (docs/DESIGN-arg-bounds.md):
+        // one entry per signature token, bounds only on the sides the companion file
+        // verified. Cvars have no argsSpec and keep their row range on every editor,
+        // as before.
+        const argSpecs = commandInfo.argsSpec || []
         specs.forEach(function (spec, i) {
+            const bs = argSpecs[i] && argSpecs[i].index === i ? argSpecs[i] : null
+            const kind = bs ? (bs.isFloat ? "flt" : spec.kind) : spec.kind
             argModel.append({
-                kind: spec.kind,
+                kind: kind,
                 optional: spec.optional,
                 included: !spec.optional,
-                label: "param " + (i + 1) + " (" + spec.kind + ")",
+                label: "param " + (i + 1) + " (" + kind + ")",
                 value: specs.length === 1 && commandInfo.def !== "" ? commandInfo.def
-                                                                    : defaultValueFor(spec.kind),
-                min: commandInfo.min,
-                max: commandInfo.max
+                                                                    : defaultValueFor(kind),
+                min: bs ? (bs.hasMin ? bs.min : "") : commandInfo.min,
+                max: bs ? (bs.hasMax ? bs.max : "") : commandInfo.max
             })
         })
         regen()
