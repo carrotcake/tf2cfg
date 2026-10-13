@@ -70,7 +70,8 @@ the UI as built today.
    closing quote and the next comma (`"abc"junk,`) are appended to the field, and a
    quoted field containing a newline would split the row (fields are scanned per
    `readLine`). The catalog is machine-generated and verified clean (all 3825 rows have
-   exactly 10 fields), so this is a data-edge note, not a live bug.
+   exactly 10 fields). Guarded by the test `catalogRowsHaveTenFields`, which pins that
+   shipped contract; no parser behavior changed. Still a data-edge note, not a live bug.
 6. **`bindtoggle` is treated as a plain bind by `scanBinds()`** (key → command, no
    toggle semantics). Fine for cap colouring and row identity, which is all the bind map
    drives today; a future "show what this key does" mode (KeyCap.bindText) would need

@@ -1,5 +1,6 @@
 #include <QFile>
 #include <QFileInfo>
+#include <QTextStream>
 #include <QSaveFile>
 #include <QTemporaryDir>
 #include <QtTest>
@@ -76,6 +77,7 @@ private slots:
     void csvFieldWithCommaStaysOneField();
     void csvShortRowIsPadded();
     void catalogLoadsEveryRowAsACommand();
+    void catalogRowsHaveTenFields();
 
     // CommandListModel
     void appendCfgReportsAnUnreadableFile();
@@ -333,6 +335,44 @@ void EngineTest::catalogLoadsEveryRowAsACommand() {
     // A cheat-tagged row keeps its flag, which is what the Build-A-Bind filter reads.
     QCOMPARE(byName.value(QStringLiteral("achievement_debug"))->get_type(), cmd::CMD_BVAR);
     QVERIFY(byName.value(QStringLiteral("achievement_debug"))->isCheat());
+}
+
+void EngineTest::catalogRowsHaveTenFields() {
+    // Catalog ingestion note: allcmds.csv is machine-generated and every shipped row
+    // must carry exactly the 10 columns documented in res/cfg/schema.md. This pins
+    // that constraint so a malformed row cannot silently be padded or truncated
+    // by cmdLex's tolerant scanner (docs/AUDIT.md #5).
+    QFile file(QStringLiteral(":/cfg/allcmds.csv"));
+    QVERIFY(file.open(QIODevice::ReadOnly | QIODevice::Text));
+    QTextStream in(&file);
+    int rows = 0;
+    while (!in.atEnd()) {
+        const QString line = in.readLine();
+        if (line.isEmpty())
+            continue;
+        int commas = 0;
+        bool inQuotes = false;
+        for (int i = 0; i < line.size(); ++i) {
+            const QChar c = line.at(i);
+            if (inQuotes) {
+                if (c == QLatin1Char('"')) {
+                    if (i + 1 < line.size() && line.at(i + 1) == QLatin1Char('"'))
+                        ++i;
+                    else
+                        inQuotes = false;
+                }
+            } else {
+                if (c == QLatin1Char('"'))
+                    inQuotes = true;
+                else if (c == QLatin1Char(','))
+                    ++commas;
+            }
+        }
+        QVERIFY2(!inQuotes, qPrintable(QStringLiteral("unclosed quote in catalog row: ") + line));
+        QCOMPARE(commas + 1, 10);
+        ++rows;
+    }
+    QCOMPARE(rows, 3825);
 }
 
 // --- CommandListModel ---
