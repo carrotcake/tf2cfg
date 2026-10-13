@@ -813,6 +813,10 @@ Dialog {
 
                 ScrollView {
                     id: argsScroll
+                    // Track the content: a bare ScrollView floors at its default
+                    // implicit size, which left a large empty block behind the few
+                    // small editors a no-argument command shows.
+                    implicitHeight: argsContent.implicitHeight
                     Layout.fillWidth: true
                     Layout.fillHeight: true
 
@@ -830,6 +834,7 @@ Dialog {
                     }
 
                     ColumnLayout {
+                        id: argsContent
                         width: argsScroll.availableWidth
                         spacing: Theme.spacingTight
 
@@ -971,6 +976,8 @@ Dialog {
             // Parity P34: plain text command editor, monospace, no wrapping.
             ScrollView {
                 Layout.fillWidth: true
+                // Same content tracking as argsScroll: no default-size floor.
+                implicitHeight: customCommand.implicitHeight
 
                 TextArea {
                     id: customCommand
