@@ -1,1 +1,12 @@
+build,0,int,0,3
+coach_command,0,int,0,3
+dbghist_addline,0,int,0,4
+dbghist_dump,0,int,0,4
+demo_setendtick,0,int,0,
+destroy,0,int,0,3
+eureka_teleport,0,int,0,1
+impulse,0,int,0,255
 load_itempreset,0,int,0,3
+next_map_vote,0,int,0,2
+voicemenu,0,int,0,2
+voicemenu,1,int,0,8
