@@ -89,6 +89,8 @@ Dialog {
             })
         })
         regen()
+        if (commandInfo && commandInfo.isCvar && commandInfo.input === "bool")
+            bindToggleCheck.checked = modeToggle.checked
     }
 
     function defaultValueFor(kind) {
@@ -212,8 +214,11 @@ Dialog {
         if (!commandInfo)
             return ""
         if (commandInfo.isCvar && modeToggle.checked && toggleAvailable) {
+            // A bool cvar toggles straight to TF2's `bindtoggle`, whose row is a
+            // `bindtoggle` bind rather than a wrapped `incrementvar` command. The
+            // numeric path keeps incrementvar so it can step through a range.
             if (commandInfo.input === "bool")
-                return "incrementvar " + commandInfo.name + " 0 1 1"
+                return commandInfo.name
             return "incrementvar " + commandInfo.name + " " + commandInfo.min + " "
                     + commandInfo.max + " " + stepField.text
         }
@@ -689,7 +694,11 @@ Dialog {
                                 text: "Toggle each press"
                                 checked: true
                                 ButtonGroup.group: cvarMode
-                                onCheckedChanged: regen()
+                                onCheckedChanged: {
+                                    regen()
+                                    if (commandInfo && commandInfo.isCvar && commandInfo.input === "bool")
+                                        bindToggleCheck.checked = checked
+                                }
                             }
                             RadioButton {
                                 text: "Set fixed value"
@@ -815,10 +824,15 @@ Dialog {
                 id: bindToggleCheck
                 text: "Save as bindtoggle (TF2 `bindtoggle` syntax)"
                 checked: dialog.boundCommand !== ""
-                         && cfg.bindingKind(dialog.keyToken.toLowerCase()) === "bindtoggle"
+                         && dialog.cfgRef.bindingKind(dialog.keyToken.toLowerCase()) === "bindtoggle"
+                enabled: commandInfo !== null
+                         ? (commandInfo.isCvar && commandInfo.input === "bool")
+                         : (dialog.boundCommand !== ""
+                            && dialog.cfgRef.bindingKind(dialog.keyToken.toLowerCase()) === "bindtoggle")
                 ToolTip.visible: hovered
-                ToolTip.text: "Writes `bindtoggle \"key\" \"command\"` so the game toggles "
-                              + "the target cvar each press instead of binding a raw command."
+                ToolTip.text: enabled ? "Writes `bindtoggle \"key\" \"cvar\"` so TF2 toggles "
+                                     + "the boolean cvar each press."
+                                     : "bindtoggle applies to bool cvars; use Toggle for int/float."
             }
 
             Item { Layout.fillWidth: true }
