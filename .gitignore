@@ -1,6 +1,7 @@
 # Qt build output and Creator state
 build/
 build-test/
+dist/
 *.pro.user
 /.qtcreator/
 
