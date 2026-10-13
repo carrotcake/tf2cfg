@@ -100,6 +100,7 @@ Each is small, and each is listed so parity can be audited. D15 and D16 are the 
 | D17 | The window is pinned to the top-left corner of the primary screen at startup instead of opening wherever the OS puts it | On a multi-monitor desktop the OS could open the window straddling two screens, pushing part of it outside any single-monitor capture. Pinning the frame to the primary screen's origin makes every launch start from the same, fully visible spot. Only the position is fixed; a page change keeps the frame's top-left and, since D2, does not resize the window either. See section 14. |
 | D18 | `setBind` lowercases only the first word of the command; the arguments keep the case the user typed | Console command names are case-insensitive, arguments are not: `say "Hello"` became `say "hello"`. Rows read from a file stay lowercase because `cfgLex` folds every line, so the same edit applied twice still yields one identical row. Fix for audit #16. |
 | D19 | `\"` and `\\` inside a quoted token no longer end it, and `//` starts a comment only outside a quoted token | The widget build split `alias t "say \"hi\""` into two arguments, cut any line at a `//` inside quotes (a URL), and then appended an `error` token. Both now match the game's tokenizer; the two escapes are read and written only by `CommandListModel::unquoted()`/`quoted()`, so a bind survives a write/read round trip. Fix for audit #6; token text is unchanged for every config that contains neither. |
+| D20 | The `File` menu gains working `Save` (Ctrl+S) and `Save As…` (Ctrl+Shift+S) actions | P21 recorded the menus as present but empty, matching the widget build. The first actions to land are the save pair (section 10.1); the other menus stay empty until something belongs in them. |
 
 ## 5. Target architecture
 
@@ -284,7 +285,7 @@ Mapped from `docs/legacy/pickle-inferences.md` §"What is unfinished" and `docs/
 
 | Future feature | Where it lands | What is already in place after this rewrite |
 |---|---|---|
-| Save a config to disk | `ConfigController::saveCfg()` + `File` menu action + `cfgPath` | menu bar exists with an empty `File` menu; `cfgPath` already tracked |
+| Save a config to disk | `ConfigController::saveCfg()` + `File` menu action + `cfgPath` | designed in section 10.1; menu bar exists with an empty `File` menu, `cfgPath` already tracked |
 | ~~Paint loaded binds onto the keyboard~~ (landed, D16) | done: `KeyCap.boundCommand` reads `cfg.binds` and colours the cap; OK in the dialog edits the bind | `BoundKeyRole` reports the key token, `cfg.binds`/`setBind`/`clearBind` exist, and bound caps have their own colour tokens |
 | Type-aware argument editors | `BindEditorDialog` "Arguments" area switches on `TypeRole`, using `IntVar::getMinVal()`/`getMaxVal()` | model exposes type + args; the cvar metadata is already parsed (unused today) |
 | Alias chains | `BindEditorDialog` command list includes aliases; `TypeNameRole` reports `alias` | `CMD_ALIAS` detection already exists in `GameCfg` |
@@ -292,6 +293,73 @@ Mapped from `docs/legacy/pickle-inferences.md` §"What is unfinished" and `docs/
 | More presets (`b4nny_defbinds`, `b4nny_nobinds`) | `ConfigController::presets` list | presets come from one C++ list instead of being split between code and `.ui` labels |
 | Key table owned by C++ | move `KeyTable.qml` data into a `KeyTable` QObject, inject via context property | one data source today (D9), no duplicated table |
 | Parse-fidelity fixes | `src/gamecfg/lex/**` | landed since: the case fold stops at the command name, `//` is quote-aware, quoted tokens honour `\"`/`\\`, and a short CSV row is padded instead of indexed blindly (`docs/CODE_REVIEW.md` #1, #2, #5, #6) |
+
+### 10.1 Save-to-disk design (decided 2026-10-12, not yet implemented)
+
+The app is read-only today: edits live in the model until the next load. The parse is
+**provably lossy** — `//` comments are stripped before tokenizing, blank lines and indentation
+never become rows, an unterminated quote becomes an `error` row, and command names are folded
+to lower case — so writing the model back wholesale would delete user content the app never
+showed. The design below is built around that fact.
+
+**Decisions**
+
+1. **Surgical save.** The file on disk is the source of truth for everything the app does not
+   own; the model is the authority only for rows it owns. At save time the original file is
+   re-read and copied line by line, except that owned lines are re-rendered from the model.
+   Comments, cvars, aliases, `exec` lines, blank lines, indentation and CRLF-vs-LF all survive.
+2. **Ownership is a flag, not a command-name test.** `cmd::Entry` gains
+   `int sourceLine = -1` (file line the row was parsed from; `-1` for rows created in-app) and
+   `bool appOwned = false`. `setBind`/`clearBind` set the flag on rows they create or keep;
+   the placeholder tab will set it on the rows it edits. Both regeneration and deletion fall
+   out of the flag — no second rule about command names to maintain.
+3. **Silent save, confirm the risky cases, always a `.bak`.** Ctrl+S saves without a prompt
+   when the path is unchanged and the file is untouched on disk. A confirmation names the
+   problem before writing when: the file changed on disk since load, the target is missing or
+   read-only, or the path has never been saved to (Save As territory). A one-line copy of the
+   current file is written as `<name>.bak` beside it before every write — `QSaveFile` already
+   makes a crash mid-write harmless, so the backup is insurance against a *wrong but successful*
+   write, not a partial one.
+4. **Disk-change detection.** mtime + size are recorded at load and compared at save;
+   a mismatch triggers the confirm dialog with both timestamps. Synctype/OneDrive/Dropbox
+   rewrite configs under the user, and silently overwriting that rewrite is the data-loss case
+   this guard exists for.
+
+**The algorithm** (`ConfigController::saveCfg()`, ~70–90 lines)
+
+1. Target path is `cfgPath`. If it starts with `:/` it is a bundled preset (a Qt resource,
+   read-only; `QFile::exists()` is true for it, so the check is explicit): Save refuses and
+   Save As opens instead.
+2. Target missing, unreadable or read-only → error via `lastError`, no write.
+3. Current mtime/size differ from the load-time record → confirm dialog with both timestamps.
+4. Write `<name>.bak` (copy of the current file).
+5. Read the original bytes and split on line boundaries **preserving each terminator**, so a
+   CRLF config stays CRLF (open without `QIODevice::Text`, which would normalize).
+6. Walk the lines in order: a line whose model row is app-owned is emitted as
+   `args.join(" ")` — the same text the Command Overview shows, so what the user reviews is
+   what lands on disk; a line that was app-owned but whose row is gone (user deleted the bind)
+   is dropped; every other line is copied verbatim.
+7. Rows with `sourceLine == -1` (binds added in this session) are inserted immediately after
+   the last app-owned line, in row order — so new binds stay with the binds — or at end of file
+   if the config has none.
+8. Write through `QSaveFile`; on failure set `lastError` and leave the `.bak` in place.
+9. On success re-record mtime/size so the next Save is silent again.
+
+**UI.** The `File` menu gains `Save` (Ctrl+S) and `Save As…` (Ctrl+Shift+S) — see deviation
+D20. Save As writes to a user-chosen path, then `cfgPath` becomes that path and the mtime/size
+record is refreshed. No dirty tracking and no prompt-on-close in the first cut.
+
+**Known reorder, accepted:** a comment sitting *between* two bind lines stays at its own file
+position while the binds around it are re-rendered in place, so it stays between them; the
+block-level alternative (emit all binds at the first bind line) would have dragged such
+comments to after the block, and was rejected for that reason.
+
+**First cut of the tests** (`tests/tst_engine.cpp`, all offline against temp files):
+round trip — parse a config with comments/blank lines/binds, `setBind`, save, re-parse, and
+assert the non-owned lines are byte-identical and the binds changed; CRLF preservation; a
+deleted bind row disappears from the saved file; `.bak` written; a `:/` path refused;
+a changed-on-disk save is refused when the confirm is declined (testable by calling the
+controller with the confirm path stubbed or split out of the GUI).
 
 ## 11. Legacy handling
 

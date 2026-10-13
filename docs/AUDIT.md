@@ -90,7 +90,7 @@ the reason recorded — these are not a to-do list and should not be re-raised),
 
 **Next up, in order:**
 1. CI (#22) — run `tf2cfg_test` and build the app on `ubuntu-latest` so half the player base is not the first to find a compile error. The **only** open finding in this document.
-2. Save-to-disk (docs/legacy/ui-qml-rewrite.md section 10) — the editor has been writable in memory since D16 with nowhere to write. Its prerequisite (argument case surviving a reload) is in place; see the parse-fidelity note in `docs/CODE_REVIEW.md`. Three decisions come first: full rewrite versus a surgical edit of the bind lines, overwrite versus confirm, and what to do if the file changed on disk while it was loaded.
+2. Save-to-disk — designed in `docs/legacy/ui-qml-rewrite.md` section 10.1 (surgical save, ownership flag on the row, `.bak` + confirm on disk-change, mtime/size detection), implementation pending.
 3. Accessibility (`docs/accessibility.md`) — evaluated and sized, put off deliberately. The work items are ordered there; the two that matter are a focus ring on `Tf2Button` and making the 104 key caps reachable by keyboard.
 
 Closed by decision and not to be re-raised: #11, #12, #13, #17, #18, #20 — each with its reason inline.
