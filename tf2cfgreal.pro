@@ -14,7 +14,6 @@ QML_DESIGNER_IMPORT_PATH += qml
 
 SOURCES += \
     src/main.cpp \
-    src/gamecfg/cvar.cpp \
     src/gamecfg/gameconfig.cpp \
     src/gamecfg/lex/cmdlexer.cpp \
     src/gamecfg/lex/configlexer.cpp \
@@ -30,8 +29,9 @@ HEADERS += \
     src/ui/consolecommandmodel.h \
     src/ui/configcontroller.h
 
-# The previous Qt Widgets UI is kept for reference but is not built.
-# It lives in src/legacy/widgets/ - see the README there.
+# The previous Qt Widgets UI was retired and deleted once the QML rewrite shipped;
+# git history has it. See docs/legacy/ui-qml-rewrite.md section 11.
+# The engine test binary is a separate project: tests/tests.pro
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

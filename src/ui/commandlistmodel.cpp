@@ -1,5 +1,7 @@
 #include "commandlistmodel.h"
 
+#include <QLatin1StringView>
+
 namespace {
 
 QHash<int, QByteArray> makeRoleNames() {
@@ -16,7 +18,7 @@ QHash<int, QByteArray> makeRoleNames() {
 /// The config lexer hands arguments back with their quotes still on, so `bind "0" "slot10"`
 /// parses as three arguments: `bind`, `"0"` and `"slot10"`. Both directions are needed:
 /// read a key/command out of a parsed row, and write a row the parser would reparse the
-/// same way. See docs/ui-qml-rewrite.md D16.
+/// same way. See docs/legacy/ui-qml-rewrite.md D16.
 ///
 /// The lexer keeps the backslashes a quoted token carries, so this is the one place that
 /// reads them - which is why a row setBind() wrote and the same row read back from a file
@@ -49,10 +51,21 @@ QString quoted(const QString &arg) {
     return QLatin1Char('"') + out + QLatin1Char('"');
 }
 
-/// True for the two commands that put a command on a key: `bind` and `bindtoggle`
-/// (allcmds.csv spells the latter BindToggle; the lexer lowercases every line).
+/// The console commands that drive key binds. scanBinds() reads them and setBind()
+/// writes one, so a typo in a copy would produce a row nothing ever reads back.
+/// All lowercase: the engine folds every config line to lower case (allcmds.csv
+/// spells `bindtoggle` BindToggle). Private to this file - no other translation
+/// unit needs them.
+namespace BindSyntax {
+constexpr auto Bind = QLatin1StringView("bind");
+constexpr auto BindToggle = QLatin1StringView("bindtoggle");
+constexpr auto Unbind = QLatin1StringView("unbind");
+constexpr auto UnbindAll = QLatin1StringView("unbindall");
+} // namespace BindSyntax
+
+/// True for the two commands that put a command on a key.
 bool isBindCommand(const QString &head) {
-    return head == QLatin1String("bind") || head == QLatin1String("bindtoggle");
+    return head == BindSyntax::Bind || head == BindSyntax::BindToggle;
 }
 
 } // namespace
@@ -142,12 +155,12 @@ CommandListModel::BindScanResult CommandListModel::scanBinds() const {
 
         const QString head = unquoted(entry.args.at(0)).toLower();
 
-        if (head == QLatin1String("unbindall")) {
+        if (head == BindSyntax::UnbindAll) {
             result.binds.clear();
             result.rowsByKey.clear();
             continue;
         }
-        if (head == QLatin1String("unbind")) {
+        if (head == BindSyntax::Unbind) {
             if (entry.args.size() >= 2) {
                 const QString key = unquoted(entry.args.at(1)).toLower();
                 result.binds.remove(key);
@@ -201,7 +214,7 @@ bool CommandListModel::setBind(const QString &key, const QString &command) {
     }
 
     cmd::Entry entry;
-    entry.args << QStringLiteral("bind") << quoted(cleanKey) << quoted(cleanCommand);
+    entry.args << QString(BindSyntax::Bind) << quoted(cleanKey) << quoted(cleanCommand);
     // `bind` is a plain console command in allcmds.csv, which is the type the parser gives
     // an identical line in a config file. Keep the two indistinguishable.
     entry.type = cmd::CMD_CMD;
@@ -246,7 +259,7 @@ QString CommandListModel::typeName(cmd::CmdType type) {
     case cmd::CMD_CMD:
         return QStringLiteral("command");
     case cmd::CMD_BIND:
-        return QStringLiteral("bind");
+        return QString(BindSyntax::Bind);
     case cmd::CMD_ALIAS:
         return QStringLiteral("alias");
     case cmd::CMD_UNKWN:
