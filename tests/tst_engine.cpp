@@ -88,6 +88,7 @@ private slots:
     void setBindKeepsArgumentCase();
     void setBindEscapesQuotesInRow();
     void clearBindRemovesRows();
+    void setBindDropsLaterRowsForKey();
 
     // ConsoleCommandModel - the Build-A-Bind browse list
     void catalogSortsByAlphanumericName();
@@ -413,6 +414,19 @@ void EngineTest::clearBindRemovesRows() {
     QVERIFY(model.binds().isEmpty());
     QVERIFY(!model.clearBind(QStringLiteral("a")));
     QVERIFY(model.clearBind(QStringLiteral("never_bound")) == false);
+}
+
+void EngineTest::setBindDropsLaterRowsForKey() {
+    // A later unbind or bindtoggle row replays after a rebound bind in scanBinds() and
+    // would otherwise override the new command (docs/AUDIT.md #1). setBind() drops every
+    // later row for the key on the in-place path, matching the append path.
+    CommandListModel model;
+    model.setEntries(parse(QStringLiteral(
+        "bind \"a\" \"+moveleft\"\nunbind \"a\"\nbindtoggle \"a\" \"+attack\"\n")));
+    QCOMPARE(model.binds().value(QStringLiteral("a")).toString(), QStringLiteral("+attack"));
+    QVERIFY(model.setBind(QStringLiteral("a"), QStringLiteral("+duck")));
+    QCOMPARE(model.binds().value(QStringLiteral("a")).toString(), QStringLiteral("+duck"));
+    QCOMPARE(model.rowCount(), 1);
 }
 
 // --- ConsoleCommandModel ---
