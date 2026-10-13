@@ -85,6 +85,15 @@ QHash<int, QByteArray> ConsoleCommandModel::roleNames() const {
 void ConsoleCommandModel::setCommands(const QVector<cmd::ConVar *> &commands) {
     beginResetModel();
     m_all = commands;
+    m_commandIndex.clear();
+    // The catalog is loaded once at startup and never reloaded, so this index is
+    // permanent; findCommand() does not need to rescan the list on every call (review
+    // finding 7).
+    for (int i = 0; i < m_all.size(); ++i) {
+        const QString key = m_all.at(i)->get_name().toLower();
+        if (!m_commandIndex.contains(key))
+            m_commandIndex.insert(key, i);
+    }
     rebuild();
     endResetModel();
 }
@@ -152,17 +161,16 @@ void ConsoleCommandModel::rebuild() {
 }
 
 QVariantMap ConsoleCommandModel::findCommand(const QString &name) const {
-    for (const cmd::ConVar *cmd : m_all) {
-        if (QString::compare(cmd->get_name(), name, Qt::CaseInsensitive) == 0) {
-            QVariantMap map;
-            map.insert(QStringLiteral("name"), cmd->get_name());
-            map.insert(QStringLiteral("context"), cmd->get_context());
-            map.insert(QStringLiteral("platform"), cmd->get_platform());
-            map.insert(QStringLiteral("cheat"), cmd->isCheat());
-            return map;
-        }
-    }
-    return {};
+    auto it = m_commandIndex.find(name.toLower());
+    if (it == m_commandIndex.end())
+        return {};
+    const cmd::ConVar *cmd = m_all.at(*it);
+    QVariantMap map;
+    map.insert(QStringLiteral("name"), cmd->get_name());
+    map.insert(QStringLiteral("context"), cmd->get_context());
+    map.insert(QStringLiteral("platform"), cmd->get_platform());
+    map.insert(QStringLiteral("cheat"), cmd->isCheat());
+    return map;
 }
 
 QStringList ConsoleCommandModel::suggest(const QString &text, int limit) const {

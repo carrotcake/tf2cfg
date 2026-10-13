@@ -150,9 +150,9 @@ void ConfigController::resyncAfterSave() {
  * are inserted after the last bind line, in row order, or at end of file when the
  * config has no binds at all.
  *
- * shortcut: several commands on one file line (`;`) are re-rendered as several lines,
- * and a deleted row among several on one line keeps the whole line. Upgrade when a
- * real config trips over it.
+ * shortcut: a parsed-but-deleted command on an untouched compound line keeps the whole
+ * line, because nothing owns that line. Touched compound lines now rebuild all of their
+ * surviving commands together. Upgrade when a real config trips over it.
  */
 bool ConfigController::writeConfig(const QString &path, const QString &source,
                                    QString *error) {
@@ -208,13 +208,11 @@ bool ConfigController::writeConfig(const QString &path, const QString &source,
         return commitWrite(path, out, error);
     }
 
-    // ownedByLine[i] = rows the app owns on file line i (several when the line used
-    // `;`), each re-rendered on its own output line. modelLines is every file line the
-    // model still holds a row for; a line the parse covered (parsedLines, the load-time
-    // snapshot) but the model no longer does was deleted by the user (clearBind), so it
-    // is dropped instead of copied verbatim.
-    QMultiHash<int, int> ownedByLine;
-    QSet<int> modelLines;
+    // rowsByLine groups every surviving row by the source line it was parsed from, so a
+    // `;`-compound line is edited and rewritten as one line instead of being rendered
+    // in several pieces. Each app-owned row on that line marks the whole line for
+    // rebuilding.
+    QHash<int, QVector<int>> rowsByLine;
     QSet<int> parsedLines;
     for (const cmd::Entry &parsed : m_parsed)
         if (parsed.sourceLine >= 0)
@@ -224,12 +222,10 @@ bool ConfigController::writeConfig(const QString &path, const QString &source,
         const cmd::Entry &entry = entries.at(row);
         if (entry.sourceLine < 0)
             continue;
-        modelLines.insert(entry.sourceLine);
+        rowsByLine[entry.sourceLine].append(row);
         if (entry.appOwned
             || CommandListModel::isBindCommand(entry.args.value(0).toLower()))
             insertAfter = qMax(insertAfter, entry.sourceLine);
-        if (entry.appOwned)
-            ownedByLine.insert(entry.sourceLine, row);
     }
 
     QByteArray out;
@@ -243,21 +239,40 @@ bool ConfigController::writeConfig(const QString &path, const QString &source,
         else if (lineBytes.endsWith('\n') || lineBytes.endsWith('\r'))
             terminator = QByteArray(1, lineBytes.at(lineBytes.size() - 1));
 
-        if (ownedByLine.contains(i)) {
-            QList<int> rows = ownedByLine.values(i);
-            std::sort(rows.begin(), rows.end());
-            for (const int row : rows) {
-                const cmd::Entry &entry = entries.at(row);
-                if (entry.args.isEmpty())
-                    continue; // owned but emptied: the line is dropped
-                // args.join(" ") is the exact text the Command Overview shows, so what
-                // the user reviewed is what lands on disk; the line's own terminator
-                // is reused so the file's endings survive.
-                out += entry.args.join(QLatin1Char(' ')).toUtf8();
-                out += terminator;
+        auto groupIt = rowsByLine.find(i);
+        if (groupIt != rowsByLine.end()) {
+            const QVector<int> &rows = groupIt.value();
+            bool anyOwned = false;
+            for (int row : rows) {
+                if (entries.at(row).appOwned) {
+                    anyOwned = true;
+                    break;
+                }
             }
-        } else if (!parsedLines.contains(i) || modelLines.contains(i)) {
-            out += lineBytes; // never parsed, or a row still holds it: byte-for-byte
+            if (!anyOwned) {
+                out += lineBytes; // untouched row: preserve the source line byte-for-byte
+            } else {
+                // Re-render every surviving command of this source line as one compound
+                // line (`; ` between commands), dropping emptied rows. The original
+                // semicolon stays on one line instead of being exploded by the writer.
+                QString rebuilt;
+                bool firstCommand = true;
+                for (int row : rows) {
+                    const cmd::Entry &entry = entries.at(row);
+                    if (entry.args.isEmpty())
+                        continue; // owned but emptied: that segment drops
+                    if (!firstCommand)
+                        rebuilt += QStringLiteral("; ");
+                    rebuilt += entry.args.join(QLatin1Char(' '));
+                    firstCommand = false;
+                }
+                if (!rebuilt.isEmpty()) {
+                    out += rebuilt.toUtf8();
+                    out += terminator;
+                }
+            }
+        } else if (!parsedLines.contains(i)) {
+            out += lineBytes; // never parsed: byte-for-byte
         }
         // else: parsed once, but its row is gone from the model - drop the line.
 

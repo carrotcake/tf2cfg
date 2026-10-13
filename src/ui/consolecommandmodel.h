@@ -89,6 +89,7 @@ private:
     friend uint qHash(const FilterKey &key, uint seed) noexcept;
 
     QVector<cmd::ConVar *> m_all;              ///< borrowed from GameCfg, which outlives the model
+    QHash<QString, int> m_commandIndex;         ///< lowercased name -> index in m_all (built once; catalog never reloads)
     QVector<int> m_visible;                    ///< indices into m_all passing both filters
     QString m_contextFilter;
     QString m_platformFilter;

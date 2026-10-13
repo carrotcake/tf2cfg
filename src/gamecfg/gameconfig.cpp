@@ -2,6 +2,9 @@
 #include "lex/lexers.h"
 
 #include <QDebug>
+#include <QLoggingCategory>
+
+Q_LOGGING_CATEGORY(lcCfg, "tf2cfg.config")
 
 GameCfg::GameCfg() {
     loadAllCmds();
@@ -136,7 +139,7 @@ void GameCfg::printCfg() const {
             line += str + ' ';
         }
         line += QStringLiteral(" (type: %1) ").arg(static_cast<int>(cmd.type));
-        qInfo().noquote() << line;
+        qCDebug(lcCfg).noquote() << line;
     }
 }
 QVector<cmd::Entry> const &GameCfg::getCmdList() const {
