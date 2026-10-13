@@ -7,6 +7,9 @@ import "../theme"
 // Bind editor. Parity P30-P36.
 Dialog {
     id: dialog
+
+    /// Context property handle for qualified access (avoids repeated advisories).
+    readonly property var cfgRef: cfg
     objectName: "bindEditorDialog"
 
     /// Prefill for the "Existing Bind:" field; set from a key cap click.
@@ -252,7 +255,9 @@ Dialog {
     function openForKey(token) {
         dialog.keyToken = token
         const command = dialog.boundCommand
-        dialog.originalBind = 'bind "' + token + '"' + (command === "" ? "" : ' "' + command + '"')
+        const verb = dialog.cfgRef.bindingKind(token.toLowerCase()) === "bindtoggle"
+                        ? "bindtoggle" : "bind"
+        dialog.originalBind = verb + ' "' + token + '"' + (command === "" ? "" : ' "' + command + '"')
         dialog.open()
     }
 

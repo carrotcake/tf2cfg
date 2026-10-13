@@ -9,6 +9,10 @@ import "../theme"
 Rectangle {
     id: cap
 
+    /// Local handle for the context property, so later accesses are qualified and do
+    /// not each add a separate unqualified-access advisory.
+    readonly property var cfgRef: cfg
+
     /// Key name into KeyTable (e.g. "esc", "bkspc", "kpplus").
     property string keyName: ""
     /// Command shown in the cap's bind overlay for the future "show what this key does"
@@ -29,7 +33,7 @@ Rectangle {
     readonly property string boundCommand: {
         if (cap.token === "")
             return ""
-        const command = cfg.binds[cap.token.toLowerCase()]
+        const command = cap.cfgRef.binds[cap.token.toLowerCase()]
         return command === undefined ? "" : command
     }
     readonly property bool bound: cap.boundCommand !== ""
@@ -125,8 +129,11 @@ Rectangle {
     readonly property string tipText: {
         if (cap.keyInfo !== null && cap.keyInfo.tooltip !== undefined)
             return cap.keyInfo.tooltip
-        if (cap.bound)
-            return 'bind "' + cap.token + '" "' + cap.boundCommand + '"'
+        if (cap.bound) {
+            const kind = cap.cfgRef.bindingKinds[cap.token.toLowerCase()]
+            const verb = kind === "bindtoggle" ? "bindtoggle" : "bind"
+            return verb + ' "' + cap.token + '" "' + cap.boundCommand + '"'
+        }
         return ""
     }
     ToolTip.visible: mouse.containsMouse && cap.tipText !== ""
