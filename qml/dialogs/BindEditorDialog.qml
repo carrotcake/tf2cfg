@@ -105,7 +105,7 @@ Dialog {
         if (parts.length === 0)
             return
         const name = parts[0]
-        const rec = dialog.cfgRef.findCommand(name)
+        const rec = dialog.cfgRef.consoleModel.findCommand(name)
         if (rec.name === undefined)
             return
 
