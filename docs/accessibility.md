@@ -148,6 +148,12 @@ lines, and arrow semantics across four differently-shaped clusters is a real des
 question, not a checkbox); `Accessible.ignored` annotations for decorative items (no noise
 today to suppress); a high-contrast theme mode (a palette redesign, not a fix).
 
+Not an accessibility item, but noted here because it was measured alongside: `qmllint`
+reported 41 `ComponentBehavior: Bound` advisories across the QML tree. Seven files now carry
+the pragma, which cleared 18 of them; the remaining 23 are context-property reads and
+`KeyboardPanel` delegates reaching an enclosing component, and need a structural change
+rather than a pragma.
+
 ## 4. Verification
 
 Nothing above is covered by `tests/tst_engine.cpp`, which tests C++ only. QML would need

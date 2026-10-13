@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
@@ -8,8 +10,6 @@ import "../theme"
 // Start screen. Parity P2-P11 in docs/legacy/ui-qml-rewrite.md.
 Item {
     id: page
-
-    readonly property string pageTitle: "TF2 Config Manager"
 
     /// Selected config path: an absolute file path from Browse, or a ":/cfg/..." preset.
     property string cfgPath: ""
@@ -24,7 +24,13 @@ Item {
     function localPath(url) {
         let s = url.toString()
         if (s.indexOf("file:") === 0) {
-            s = decodeURIComponent(s.replace(/^file:\/\//, ""))
+            s = s.replace(/^file:\/\//, "")
+            // A filename may hold a bare % that is not an escape, which makes
+            // decodeURIComponent throw; the undecoded string is still a usable path.
+            try {
+                s = decodeURIComponent(s)
+            } catch (e) {
+            }
             // The URL has an empty authority, so what is left starts with a slash the
             // path itself does not have - but only for a Windows drive letter. A Unix
             // path is "/home/..." and that leading slash is part of it.

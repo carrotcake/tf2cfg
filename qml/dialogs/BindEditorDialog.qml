@@ -563,6 +563,12 @@ Dialog {
                                 model: browsing ? suggestionList : suggestionList.slice(0, 8)
                                 currentIndex: suggestionIndex
                                 ScrollIndicator.vertical: ScrollIndicator {
+                                    // Themed like the command list's scroll bar.
+                                    contentItem: Rectangle {
+                                        implicitWidth: Theme.spacingTight + 2
+                                        radius: implicitWidth / 2
+                                        color: Theme.colorBorderStrong
+                                    }
                                     visible: suggestionView.contentHeight > suggestionView.height
                                 }
                                 // Mouse wheel on the list enters browsing mode.
@@ -641,7 +647,18 @@ Dialog {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
 
-                    ScrollBar.horizontal: ScrollBar { policy: ScrollBar.AsNeeded }
+                    ScrollBar.horizontal: ScrollBar {
+                        id: argsBar
+                        policy: ScrollBar.AsNeeded
+                        hoverEnabled: true
+                        contentItem: Rectangle {
+                            implicitHeight: Theme.spacingTight + 2
+                            radius: implicitHeight / 2
+                            color: argsBar.pressed ? Theme.colorAccent
+                                  : argsBar.hovered ? Theme.colorTextMuted
+                                  : Theme.colorBorderStrong
+                        }
+                    }
 
                     ColumnLayout {
                         width: argsScroll.availableWidth

@@ -10,8 +10,6 @@ import "tabs"
 Item {
     id: page
 
-    readonly property string pageTitle: "Team Fortress 2 Config Editor"
-
     /// Status-strip hint, mirroring the widget build's status tips (P20).
     property string statusHint: ""
 

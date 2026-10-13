@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls
 import "pages"
@@ -24,7 +26,10 @@ ApplicationWindow {
     // minimums as the editor's floor.
     maximumWidth: Theme.windowWidth
     maximumHeight: Theme.windowHeight
-    title: pageStack.currentItem !== null ? pageStack.currentItem.pageTitle : "TF2 Config Manager"
+    // Titles live here rather than on the pages: reading pageStack.currentItem.pageTitle
+    // is a member lookup on QQuickItem, which has no such property (the one real qmllint
+    // warning in the tree).
+    title: "TF2 Config Manager"
 
     function goToEditor() {
         pageStack.replace(editorComponent)
@@ -33,6 +38,7 @@ ApplicationWindow {
         // second monitor included; the minimums stay at the shared default.
         window.maximumWidth = Screen.desktopAvailableWidth
         window.maximumHeight = Screen.desktopAvailableHeight
+        window.title = "Team Fortress 2 Config Editor"
     }
 
     // Parity P21: File/Edit/View/Help exist but carry no actions, and only the editor

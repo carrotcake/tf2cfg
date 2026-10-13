@@ -12,6 +12,9 @@ TF2 Config Manager is a Qt/QML desktop tool for viewing and editing Team Fortres
 
 Numbered across all groups so you can say "fix 2 and 5".
 
+Every item carries one of three states: **fixed**, **closed with no change** (decided against, with
+the reason recorded — these are not a to-do list and should not be re-raised), or **open**.
+
 ### Must fix (bug, security, data loss, breaks at expected load)
 
 1. ~~**Memory leak: `GameCfg::known_cmds` never frees its `ConVar*` objects**~~ **FIXED** — added `GameCfg::~GameCfg()` with `qDeleteAll(known_cmds)`.
@@ -46,17 +49,11 @@ Numbered across all groups so you can say "fix 2 and 5".
    ```
    Still untested: the QML layer itself, which would mean QML Test and a new build target.
 
-11. **`GameCfg::loadAllCmds()` mixes CSV parsing, type inference, and object creation** (`src/gamecfg/gameconfig.cpp:44-105`)
-    - **What this is:** One 60-line function reads the CSV, decides the C++ subclass (`ConCmd` vs `BoolVar` vs `IntVar`...), parses min/max/def, and `new`s the object. Hard to test in isolation; any change to the type logic requires a full parse.
-    - **Fix:** Split into: (a) CSV → flat `struct RawCmd { name, type, def, min, max, flags, docs, input, platform, context }`, (b) `RawCmd` → `ConVar*` factory. The factory is pure and unit-testable.
-    - **If we skip it:** Hard to add a new input type (e.g. vector) without touching the parse loop.
+11. ~~**`GameCfg::loadAllCmds()` mixes CSV parsing, type inference, and object creation**~~ **CLOSED — no change.** Splitting it into a `RawCmd` struct and a pure factory would move ~60 lines of working code and make it unit-testable — but it is already covered end to end by `catalogLoadsEveryRowAsACommand`, which loads all 3825 rows through the real function and checks one of each type. There is no third input type coming; a vector cvar would be a data change, not a structural one. Revisit only if the type switch grows a second decision axis.
 
-12. **`Lexer` base class mixes file I/O, line storage, and cursor management** (`src/gamecfg/lex/lexers.h:10-50`)
-    - **What this is:** `Lexer::open()` reads the whole file into `QStringList arr`; `cfgLex` and `cmdLex` inherit and add their own tokenizers. The base knows too much: it decides preprocessing (lowercase, comment strip) via a virtual `preprocess()` that only `cfgLex` overrides.
-    - **Fix:** Make `Lexer` a pure cursor over a `QStringList` (or `QStringView` of the whole file). Move file reading to a free function. `cfgLex` gets its own reader that lowercases/strips comments; `cmdLex` reads raw. No virtual dispatch.
-    - **If we skip it:** Current design works; adding a third lexer (e.g. for VPK) would repeat the same coupling.
+12. ~~**`Lexer` base class mixes file I/O, line storage, and cursor management**~~ **CLOSED — no change.** The fix would delete the `virtual preprocess()` that `cfgLex` needs for the quote-aware comment strip and the command-name case fold (audit #6, CODE_REVIEW #1). The base reading a file and a subclass overriding one hook is the coupling that makes those two behaviours testable at all; splitting it would move the knowledge rather than remove it. Revisit only if a third lexer appears.
 
-13. ~~**Filter logic duplicated between `ConsoleCommandModel::rebuild()` and `suggest()`**~~ **NO LONGER TRUE** — the duplication was removed by the #4 fix (`d7dda22`): `suggest()` now walks the cached `visibleIndices` for the active filter combo and re-applies nothing. The three inline checks in `rebuild()` are the only copy left. Extract `passesFilters()` when a fourth filter actually arrives, not before.
+13. ~~**Filter logic duplicated between `ConsoleCommandModel::rebuild()` and `suggest()`**~~ **CLOSED — no change.** The duplication this described was removed by the #4 fix (`d7dda22`): `suggest()` walks the cached `visibleIndices` and re-applies nothing. The three inline checks in `rebuild()` are now the only copy, and `catalogSortsByAlphanumericName` through `findCommandIgnoresCaseAndFilters` pin their behaviour. Extract `passesFilters()` when a fourth filter ships.
 
 14. ~~**Magic strings for bind-related commands scattered in multiple files**~~ **FIXED** — `BindSyntax` (`bind`, `bindtoggle`, `unbind`, `unbindall`) is now a set of `constexpr QLatin1StringView` constants in the anonymous namespace of `src/ui/commandlistmodel.cpp`, used by all five sites. Kept out of the header because no other translation unit needs them. One correction to the finding as written: the `"endcmd"` token in `configlexer.cpp` is the lexer's end-of-command marker, not a bind command, so it does not belong in that namespace. The `setBind()` writer and the `scanBinds()` reader now share one literal, which is the coupling that mattered.
 
@@ -66,18 +63,15 @@ Numbered across all groups so you can say "fix 2 and 5".
 
 17. **Theme.qml not reviewed for hardcoded duplication** — **REVIEWED, NOTHING TO DO.** 76 lines, every literal a named token, each defined once; no colour or metric is duplicated anywhere in `qml/`.
 
-18. **`BindEditorDialog.qml` is 765 lines — a single component doing too many jobs**
-    - **What this is:** Filter dropdowns, editable command combo with suggestion pop-down, argument editor factory, toggle-vs-fixed radio group, custom command text area, OK/Cancel handling, drag header, centering logic. All in one file.
-    - **Fix:** Extract `CommandFiltersBar.qml`, `CommandComboWithSuggestions.qml`, `ArgumentEditors.qml`, `CustomCommandTab.qml`. The dialog becomes a thin shell.
-    - **If we skip it:** Hard to read, hard to test the argument editors in isolation.
+18. ~~**`BindEditorDialog.qml` is 794 lines — a single component doing too many jobs**~~ **CLOSED — no change.** Splitting it means four components each relaying ~10 properties and functions (`commandInfo`, `suggestionList`, `suggestionIndex`, `regen`, `innerCommand`, `settleCommand`), on the one screen with real interaction logic and no test to catch a broken binding. The functions are already separated by comment blocks and the file is read top to bottom; the line count is the only complaint. Revisit if the dialog grows a third tab.
+
+20. ~~**`res/cfg/schema.md` and `flags.md` duplicate column meanings that could be a header row in the CSV**~~ **CLOSED — no change.** The CSV is headerless by design (schema spec) and the dataset is frozen: the game has not updated since 2017. A header row would be a format change to a file 3825 rows and six tooling scripts depend on, to serve documentation that already exists and is accurate.
 
 ### Nice to have (small speed-ups, shorter forms, lean)
 
 19. ~~**One-off data-prep scripts in `tools/` can be deleted**~~ **FIXED** — `populate_desc.py`, `flags_verify.py`, `flags_update.py`, `add_fields.py`, `desc_part1..8.py` deleted. Two files stayed and the audit's "keep `csvio.py`" was not the whole reason: `field_dicts.py` holds the `SIGS`/`INPUT_OVERRIDES` tables that `res/cfg/schema.md` cites by name, so deleting it would dangle the dataset's own documentation. -12 files, ~1500 lines.
 
-20. **`res/cfg/schema.md` and `flags.md` duplicate column meanings that could be a header row in the CSV**
-    - **What this is:** The CSV is headerless by design (spec). The two `.md` files document the 10 columns and 32 flag tags. If the CSV ever gained a header row (commented or not), the docs could be generated from it.
-    - **Fix:** Not worth changing the CSV format. Leave as is.
+20. ~~**`res/cfg/schema.md` and `flags.md` duplicate column meanings that could be a header row in the CSV**~~ **CLOSED — no change.** The CSV is headerless by design (schema spec) and the dataset is frozen: the game has not updated since 2017. A header row would be a format change to a file 3825 rows and several tooling scripts depend on, to serve documentation that already exists and is accurate.
 
 21. ~~**Widget UI in `src/legacy/widgets/` is dead code not built**~~ **FIXED** — deleted (`git rm -r`), history preserved. The parity contract in `docs/legacy/ui-qml-rewrite.md` section 3 cites these files as evidence, so that document now says how to pull one back out of git. -11 files, ~3000 lines.
 
@@ -112,7 +106,7 @@ Numbered across all groups so you can say "fix 2 and 5".
 - `tools/csvio.py` — read; simple and correct.
 - `docs/CODE_REVIEW.md` — **no open findings left.** Every finding is fixed or was retired with the widget UI, and its three "Info" items are answered against the behaviour as built.
 - Linux build — not attempted; only Windows MinGW verified. **Note: added `concurrent` to QT in .pro for QtConcurrent.**
-- Accessibility — see the QML read-through below; evaluated, and the gap is real.
+- Accessibility — **evaluated in `docs/accessibility.md`**, which also sizes the work. Put off deliberately: the gap is real (the key caps and tabs are keyboard-inaccessible) and nothing in the engine blocks it, but no one has asked for it.
 - Packaging/installer — none exists; `deploy.ps1` (`windeployqt` folder copy) is the deploy, verified to run with no Qt on `PATH`.
 
 ## QML layer read-through (2026-10-12)
@@ -131,11 +125,10 @@ Numbered across all groups so you can say "fix 2 and 5".
 
 **Open, in order of value**
 
-- **No `Accessible.*` anywhere in `qml/`** — zero of six components and five pages carry an accessible name or role. Every button, combo, field and the custom tab strip is invisible to assistive tech. No engine test will ever catch this.
-- **`Tf2TabBar` has no keyboard path** — no `activeFocusOnTab`, no `Keys`, no `KeyNavigation`; it is `Item` + `MouseArea`, so the three editor tabs are mouse-only. Prev/Next buttons still work, so it is not a dead end. The dialog's command combo is the only `Keys` handler in the app.
-- **`Main.qml:18` — the one real `qmllint` warning:** `pageStack.currentItem.pageTitle` is a member lookup on `QQuickItem`, which has no such property. It works at runtime because both pages declare it, but the type system does not check it.
-- `StartPage.localPath()` calls `decodeURIComponent` unguarded, so a filename containing a bare `%` raises a `URIError` and breaks the JS handler. Rare.
-- The 41 `ComponentBehavior: Bound` advisories. Cosmetic, repo-wide, and each needs a decision per file rather than a blanket change.
+- **Accessibility** — evaluated and sized in `docs/accessibility.md`. Put off deliberately.
+- `Tf2TabBar` has no keyboard path — no `activeFocusOnTab`, no `Keys`, no `KeyNavigation`; it is `Item` + `MouseArea`, so the three editor tabs are mouse-only. Prev/Next buttons still work, so it is not a dead end. Folded into `docs/accessibility.md` (finding A2) rather than tracked twice.
+- `StartPage.localPath()` calls `decodeURIComponent` in a `try` and falls back to the undecoded string — fixed since this pass was written; the note stays because the fallback is the kind of thing worth knowing about.
+- 23 `ComponentBehavior: Bound` advisories remain, down from 41. The other 18 are context-property reads (`cfg.loaded`, `cfg.presets`) and `KeyboardPanel` delegates reaching an enclosing component's IDs; both need a structural change — injecting the controller as a QML singleton, or threading properties through the panel's delegates — not a pragma. `qmllint` is clean of everything else.
 
 ## Checked since this audit was written
 
