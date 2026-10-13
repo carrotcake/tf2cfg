@@ -1,8 +1,9 @@
 # Repository Audit — tf2cfg
 
-Audit date: 2026-10-12
-Scope: entire repo (C++ engine, QML UI, Python tooling, data files)
-Assumed load: **single user, local desktop app, one config at a time, ~3800 commands, ~60 binds, no concurrency, no network, no money**. Windows and Linux (the two platforms TF2 runs on). Qt 6.12 MinGW on Windows; Linux build untested but expected to work.
+Audit date: 2026-10-12 (updated in place as the work landed; every claim below is checked
+against the tree it describes).
+Scope: entire repo (C++ engine, QML UI, data files, and the two surviving files in `tools/`).
+Assumed load: **single user, local desktop app, one config at a time, 3825 commands, 54-67 binds, no concurrency, no network, no money**. Windows and Linux (the two platforms TF2 runs on). Qt 6.12 MinGW on Windows; Linux build untested but expected to work.
 
 ## What this repo does
 
@@ -33,7 +34,7 @@ the reason recorded — these are not a to-do list and should not be re-raised),
    - **Found while fixing it:** `cfgLex::preprocess` cut the line at the first `//` **anywhere**, including inside quotes. `alias t "echo http://host/x"` lost its tail, and the unterminated quote then appended an `error` token to the row. `//` now only starts a comment outside a quoted token, matching the game's tokenizer.
    - **Matches the game:** Valve's own escape table for quoted strings is `s_StringCharConversion` in `src/tier1/utlbuffer.cpp` (public Source SDK 2013): escape char `\`, delimiter `"`, with `\\` and `\"` among its entries and nothing for an unknown escape. So the two escapes that can end or continue a token are exactly the two `unquoted()` understands. Anything else after a backslash is kept verbatim in both (`"C:\temp"` stays `C:\temp`; no character is dropped), because a token is the line as written.
    - **Known, deliberate gap:** the game also turns `\n`, `\t`, `\r`, `\v`, `\b`, `\f`, `\a`, `\'` and `\?` into control characters inside quoted tokens; we keep those two-character sequences as text. Reproducing them would need a control-character table in the tokenizer for input no real TF2 config contains.
-   - **Verified:** all four bundled configs tokenize identically before and after the change (diffed old vs new lexer build over every token); the escaped-quote case is pinned by `tests/tst_engine.cpp`.
+   - **Verified:** all four bundled configs tokenize identically before and after the change (diffed old vs new lexer build over every token); the escaped-quote case is pinned by `tests/tst_engine.cpp`. The later case-fold change (CODE_REVIEW #1) was verified the same way — also identical, because no bundled config has a mixed-case argument.
 
 7. ~~**KeyCap tooltip interpolates user data into a format string**~~ **FIXED** — changed to string concatenation: `'bind "' + cap.token + '" "' + cap.boundCommand + '"'`.
 
@@ -61,11 +62,9 @@ the reason recorded — these are not a to-do list and should not be re-raised),
 
 16. ~~**`CommandListModel::setBind()` lowercases the command, but TF2 aliases/commands can have case-sensitive arguments**~~ **FIXED** — only the first word is folded to lower case; the rest is stored as typed. Rows read from a file stay lower case, because `cfgLex` folds every line, so an edit applied twice still produces one identical row.
 
-17. **Theme.qml not reviewed for hardcoded duplication** — **REVIEWED, NOTHING TO DO.** 76 lines, every literal a named token, each defined once; no colour or metric is duplicated anywhere in `qml/`.
+17. ~~**Theme.qml not reviewed for hardcoded duplication**~~ **CLOSED — no change.** Reviewed: 54 named tokens (25 colours), each defined once, and no colour or metric is duplicated anywhere in `qml/`. The one thing the review turned up was six *metrics* outside the theme, which are now tokens too (see the QML read-through below).
 
-18. ~~**`BindEditorDialog.qml` is 794 lines — a single component doing too many jobs**~~ **CLOSED — no change.** Splitting it means four components each relaying ~10 properties and functions (`commandInfo`, `suggestionList`, `suggestionIndex`, `regen`, `innerCommand`, `settleCommand`), on the one screen with real interaction logic and no test to catch a broken binding. The functions are already separated by comment blocks and the file is read top to bottom; the line count is the only complaint. Revisit if the dialog grows a third tab.
-
-20. ~~**`res/cfg/schema.md` and `flags.md` duplicate column meanings that could be a header row in the CSV**~~ **CLOSED — no change.** The CSV is headerless by design (schema spec) and the dataset is frozen: the game has not updated since 2017. A header row would be a format change to a file 3825 rows and six tooling scripts depend on, to serve documentation that already exists and is accurate.
+18. ~~**`BindEditorDialog.qml` is 811 lines — a single component doing too many jobs**~~ **CLOSED — no change.** Splitting it means four components each relaying ~10 properties and functions (`commandInfo`, `suggestionList`, `suggestionIndex`, `regen`, `innerCommand`, `settleCommand`), on the one screen with real interaction logic and no test to catch a broken binding. The functions are already separated by comment blocks and the file is read top to bottom; the line count is the only complaint. Revisit if the dialog grows a third tab.
 
 ### Nice to have (small speed-ups, shorter forms, lean)
 
@@ -73,11 +72,12 @@ the reason recorded — these are not a to-do list and should not be re-raised),
 
 20. ~~**`res/cfg/schema.md` and `flags.md` duplicate column meanings that could be a header row in the CSV**~~ **CLOSED — no change.** The CSV is headerless by design (schema spec) and the dataset is frozen: the game has not updated since 2017. A header row would be a format change to a file 3825 rows and several tooling scripts depend on, to serve documentation that already exists and is accurate.
 
-21. ~~**Widget UI in `src/legacy/widgets/` is dead code not built**~~ **FIXED** — deleted (`git rm -r`), history preserved. The parity contract in `docs/legacy/ui-qml-rewrite.md` section 3 cites these files as evidence, so that document now says how to pull one back out of git. -11 files, ~3000 lines.
+21. ~~**Widget UI in `src/legacy/widgets/` is dead code not built**~~ **FIXED** — deleted (`git rm -r`, 13 files), history preserved. The parity contract in `docs/legacy/ui-qml-rewrite.md` section 3 cites those files as evidence, so that document now says how to pull one back out of git. ~3000 lines.
 
-22. **No Linux build verification in CI**
+22. **No Linux build verification in CI** — the only open finding here.
     - **What this is:** The `.pro` uses MinGW paths; Linux build assumes Qt 6 in standard paths. No GitHub Actions / GitLab CI to confirm it compiles on Ubuntu/Arch.
     - **Fix:** Add a minimal workflow: `ubuntu-latest`, install `qt6-base-dev`, `qmake`, `make`, run `qmllint`.
+    - **Note added since:** `qmllint` is clean of errors today but reports 23 `ComponentBehavior` advisories, so a gate has to tolerate warnings rather than fail on them. The test target should be fine on Linux — it links only Qt core + testlib and the same resource bundle — but nothing has run there yet, which is the point of this finding.
     - **If we skip it:** Linux users (half the TF2 player base) may hit compile errors on first try.
 
 23. ~~**`windeployqt` command is not scripted**~~ **FIXED** — `deploy.ps1`: copies `build/<config>/tf2cfgreal.exe` into a clean `dist/`, runs `windeployqt --<config> --compiler-runtime --qmldir qml`, and fails loudly when the build or the Qt kit is missing. Verified: the deployed folder runs with no Qt directory on `PATH`. `-QtRoot`/`-Output`/`-Config` are parameters, not edits.
@@ -89,20 +89,21 @@ the reason recorded — these are not a to-do list and should not be re-raised),
 **Healthy core, safety net in place.** The engine and UI are functionally complete for the read-only use case. All nine "Must fix" items are resolved, `tests/tst_engine.cpp` guards the parser, the bind logic and the command catalog, and the dead code is gone. `docs/CODE_REVIEW.md` has no open findings left. The **biggest missing feature is save-to-disk**, which the docs already track.
 
 **Next up, in order:**
-1. CI (#22) — run `tf2cfg_test` and build the app on `ubuntu-latest` so half the player base is not the first to find a compile error.
-2. Save-to-disk (docs/legacy/ui-qml-rewrite.md section 10) — the editor has been writable in memory since D16 with nowhere to write. Its prerequisite (argument case surviving a reload) is now in place; see the parse-fidelity note in `docs/CODE_REVIEW.md`.
-3. `passesFilters()` (#13) — only when a fourth filter ships.
-4. Not worth it unless something asks: #11 and #12 (refactors with no caller), #18 (cosmetic), #20 (leave as is).
+1. CI (#22) — run `tf2cfg_test` and build the app on `ubuntu-latest` so half the player base is not the first to find a compile error. The **only** open finding in this document.
+2. Save-to-disk (docs/legacy/ui-qml-rewrite.md section 10) — the editor has been writable in memory since D16 with nowhere to write. Its prerequisite (argument case surviving a reload) is in place; see the parse-fidelity note in `docs/CODE_REVIEW.md`. Three decisions come first: full rewrite versus a surgical edit of the bind lines, overwrite versus confirm, and what to do if the file changed on disk while it was loaded.
+3. Accessibility (`docs/accessibility.md`) — evaluated and sized, put off deliberately. The work items are ordered there; the two that matter are a focus ring on `Tf2Button` and making the 104 key caps reachable by keyboard.
+
+Closed by decision and not to be re-raised: #11, #12, #13, #17, #18, #20 — each with its reason inline.
 
 ## Lean
 
 - **Done:** ~4500 lines of dead code removed — `src/legacy/widgets/` (3000), the one-off dataset scripts in `tools/` (1500), `src/gamecfg/cvar.cpp` (1).
 - **0 dependencies removable:** Only Qt 6 (core, gui, quick, quickcontrols2, concurrent) — already minimal.
-- **~500 lines to split** (still available, still not worth it): `BindEditorDialog.qml` → 4 subcomponents.
+- **Nothing left to split:** `BindEditorDialog.qml` is the one large file, and #18 closed the case for splitting it.
 
 ## Not checked
 
-- `qml/keyboard/*.qml`, `qml/dialogs/BindEditorDialog.qml` — read where the work touched them, not end to end.
+- `qml/keyboard/KeyboardPanel.qml` — read in full. `KeyCap.qml` and `qml/dialogs/BindEditorDialog.qml` — read where the work touched them, not end to end.
 - `tools/csvio.py` — read; simple and correct.
 - `docs/CODE_REVIEW.md` — **no open findings left.** Every finding is fixed or was retired with the widget UI, and its three "Info" items are answered against the behaviour as built.
 - Linux build — not attempted; only Windows MinGW verified. **Note: added `concurrent` to QT in .pro for QtConcurrent.**
@@ -111,7 +112,7 @@ the reason recorded — these are not a to-do list and should not be re-raised),
 
 ## QML layer read-through (2026-10-12)
 
-`qml/components/*.qml` (6 files) and `qml/pages/**` (5 files, 719 lines) read line by line for the first time. `qmllint` over the whole `qml/` tree reports no errors; its 41 remaining warnings are all the same `pragma ComponentBehavior: Bound` advisory, which predates this pass.
+`qml/components/*.qml` (6 files) and `qml/pages/**` (5 files, ~750 lines) read line by line for the first time, followed by a leftovers pass over the rest of the tree. `qmllint` reports **0 errors**; its 23 remaining warnings are all `pragma ComponentBehavior: Bound` advisories, down from 41 before the pragma was added to the seven files that needed it.
 
 **Fixed**
 
@@ -119,20 +120,23 @@ the reason recorded — these are not a to-do list and should not be re-raised),
 2. A failed load was never reported once a config was already loaded: `cfg.loaded` is `rowCount() > 0` and a failure leaves the old rows, so the success branch won. `lastError` is checked first now.
 3. `CommandOverviewTab`'s delegates carried a `MouseArea` with a pointing-hand cursor and no click handler — parity P16 kept the cursor, but the area swallowed every press for nothing. Now a `HoverHandler`, which gives the cursor without taking input.
 4. `Tf2ComboBox`'s indicator hit zone ignored `control.enabled`, so a disabled combo would still open its popup. Latent — no caller disables a combo today.
-5. Six metrics moved into `Theme` (tab height and minimum width, combo default width, popup max height, status bar height) and the combo popup height stopped hardcoding `+ 2` for its own padding.
-6. `CommandOverviewTab`'s scroll bar was the app's only unstyled scrollbar; it uses Theme colours now. The dialog's suggestion indicator and horizontal scroll bar are still default-styled.
+5. Five metrics moved into `Theme` (tab height and minimum width, combo default width, popup max height, status bar height) and the combo popup height stopped hardcoding `+ 2` for its own padding.
+6. All three scroll affordances are themed now: the command list's bar, the dialog's suggestion indicator and the dialog's argument bar. `CommandOverviewTab`'s was the last unstyled one.
 7. `parseInt` in `BindEditorDialog.validBottom/validTop` had no radix, so `0x10` parsed as 16.
+8. `Main.qml` read `pageStack.currentItem.pageTitle`, a member lookup on `QQuickItem` that has no such property — the one real `qmllint` warning in the tree. Titles live in `Main.qml` now, and the unused `pageTitle` on both pages is gone.
+9. `localPath()` called `decodeURIComponent` unguarded, so a filename holding a bare `%` raised a `URIError` and broke the handler. It falls back to the undecoded string, which is still a usable path.
+10. `pragma ComponentBehavior: Bound` on seven files: 41 advisories to 23, no errors.
 
 **Open, in order of value**
 
 - **Accessibility** — evaluated and sized in `docs/accessibility.md`. Put off deliberately.
 - `Tf2TabBar` has no keyboard path — no `activeFocusOnTab`, no `Keys`, no `KeyNavigation`; it is `Item` + `MouseArea`, so the three editor tabs are mouse-only. Prev/Next buttons still work, so it is not a dead end. Folded into `docs/accessibility.md` (finding A2) rather than tracked twice.
-- `StartPage.localPath()` calls `decodeURIComponent` in a `try` and falls back to the undecoded string — fixed since this pass was written; the note stays because the fallback is the kind of thing worth knowing about.
-- 23 `ComponentBehavior: Bound` advisories remain, down from 41. The other 18 are context-property reads (`cfg.loaded`, `cfg.presets`) and `KeyboardPanel` delegates reaching an enclosing component's IDs; both need a structural change — injecting the controller as a QML singleton, or threading properties through the panel's delegates — not a pragma. `qmllint` is clean of everything else.
+- The remaining 18 `ComponentBehavior` advisories: context-property reads (`cfg.loaded`, `cfg.presets`) and `KeyboardPanel` delegates reaching an enclosing component's IDs. Both need a structural change — injecting the controller as a QML singleton, or threading properties through the panel's delegates — not a pragma.
 
 ## Checked since this audit was written
 
-- `qml/theme/Theme.qml` — 84 named tokens, nothing duplicated (#17).
+- `qml/theme/Theme.qml` — 54 named tokens (25 colours), nothing duplicated (#17).
 - `res/res.qrc` and `qml.qrc` — complete: all 17 `.qml` files and both `qmldir`s are packed, as are all four presets, all four fonts and `allcmds.csv`. `flags.md`/`schema.md` are correctly absent; no code reads them.
 - `res/cfg/allcmds.csv` — all 3825 rows carry exactly 10 fields under a real CSV parse.
-- `qml/components/*.qml` and `qml/pages/**` — see the QML layer read-through below.
+- `qml/components/*.qml` and `qml/pages/**` — see the QML layer read-through above.
+- Window sizing — not an audit finding, changed on request: one shared 1000×500 size for both screens, start screen fixed, editor resizable (deviation D2).
