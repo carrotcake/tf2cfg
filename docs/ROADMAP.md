@@ -95,7 +95,8 @@ Items #1 and #2 from `docs/AUDIT.md` are closed by the 2026-10-13 sweep (audit a
 
 | # | Severity | Item |
 |---|----------|------|
-| 3 | nice | `loadCfg`'s worker lambda captures raw `this`; guard with `QPointer` against shutdown mid-load |
-| 4 | nice | `cfgLex::Token` still has `const` members (non-movable); finish the de-const `docs/legacy/CODE_REVIEW.md` #14 recorded for `cmdLex::Token` only |
+Items #3 and #4 closed by the same 2026-10-13 sweep (audit annotated). Only data-edge
+and future-feature items remain:
+
 | 5 | nice | `cmdLex` CSV scan silently tolerates malformed quoting; data-edge note only (catalog verified clean) |
 | 6 | nice | `bindtoggle` modelled as a plain bind; fine today, needed for a future "what does this key do" mode |

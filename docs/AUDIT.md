@@ -57,15 +57,15 @@ the UI as built today.
 
 ### Nice to have
 
-3. **`loadCfg` captures raw `this`** in the worker lambda and the queued
-   `invokeMethod`. If `ConfigController` is destroyed while a load is in flight
-   (app shutdown), the queued call runs on a dead object. Harmless today because the
-   controller lives as long as the app; a `QPointer` guard or future cancellation makes
-   it structurally safe.
-4. **`cfgLex::Token` still carries `const QString str` / `const TokenClass type`**
-   (`lexers.h`) - non-assignable and copied rather than moved on return. The de-const
-   recorded in `docs/legacy/CODE_REVIEW.md` #14 was applied to `cmdLex::Token` only;
-   either finish it for `cfgLex::Token` or correct that note. Cosmetic, not correctness.
+3. **Fixed (2026-10-13, this sweep).** `loadCfg` captured raw `this`; the worker and the
+   queued completion now run through a `QPointer<ConfigController>` (initiating returns
+   and the queued lambda no-op if the controller is destroyed), so no `invokeMethod` can
+   land on a dead object. The worker parses via the weak reference the same way; loads
+   still live for the app lifetime in practice.
+4. **Fixed (2026-10-13, this sweep).** `cfgLex::Token` still carried `const QString str`
+   / `const TokenClass type`. Finished the de-const recorded for `cmdLex::Token` (audit
+   legacy CODE_REVIEW #14): members are now mutable and the string is move-constructed,
+   so the token is assignable and move-friendly.
 5. **`cmdLex` CSV scan tolerates malformed quoting silently**: characters between a
    closing quote and the next comma (`"abc"junk,`) are appended to the field, and a
    quoted field containing a newline would split the row (fields are scanned per
