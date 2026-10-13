@@ -42,6 +42,14 @@ public:
     void setEntries(const QVector<cmd::Entry> &entries);
     void clearEntries();
 
+    /// The rows as they currently stand, edits included - the surgical save reads this,
+    /// not the parse output, because setBind/clearBind edit the model's copy.
+    const QVector<cmd::Entry> &entries() const { return m_entries; }
+
+    /// True for the two commands that put a command on a key (`bind`, `bindtoggle`).
+    /// The save uses it to find the line new binds are inserted after.
+    static bool isBindCommand(const QString &head);
+
     /**
      * Active binds: lowercase, unquoted key token -> command string.
      *

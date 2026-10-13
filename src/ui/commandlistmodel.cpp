@@ -63,12 +63,13 @@ constexpr auto Unbind = QLatin1StringView("unbind");
 constexpr auto UnbindAll = QLatin1StringView("unbindall");
 } // namespace BindSyntax
 
-/// True for the two commands that put a command on a key.
-bool isBindCommand(const QString &head) {
+} // namespace
+
+/// True for the two commands that put a command on a key. Declared static on the
+/// model because the surgical save needs the same test to place new bind rows.
+bool CommandListModel::isBindCommand(const QString &head) {
     return head == BindSyntax::Bind || head == BindSyntax::BindToggle;
 }
-
-} // namespace
 
 CommandListModel::CommandListModel(QObject *parent)
     : QAbstractListModel(parent) {}
@@ -206,6 +207,27 @@ bool CommandListModel::setBind(const QString &key, const QString &command) {
         return false; // already bound to exactly this
 
     const QVector<int> rows = bindRows(cleanKey);
+    // Rebind the key's most recent row in place when it is a real bind line, so the row
+    // keeps its sourceLine and the surgical save rewrites the line where it is instead
+    // of moving the bind to the end of the file (10.1: an edit keeps its position).
+    for (int i = rows.size() - 1; i >= 0; --i) {
+        const int row = rows.at(i);
+        const QString head = unquoted(m_entries.at(row).args.value(0)).toLower();
+        if (head != BindSyntax::Bind)
+            continue; // unbind rows stay put; they are dropped at save with the key gone
+        cmd::Entry &entry = m_entries[row];
+        entry.appOwned = true; // now the app owns this line
+        entry.args.clear();
+        entry.args << QString(BindSyntax::Bind) << quoted(cleanKey) << quoted(cleanCommand);
+        entry.type = cmd::CMD_CMD;
+        const QModelIndex idx = index(row);
+        emit dataChanged(idx, idx, {LineRole, CommandRole, ArgsRole, TypeRole, TypeNameRole,
+                                    BoundKeyRole});
+        m_bindsCacheValid = false;
+        emit bindsChanged();
+        return true;
+    }
+
     for (int i = rows.size() - 1; i >= 0; --i) {
         const int row = rows.at(i);
         beginRemoveRows(QModelIndex(), row, row);
@@ -214,6 +236,10 @@ bool CommandListModel::setBind(const QString &key, const QString &command) {
     }
 
     cmd::Entry entry;
+    // The row is app-owned: the surgical save re-renders exactly these rows and leaves
+    // every parsed line byte-for-byte (docs/legacy/ui-qml-rewrite.md 10.1). sourceLine
+    // stays -1, which is what puts it after the last owned line at save time.
+    entry.appOwned = true;
     entry.args << QString(BindSyntax::Bind) << quoted(cleanKey) << quoted(cleanCommand);
     // `bind` is a plain console command in allcmds.csv, which is the type the parser gives
     // an identical line in a config file. Keep the two indistinguishable.

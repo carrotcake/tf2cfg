@@ -27,6 +27,10 @@ public:
     }
     bool hasNext() const { return line < arr.size(); }
     void close() { arr.clear(); }
+    /// 0-based index of the line the cursor is on. nextToken() reads one line per call,
+    /// so this is the line a command starts on - which is what the surgical save keys
+    /// app-owned rows to.
+    int currentLine() const { return line; }
 
 protected:
     int line, col;

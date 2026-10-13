@@ -96,7 +96,7 @@ Each is small, and each is listed so parity can be audited. D15 and D16 are the 
 | D13 | Main keyboard rows are stretched to the widest row (1012 px) with computed per-row gaps | Matches what the widget's `QHBoxLayout` rows did with fixed-width caps; keeps the main block rectangular. The middle and numpad clusters keep the plain 4 px gap. |
 | D14 | The bind dialog opens centred on the window and is dragged by its title bar, clamped inside the window | A stock QML `Dialog` has no drag behaviour and sits at (0,0); the widget `QDialog` was moved by the window manager, which could leave the screen. In-window bounds are what the tool needs. |
 | D15 | The keyboard panel scrolls in both directions when the window is too small for it, and the keyboard alone can be zoomed (`Ctrl`+wheel, `Ctrl`+`+`/`-`/`0`) | Requested usability additions: the keyboard is 1632 px wide and does not fit even the default editor width (1573 px), so the outer keys were previously unreachable. See section 13. |
-| D16 | A cap whose key the loaded config binds is filled burnt orange; OK in the bind dialog edits the bind instead of logging it | P31/P34/P35 left the dialog inert and `BoundKeyRole` empty, so the keyboard was a viewer. The user asked for the caps to show their binds and for OK to add/remove one. The Custom Command text is the command applied (an empty field removes the bind); `Existing Bind:` becomes display-only. Nothing is written to disk — there is still no save path (section 10) — so the edit lives in the loaded model until the next load. |
+| D16 | A cap whose key the loaded config binds is filled burnt orange; OK in the bind dialog edits the bind instead of logging it | P31/P34/P35 left the dialog inert and `BoundKeyRole` empty, so the keyboard was a viewer. The user asked for the caps to show their binds and for OK to add/remove one. The Custom Command text is the command applied (an empty field removes the bind); `Existing Bind:` becomes display-only. The edit reaches the file through the surgical save (section 10.1, D20); until then it lives in the loaded model. |
 | D17 | The window is pinned to the top-left corner of the primary screen at startup instead of opening wherever the OS puts it | On a multi-monitor desktop the OS could open the window straddling two screens, pushing part of it outside any single-monitor capture. Pinning the frame to the primary screen's origin makes every launch start from the same, fully visible spot. Only the position is fixed; a page change keeps the frame's top-left and, since D2, does not resize the window either. See section 14. |
 | D18 | `setBind` lowercases only the first word of the command; the arguments keep the case the user typed | Console command names are case-insensitive, arguments are not: `say "Hello"` became `say "hello"`. Rows read from a file stay lowercase because `cfgLex` folds every line, so the same edit applied twice still yields one identical row. Fix for audit #16. |
 | D19 | `\"` and `\\` inside a quoted token no longer end it, and `//` starts a comment only outside a quoted token | The widget build split `alias t "say \"hi\""` into two arguments, cut any line at a `//` inside quotes (a URL), and then appended an `error` token. Both now match the game's tokenizer; the two escapes are read and written only by `CommandListModel::unquoted()`/`quoted()`, so a bind survives a write/read round trip. Fix for audit #6; token text is unchanged for every config that contains neither. |
@@ -165,7 +165,7 @@ Mirrors one `cmd::Entry` per row. Row order = insertion order = parse order, so 
 
 `setEntries(const QVector<cmd::Entry> &)` replaces the contents with `beginResetModel`/`endResetModel`.
 
-`binds()`, `setBind()` and `clearBind()` keep the model's view of the binds in step with its rows. `binds()` replays the rows the way TF2 would — a later bind wins, and `unbindall`, `unbind "k"` and an empty command (`bind "r" ""`, which `b4nny.cfg` uses) all clear — and returns lowercase key token → command. `setBind`/`clearBind` edit the rows themselves and emit `bindsChanged`, so any view reading the map repaints. `setBind` drops every earlier row for that key and appends one `bind "<key>" "<command>"` row typed `CMD_CMD`, the type the parser gives an identical line in a config file, so a key never ends up with two competing rows and a reload is indistinguishable from the edit. Key tokens are lowercased in both directions, because `cfgLex` folds every line it reads; the *command* keeps its case apart from its first word (D18). `quoted()`/`unquoted()` are the only places that read or write `\"` and `\\`, so the command shown in the dialog, the row in the model and the same row read back from a file are one identical string (D19). See D16.
+`binds()`, `setBind()` and `clearBind()` keep the model's view of the binds in step with its rows. `binds()` replays the rows the way TF2 would — a later bind wins, and `unbindall`, `unbind "k"` and an empty command (`bind "r" ""`, which `b4nny.cfg` uses) all clear — and returns lowercase key token → command. `setBind`/`clearBind` edit the rows themselves and emit `bindsChanged`, so any view reading the map repaints. `setBind` rebinds the key's most recent `bind` row in place when it has one (keeping its file line, which is what lets the surgical save rewrite the line where it stands - section 10.1) and otherwise drops every earlier row for that key and appends one `bind "<key>" "<command>"` row typed `CMD_CMD`, the type the parser gives an identical line in a config file, so a key never ends up with two competing rows and a reload is indistinguishable from the edit. Key tokens are lowercased in both directions, because `cfgLex` folds every line it reads; the *command* keeps its case apart from its first word (D18). `quoted()`/`unquoted()` are the only places that read or write `\"` and `\\`, so the command shown in the dialog, the row in the model and the same row read back from a file are one identical string (D19). See D16.
 
 ### `ConfigController` (QObject, exposed to QML as the context property `cfg`)
 
@@ -180,8 +180,12 @@ Mirrors one `cmd::Entry` per row. Row order = insertion order = parse order, so 
 | `loaded` | `Q_PROPERTY bool` | `commandModel.rowCount() > 0` |
 | `lastError` | `Q_PROPERTY QString` | empty on success; `Lexers::Lexer::open` failure is currently silent, so this is set from the same check the widget build ignored (review finding 6, surfaced not fixed) |
 | `binds` | `Q_PROPERTY QVariantMap` | active binds: lowercase key token → command, derived from the parsed rows; notifies on every change, so the caps recolour (D16) |
-| `setBind(key, command)` | `Q_INVOKABLE bool` | bind `command` to TF2 key token `key`, replacing earlier binds; an empty command removes instead; false when nothing changed. In memory only (D16) |
+| `setBind(key, command)` | `Q_INVOKABLE bool` | bind `command` to TF2 key token `key`, replacing earlier binds; an empty command removes instead; false when nothing changed. Reaches the file on the next save (D16, D20) |
 | `clearBind(key)` | `Q_INVOKABLE bool` | remove key token `key`'s bind row(s); false when it had none |
+| `dirty` | `Q_PROPERTY bool` | true when any app-owned row exists, i.e. Save would change the file |
+| `canSave()` / `saveBlockReason()` | `Q_INVOKABLE` | false plus a reason string when saving is impossible (nothing loaded, or the path is a bundled `:/` preset) |
+| `needsConfirm()` | `Q_INVOKABLE bool` | true when the file changed on disk, is read-only or has vanished since load; the QML confirm dialog sits between the question and the write |
+| `saveCfg()` / `saveCfgAs(path)` | `Q_INVOKABLE bool` | the surgical save (section 10.1); Save As re-points `cfgPath` at the new file. Emits `saved(path)` on success |
 
 `GameCfg`, `cmd::*`, `Lexers::*` are unchanged apart from removing two unused `#include <QApplication>` lines that only existed because the widgets module was in the build.
 
@@ -285,7 +289,7 @@ Mapped from `docs/legacy/pickle-inferences.md` §"What is unfinished" and `docs/
 
 | Future feature | Where it lands | What is already in place after this rewrite |
 |---|---|---|
-| Save a config to disk | `ConfigController::saveCfg()` + `File` menu action + `cfgPath` | designed in section 10.1; menu bar exists with an empty `File` menu, `cfgPath` already tracked |
+| ~~Save a config to disk~~ (landed, D20) | done: `ConfigController::saveCfg()`/`saveCfgAs()` per section 10.1; `File` menu carries the save pair | `cfgPath` tracked, mtime/size recorded at load, `.bak` beside every write |
 | ~~Paint loaded binds onto the keyboard~~ (landed, D16) | done: `KeyCap.boundCommand` reads `cfg.binds` and colours the cap; OK in the dialog edits the bind | `BoundKeyRole` reports the key token, `cfg.binds`/`setBind`/`clearBind` exist, and bound caps have their own colour tokens |
 | Type-aware argument editors | `BindEditorDialog` "Arguments" area switches on `TypeRole`, using `IntVar::getMinVal()`/`getMaxVal()` | model exposes type + args; the cvar metadata is already parsed (unused today) |
 | Alias chains | `BindEditorDialog` command list includes aliases; `TypeNameRole` reports `alias` | `CMD_ALIAS` detection already exists in `GameCfg` |
@@ -294,13 +298,12 @@ Mapped from `docs/legacy/pickle-inferences.md` §"What is unfinished" and `docs/
 | Key table owned by C++ | move `KeyTable.qml` data into a `KeyTable` QObject, inject via context property | one data source today (D9), no duplicated table |
 | Parse-fidelity fixes | `src/gamecfg/lex/**` | landed since: the case fold stops at the command name, `//` is quote-aware, quoted tokens honour `\"`/`\\`, and a short CSV row is padded instead of indexed blindly (`docs/CODE_REVIEW.md` #1, #2, #5, #6) |
 
-### 10.1 Save-to-disk design (decided 2026-10-12, not yet implemented)
+### 10.1 Save-to-disk design (decided 2026-10-12, implemented 2026-10-12)
 
-The app is read-only today: edits live in the model until the next load. The parse is
-**provably lossy** — `//` comments are stripped before tokenizing, blank lines and indentation
-never become rows, an unterminated quote becomes an `error` row, and command names are folded
-to lower case — so writing the model back wholesale would delete user content the app never
-showed. The design below is built around that fact.
+The parse is **provably lossy** — `//` comments are stripped before tokenizing, blank lines and
+indentation never become rows, an unterminated quote becomes an `error` row, and command names
+are folded to lower case — so writing the model back wholesale would delete user content the
+app never showed. The design below is built around that fact.
 
 **Decisions**
 
@@ -389,7 +392,7 @@ Performed against the MinGW Qt 6.12.0 build with the full automation run on 2026
 10. Scrolling (D15): at the default editor size the keyboard (1632 px) is wider than the viewport (1557 px), so the horizontal bar is shown (`hbar size 0.95`, policy `AlwaysOn`, opacity 1). At the minimum window (1180×700, viewport 1164×568) `hbar size 0.71`; `KP Enter` sits at x=1580, i.e. outside the viewport. Flicking the keyboard left by 600 px set `contentX` to 468 and `KP Enter` to x=1112; clicking there logged `keybButtonClicked: id=101 token=kp_enter`, so the outer keys are reachable and clickable. A vertical bar appears only when the content is taller than the viewport (at zoom 2.0: `vbar size 0.66`).
 11. Zoom (D15): `Ctrl`+wheel in and out, `Ctrl+=` / `Ctrl+-`, the numpad `+`/`-`, and `Ctrl+Shift+=` / `Ctrl+Shift+-` all change the level in 0.1 steps; the level clamps at 0.5 and 2.0; `Ctrl+0` returns to 1.0. Zoom is anchored: the viewport centre stays over the same key (the scroll offset changes to compensate). The zoom badge shows the percentage and fades after 1.2 s.
 12. Zoom scope and hit testing: at zoom 0.5 the content equals the viewport (both bars hidden) and clicking Space logs `id=71 token=space`; at zoom 0.5 clicking `KP Enter` logs `id=101 token=kp_enter`, so the click areas scale with the caps. Only the keyboard scales — the tab bar, status strip, zoom badge and panel geometry are unaffected. `Flickable` does not clamp programmatically assigned `contentX`/`contentY`, so `setZoom` clamps to `[0, content − viewport]` itself; without it, a zoom-out produced negative scroll offsets (−164, −77).
-13. Binds on the keyboard (D16): with `default.cfg` loaded, the caps whose key the config binds are painted with the bound tokens. A pixel scan of the Edit Binds tab finds 47 visible bound caps — exactly the on-screen keys `default.cfg` binds (of its 54 binds, 50 land on a cap; `end`/`pgdn`/`pgup` sit past the right edge, and the mouse binds have no cap) — and the whole numpad stays grey, the negative control for a wrong key mapping. `b4nny.cfg` binds 59 keys, a second data point. The dialog's OK applies the Custom Command text through `cfg.setBind`/`cfg.clearBind`, which edits the parsed rows; the caps and the Overview line update from the model's change signals. The edit is in memory only (section 10: no save path exists).
+13. Binds on the keyboard (D16): with `default.cfg` loaded, the caps whose key the config binds are painted with the bound tokens. A pixel scan of the Edit Binds tab finds 47 visible bound caps — exactly the on-screen keys `default.cfg` binds (of its 54 binds, 50 land on a cap; `end`/`pgdn`/`pgup` sit past the right edge, and the mouse binds have no cap) — and the whole numpad stays grey, the negative control for a wrong key mapping. `b4nny.cfg` binds 59 keys, a second data point. The dialog's OK applies the Custom Command text through `cfg.setBind`/`cfg.clearBind`, which edits the parsed rows; the caps and the Overview line update from the model's change signals. The edit reaches the file through the surgical save (section 10.1).
 14. Startup position (D17): with the primary screen at 2560×1440, at launch `GetWindowRect` reports the frame at `L=-9 T=0 R=1259 B=669` and the client origin at (0, 35). The −9 is the invisible DWM resize border, so the visible window sits in the top-left corner; the title bar is fully on screen. Before the rule the OS opened the window at (138, 69), with the 1573 px editor overlapping the second monitor at x=2560.
 
 | Parity row | How it was verified |
@@ -403,6 +406,7 @@ Performed against the MinGW Qt 6.12.0 build with the full automation run on 2026
 | D15 (scroll + zoom) | see items 10–12 of this section |
 | D16 (bound caps + dialog edit) | loaded-config colouring confirmed visually and by the pixel scan in item 13 (47 visible bound caps == the on-screen keys `default.cfg` binds; numpad all grey); the dialog's OK is wired to `cfg.setBind`/`cfg.clearBind`, whose `bindsChanged` signal is what repaints the caps |
 | D17 (startup position) | confirmed visually, and by the `GetWindowRect` probe in item 14 (frame top-left at the primary screen's origin) |
+| D20 (save pair) | the surgical save is covered offline by eight `EngineTest` cases (owned-line round trip, CRLF + missing final newline, deleted-row drop, session-row placement, idempotent re-save, `.bak`, `:/` refusal + Save As, disk-change detection); the menus/dialog/toast are compiler-, lint- and smoke-verified only (no config can be loaded without UI interaction) |
 
 ## 13. Keyboard usability: scrolling and zoom
 

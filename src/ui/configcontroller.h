@@ -5,6 +5,7 @@
 #include <QString>
 #include <QVariantList>
 #include <QVariantMap>
+#include <QDateTime>
 #include <QFuture>
 
 #include "gamecfg/gameconfig.h"
@@ -27,6 +28,9 @@ class ConfigController : public QObject {
     Q_PROPERTY(QString cfgPath READ cfgPath NOTIFY cfgPathChanged)
     Q_PROPERTY(QString lastError READ lastError NOTIFY lastErrorChanged)
     Q_PROPERTY(bool loaded READ loaded NOTIFY loadedChanged)
+    /// True when any app-owned row exists, i.e. Save would change the file. Notified
+    /// through bindsChanged, which fires on every model change that can alter it.
+    Q_PROPERTY(bool dirty READ isDirty NOTIFY bindsChanged)
     Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
     Q_PROPERTY(QVariantMap binds READ binds NOTIFY bindsChanged)
 
@@ -61,12 +65,32 @@ public:
     Q_INVOKABLE void clear();
 
     /// Bind `command` to TF2 key token `key` (e.g. "space", "kp_home"), replacing any
-    /// bind the key already had. An empty command removes the bind instead. In memory
-    /// only: the loaded .cfg file is not touched, because the app has no save yet (D16).
+    /// bind the key already had. An empty command removes the bind instead. Edits the
+    /// model; it reaches the file on the next saveCfg() (D16, D20).
     Q_INVOKABLE bool setBind(const QString &key, const QString &command);
 
     /// Remove the bind of TF2 key token `key`.
     Q_INVOKABLE bool clearBind(const QString &key);
+
+    /**
+     * Surgical save (docs/legacy/ui-qml-rewrite.md 10.1): rewrite only the lines the
+     * app owns, copy every other line byte-for-byte. Writes `<name>.bak` beside the
+     * file first, then the file itself through QSaveFile.
+     *
+     * QML drives this as: ask canSave() (false = refuse, explain via saveBlockReason),
+     * then needsConfirm() (true = the file changed on disk; show a dialog), then call
+     * saveCfg() or saveCfgAs(path). Keeping the questions separate from the write lets
+     * the QML dialog sit between them.
+     */
+    Q_INVOKABLE bool canSave() const;
+    Q_INVOKABLE QString saveBlockReason() const;
+    Q_INVOKABLE bool needsConfirm() const;
+    Q_INVOKABLE bool saveCfg();
+    Q_INVOKABLE bool saveCfgAs(const QString &path);
+
+    /// True when any app-owned row exists, i.e. saving would change the file. Drives
+    /// the Save action's enabled state.
+    Q_INVOKABLE bool isDirty() const;
 
 signals:
     void cfgPathChanged();
@@ -74,19 +98,29 @@ signals:
     void loadedChanged();
     void loadingChanged();
     void bindsChanged();
+    /// After a successful save, so QML can show transient feedback.
+    void saved(const QString &path);
 
 private:
     void setCfgPath(const QString &path);
     void setLastError(const QString &error);
     void setLoading(bool loading);
+    bool writeConfig(const QString &path, QString *error);
+    void recordFileStamp();
 
     GameCfg m_cfg; ///< default ctor loads res/cfg/allcmds.csv once
     CommandListModel m_commands;
     ConsoleCommandModel m_console;
+    /// Rows exactly as the parse produced them. The save compares this against the live
+    /// model: a line the parse covered but whose row the user since deleted is dropped
+    /// from the file instead of surviving verbatim.
+    QVector<cmd::Entry> m_parsed;
     QString m_cfgPath;
     QString m_lastError;
     bool m_loading = false;
     QFuture<void> m_loadFuture;
+    QDateTime m_loadedStamp;  ///< file mtime at load; compared at save
+    qint64 m_loadedSize = -1; ///< file size at load
 };
 
 #endif // CONFIGCONTROLLER_H

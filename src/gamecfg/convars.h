@@ -11,6 +11,14 @@ enum CmdType { CMD_IVAR, CMD_FVAR, CMD_SVAR, CMD_BVAR, CMD_CMD, CMD_BIND, CMD_AL
 struct Entry {
     QStringList args;
     CmdType type;
+    /// File line (0-based) the row was parsed from; -1 for a row the app created
+    /// (setBind), which is what makes the surgical save regenerate exactly these
+    /// lines and copy every other one verbatim (docs/legacy/ui-qml-rewrite.md 10.1).
+    int sourceLine = -1;
+    /// True when the row was written by the app rather than parsed. Parsed rows stay
+    /// false even when they are binds: the file remains their source of truth until
+    /// the user edits them.
+    bool appOwned = false;
     Entry()
         : type(CMD_UNKWN){};
 };

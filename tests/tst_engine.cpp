@@ -1,10 +1,13 @@
 #include <QFile>
+#include <QFileInfo>
+#include <QSaveFile>
 #include <QTemporaryDir>
 #include <QtTest>
 
 #include "gamecfg/gameconfig.h"
 #include "gamecfg/lex/lexers.h"
 #include "ui/commandlistmodel.h"
+#include "ui/configcontroller.h"
 #include "ui/consolecommandmodel.h"
 
 /**
@@ -96,6 +99,16 @@ private slots:
     void findCommandIgnoresCaseAndFilters();
     void commandAtCarriesTheArgumentMetadata();
 
+    // ConfigController: the surgical save (docs/legacy/ui-qml-rewrite.md 10.1)
+    void saveRewritesOnlyOwnedLines();
+    void savePreservesCrlfAndMissingFinalNewline();
+    void saveDropsDeletedBinds();
+    void saveAppendsSessionBindsAfterTheOwnedBlock();
+    void saveIsIdempotent();
+    void saveWritesABakBesideTheFile();
+    void saveRefusesAResourcePath();
+    void saveDetectsAnExternallyModifiedFile();
+
 private:
     QTemporaryDir m_dir;
     int m_fileCount = 0;
@@ -115,7 +128,9 @@ void EngineTest::initTestCase() {
 QString EngineTest::writeFile(const QString &name, const QString &text) {
     const QString path = m_dir.filePath(name);
     QFile file(path);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+    // No QIODevice::Text: the save tests assert exact line endings, so the bytes on
+    // disk must be exactly the bytes handed over (\n stays \n on Windows too).
+    if (!file.open(QIODevice::WriteOnly))
         return {};
     file.write(text.toUtf8());
     file.close();
@@ -531,6 +546,195 @@ void EngineTest::commandAtCarriesTheArgumentMetadata() {
 
     QVERIFY(model.commandAt(-1).isEmpty());
     QVERIFY(model.commandAt(99).isEmpty());
+}
+
+// --- ConfigController: the surgical save ---
+
+/// A loaded controller over `path`. loadCfg parses on a worker thread; the tests drive
+/// the controller synchronously, so spin until the queued model update lands. A macro
+/// wrapper, because QTRY_COMPARE contains `return` and cannot live in a function.
+#define LOAD_CONFIG(controller, path) \
+    do { \
+        (controller).loadCfg(path); \
+        QTRY_COMPARE((controller).loaded(), true); \
+    } while (false)
+
+void EngineTest::saveRewritesOnlyOwnedLines() {
+    // Comments, blank lines, an alias and a cvar line must survive byte-for-byte; only
+    // the bind lines the app touched are re-rendered.
+    const QString cfgText = QStringLiteral(
+        "// my binds, edited by hand\n"
+        "unbindall\n"
+        "bind \"a\" \"+moveleft\"\n"
+        "\n"
+        "bind \"b\" \"+jump\"\n"
+        "// a cvar below, not a bind\n"
+        "volume \"0.7\"\n"
+        "alias \"+quickswitch\" \"slot3; slot1\"\n");
+    const QString path = writeFile(QStringLiteral("owned.cfg"), cfgText);
+
+    ConfigController controller;
+    LOAD_CONFIG(controller, path);
+    QVERIFY(controller.setBind(QStringLiteral("b"), QStringLiteral("+duck")));
+    QVERIFY(controller.saveCfg());
+
+    QFile saved(path);
+    QVERIFY(saved.open(QIODevice::ReadOnly | QIODevice::Text));
+    const QStringList lines = QString::fromUtf8(saved.readAll()).split(QLatin1Char('\n'));
+    saved.close();
+
+    // Every line that is not an app-owned bind is unchanged, terminators aside.
+    QCOMPARE(lines.at(0), QStringLiteral("// my binds, edited by hand"));
+    QCOMPARE(lines.at(1), QStringLiteral("unbindall"));
+    QCOMPARE(lines.at(2), QStringLiteral("bind \"a\" \"+moveleft\""));
+    QCOMPARE(lines.at(3), QString()); // the blank line survived
+    QCOMPARE(lines.at(4), QStringLiteral("bind \"b\" \"+duck\"")); // re-rendered
+    QCOMPARE(lines.at(5), QStringLiteral("// a cvar below, not a bind"));
+    QCOMPARE(lines.at(6), QStringLiteral("volume \"0.7\""));
+    QCOMPARE(lines.at(7), QStringLiteral("alias \"+quickswitch\" \"slot3; slot1\""));
+}
+
+void EngineTest::savePreservesCrlfAndMissingFinalNewline() {
+    // CRLF endings and a final line with no newline: the save must not normalize either.
+    const QByteArray original = "unbindall\r\nbind \"a\" \"+moveleft\"\r\nsv_cheats 1";
+    const QString path = writeFile(QStringLiteral("crlf.cfg"), QString::fromUtf8(original));
+
+    ConfigController controller;
+    LOAD_CONFIG(controller, path);
+    QVERIFY(controller.setBind(QStringLiteral("a"), QStringLiteral("+duck")));
+    QVERIFY(controller.saveCfg());
+
+    QFile saved(path);
+    QVERIFY(saved.open(QIODevice::ReadOnly));
+    const QByteArray bytes = saved.readAll();
+    saved.close();
+
+    // \r\n stays \r\n, and the last line still has no terminator.
+    QVERIFY(bytes.startsWith("unbindall\r\n"));
+    QVERIFY(bytes.contains("bind \"a\" \"+duck\"\r\n"));
+    QVERIFY(bytes.endsWith("sv_cheats 1"));
+    QCOMPARE(bytes.count("\r\n"), 2);
+    QVERIFY(!bytes.contains("\n\n"));
+}
+
+void EngineTest::saveDropsDeletedBinds() {
+    const QString path = writeFile(QStringLiteral("drops.cfg"),
+                                   QStringLiteral("bind \"a\" \"+moveleft\"\nsv_cheats 1\n"));
+
+    ConfigController controller;
+    LOAD_CONFIG(controller, path);
+    QVERIFY(controller.clearBind(QStringLiteral("a"))); // removes the row
+    QVERIFY(controller.saveCfg());
+
+    QFile saved(path);
+    QVERIFY(saved.open(QIODevice::ReadOnly | QIODevice::Text));
+    const QString text = QString::fromUtf8(saved.readAll());
+    saved.close();
+    QVERIFY(!text.contains(QLatin1String("+moveleft")));
+    QVERIFY(text.contains(QLatin1String("sv_cheats 1")));
+}
+
+void EngineTest::saveAppendsSessionBindsAfterTheOwnedBlock() {
+    // A bind added in-app has no source line: it lands after the last bind line, so the
+    // binds stay together instead of scattering to the end of the file.
+    const QString path = writeFile(QStringLiteral("session.cfg"),
+                                   QStringLiteral("bind \"a\" \"+moveleft\"\n"
+                                                  "sv_cheats 1\n"
+                                                  "alias \"x\" \"say hi\"\n"));
+
+    ConfigController controller;
+    LOAD_CONFIG(controller, path);
+    QVERIFY(controller.setBind(QStringLiteral("k"), QStringLiteral("+jump")));
+    QVERIFY(controller.saveCfg());
+
+    QFile saved(path);
+    QVERIFY(saved.open(QIODevice::ReadOnly | QIODevice::Text));
+    const QStringList lines = QString::fromUtf8(saved.readAll()).split(QLatin1Char('\n'));
+    saved.close();
+
+    QCOMPARE(lines.at(0), QStringLiteral("bind \"a\" \"+moveleft\""));
+    QCOMPARE(lines.at(1), QStringLiteral("bind \"k\" \"+jump\"")); // right after the binds
+    QCOMPARE(lines.at(2), QStringLiteral("sv_cheats 1"));
+    QCOMPARE(lines.at(3), QStringLiteral("alias \"x\" \"say hi\""));
+}
+
+void EngineTest::saveIsIdempotent() {
+    const QString path = writeFile(QStringLiteral("idem.cfg"),
+                                   QStringLiteral("// bind block\nbind \"a\" \"+moveleft\"\nsv_cheats 1\n"));
+
+    ConfigController controller;
+    LOAD_CONFIG(controller, path);
+    QVERIFY(controller.setBind(QStringLiteral("a"), QStringLiteral("+duck")));
+    QVERIFY(controller.saveCfg());
+
+    QFile first(path);
+    QVERIFY(first.open(QIODevice::ReadOnly));
+    const QByteArray afterFirst = first.readAll();
+    first.close();
+
+    QVERIFY(controller.saveCfg()); // second save over the first
+    QFile second(path);
+    QVERIFY(second.open(QIODevice::ReadOnly));
+    const QByteArray afterSecond = second.readAll();
+    second.close();
+
+    QCOMPARE(afterSecond, afterFirst);
+}
+
+void EngineTest::saveWritesABakBesideTheFile() {
+    const QString path = writeFile(QStringLiteral("bak.cfg"),
+                                   QStringLiteral("bind \"a\" \"+moveleft\"\n"));
+    const QString bak = path + QStringLiteral(".bak");
+
+    ConfigController controller;
+    LOAD_CONFIG(controller, path);
+    QVERIFY(controller.setBind(QStringLiteral("a"), QStringLiteral("+duck")));
+    QVERIFY(controller.saveCfg());
+
+    QFile backup(bak);
+    QVERIFY2(backup.open(QIODevice::ReadOnly | QIODevice::Text), qPrintable(bak));
+    const QString text = QString::fromUtf8(backup.readAll());
+    backup.close();
+    // The .bak holds what was on disk before this save: the untouched original.
+    QCOMPARE(text, QStringLiteral("bind \"a\" \"+moveleft\"\n"));
+}
+
+void EngineTest::saveRefusesAResourcePath() {
+    // The bundled presets are Qt resources: they "exist" but cannot be written.
+    ConfigController controller;
+    LOAD_CONFIG(controller, QStringLiteral(":/cfg/default.cfg"));
+    QVERIFY(!controller.canSave());
+    QVERIFY(!controller.saveBlockReason().isEmpty());
+    QVERIFY(controller.saveCfg() == false); // refuses, with lastError set
+    QVERIFY(!controller.lastError().isEmpty());
+
+    // Save As to a real path works and re-points cfgPath at the file.
+    const QString target = m_dir.filePath(QStringLiteral("saved-from-preset.cfg"));
+    QVERIFY(controller.saveCfgAs(target));
+    QCOMPARE(controller.cfgPath(), target);
+    QVERIFY(QFile::exists(target));
+}
+
+void EngineTest::saveDetectsAnExternallyModifiedFile() {
+    const QString path = writeFile(QStringLiteral("ext.cfg"),
+                                   QStringLiteral("bind \"a\" \"+moveleft\"\nsv_cheats 1\n"));
+
+    ConfigController controller;
+    LOAD_CONFIG(controller, path);
+    QVERIFY(!controller.needsConfirm()); // just loaded, nothing changed
+
+    // Touch the file the way a sync tool would.
+    {
+        QFile touch(path);
+        QVERIFY(touch.open(QIODevice::WriteOnly | QIODevice::Text));
+        touch.write("bind \"a\" \"+moveleft\"\nsv_cheats 1\n// sync tool comment\n");
+        touch.close();
+    }
+    QVERIFY2(controller.needsConfirm(), "an externally modified file must ask before saving");
+    QVERIFY(controller.saveCfg()); // the write itself still works once confirmed
+
+    // And after the save the stamp is re-recorded, so the next save is silent again.
+    QVERIFY(!controller.needsConfirm());
 }
 
 QTEST_MAIN(EngineTest)

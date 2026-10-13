@@ -22,6 +22,10 @@ bool GameCfg::appendCfg(const QString &filename) {
     }
 
     while (lex.hasNext()) {
+        // The lexer tokenizes line by line, so the cursor's line index is the file line
+        // the command started on. Recorded per row: the surgical save regenerates exactly
+        // these lines (docs/legacy/ui-qml-rewrite.md 10.1).
+        cmd.sourceLine = lex.currentLine();
         const auto tok = lex.nextToken();
         if (cmd.args.empty()) {
             cmd.type = cmdToType(tok.string());

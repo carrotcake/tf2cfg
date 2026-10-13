@@ -7,7 +7,7 @@ Assumed load: **single user, local desktop app, one config at a time, 3825 comma
 
 ## What this repo does
 
-TF2 Config Manager is a Qt/QML desktop tool for viewing and editing Team Fortress 2 `.cfg` files. You load a config (or a bundled preset), browse the parsed commands, click a key on a visual keyboard/mouse/controller, and a dialog helps you construct a valid `bind` line. The engine parses configs and a 3800-row command catalog (`allcmds.csv`) with type/min/max/flags/platform/context metadata. The app is currently **read-only**: edits live in memory until the next load; there is no save path.
+TF2 Config Manager is a Qt/QML desktop tool for viewing and editing Team Fortress 2 `.cfg` files. You load a config (or a bundled preset), browse the parsed commands, click a key on a visual keyboard/mouse/controller, and a dialog helps you construct a valid `bind` line. The engine parses configs and a 3800-row command catalog (`allcmds.csv`) with type/min/max/flags/platform/context metadata. Edits are saved with a surgical save (`docs/legacy/ui-qml-rewrite.md` section 10.1): the file on disk stays the source of truth for everything the app does not own, and File > Save / Save As write through it.
 
 ## Findings
 
@@ -86,12 +86,11 @@ the reason recorded — these are not a to-do list and should not be re-raised),
 
 ## Verdict
 
-**Healthy core, safety net in place.** The engine and UI are functionally complete for the read-only use case. All nine "Must fix" items are resolved, `tests/tst_engine.cpp` guards the parser, the bind logic and the command catalog, and the dead code is gone. `docs/CODE_REVIEW.md` has no open findings left. The **biggest missing feature is save-to-disk**, which the docs already track.
+**Healthy core, safety net in place.** The engine and UI are functionally complete. All nine "Must fix" items are resolved, `tests/tst_engine.cpp` guards the parser, the bind logic, the command catalog and the save path, and the dead code is gone. `docs/CODE_REVIEW.md` has no open findings left.
 
 **Next up, in order:**
-1. CI (#22) — run `tf2cfg_test` and build the app on `ubuntu-latest` so half the player base is not the first to find a compile error. The **only** open finding in this document.
-2. Save-to-disk — designed in `docs/legacy/ui-qml-rewrite.md` section 10.1 (surgical save, ownership flag on the row, `.bak` + confirm on disk-change, mtime/size detection), implementation pending.
-3. Accessibility (`docs/accessibility.md`) — evaluated and sized, put off deliberately. The work items are ordered there; the two that matter are a focus ring on `Tf2Button` and making the 104 key caps reachable by keyboard.
+1. CI (#22) - run `tf2cfg_test` and build the app on `ubuntu-latest` so half the player base is not the first to find a compile error. The **only** open finding in this document.
+2. Accessibility (`docs/accessibility.md`) - evaluated and sized, put off deliberately. The work items are ordered there; the two that matter are a focus ring on `Tf2Button` and making the 104 key caps reachable by keyboard.
 
 Closed by decision and not to be re-raised: #11, #12, #13, #17, #18, #20 — each with its reason inline.
 

@@ -15,13 +15,17 @@ SOURCES += \
     ../src/gamecfg/lex/cmdlexer.cpp \
     ../src/gamecfg/lex/configlexer.cpp \
     ../src/ui/commandlistmodel.cpp \
+    ../src/ui/configcontroller.cpp \
     ../src/ui/consolecommandmodel.cpp \
     tst_engine.cpp
+
+QT += concurrent
 
 HEADERS += \
     ../src/gamecfg/gameconfig.h \
     ../src/gamecfg/lex/lexers.h \
     ../src/ui/commandlistmodel.h \
+    ../src/ui/configcontroller.h \
     ../src/ui/consolecommandmodel.h
 
 # GameCfg reads the command catalog from the resource bundle, so the tests get it

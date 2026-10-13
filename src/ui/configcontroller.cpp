@@ -1,8 +1,15 @@
 #include "configcontroller.h"
 
+#include <QDir>
 #include <QFile>
+#include <QFileInfo>
+#include <QMultiHash>
+#include <QSaveFile>
+#include <QSet>
 #include <QVariantMap>
 #include <QtConcurrent>
+
+#include <algorithm>
 
 ConfigController::ConfigController(QObject *parent)
     : QObject(parent) {
@@ -21,6 +28,255 @@ void ConfigController::setLoading(bool loading) {
         return;
     m_loading = loading;
     emit loadingChanged();
+}
+
+void ConfigController::recordFileStamp() {
+    const QFileInfo info(m_cfgPath);
+    if (info.exists() && info.isFile()) {
+        m_loadedStamp = info.lastModified();
+        m_loadedSize = info.size();
+    } else {
+        m_loadedStamp = QDateTime();
+        m_loadedSize = -1;
+    }
+}
+
+bool ConfigController::canSave() const {
+    return loaded() && !m_cfgPath.startsWith(QLatin1Char(':'));
+}
+
+QString ConfigController::saveBlockReason() const {
+    if (!loaded())
+        return QStringLiteral("no config is loaded");
+    if (m_cfgPath.startsWith(QLatin1Char(':')))
+        return QStringLiteral("the loaded config is a bundled preset; use Save As to pick a real file");
+    return QString();
+}
+
+bool ConfigController::needsConfirm() const {
+    if (!canSave())
+        return false;
+    const QFileInfo info(m_cfgPath);
+    if (!info.exists() || !info.isFile())
+        return true; // vanished since load
+    if (!info.isReadable() || !info.isWritable())
+        return true; // read-only
+    return info.lastModified() != m_loadedStamp || info.size() != m_loadedSize;
+}
+
+bool ConfigController::isDirty() const {
+    for (const cmd::Entry &entry : m_commands.entries())
+        if (entry.appOwned)
+            return true;
+    return false;
+}
+
+bool ConfigController::saveCfg() {
+    if (!canSave()) {
+        setLastError(saveBlockReason());
+        return false;
+    }
+    QString error;
+    if (!writeConfig(m_cfgPath, &error)) {
+        setLastError(error);
+        return false;
+    }
+    setLastError(QString());
+    recordFileStamp();
+    emit saved(m_cfgPath);
+    return true;
+}
+
+bool ConfigController::saveCfgAs(const QString &path) {
+    if (!loaded()) {
+        setLastError(QStringLiteral("no config is loaded"));
+        return false;
+    }
+    if (path.isEmpty() || path.startsWith(QLatin1Char(':'))) {
+        setLastError(QStringLiteral("pick a writable file path"));
+        return false;
+    }
+    QString error;
+    if (!writeConfig(path, &error)) {
+        setLastError(error);
+        return false;
+    }
+    setCfgPath(path); // a preset saved to a real path becomes that file
+    setLastError(QString());
+    recordFileStamp();
+    emit saved(path);
+    return true;
+}
+
+/**
+ * The surgical save (docs/legacy/ui-qml-rewrite.md 10.1). The file on disk is the
+ * source of truth for everything the app does not own; the model is the authority
+ * only for its app-owned rows.
+ *
+ * Lines are split preserving each terminator, so a CRLF config stays CRLF and a file
+ * with no trailing newline keeps that property. An app-owned line is re-rendered as
+ * `args.join(" ")` — the exact text the Command Overview shows, so there is one
+ * rendering, not two. A line the parse covered but whose row the model no longer holds
+ * (the user deleted the bind) is dropped. Rows added in this session (`sourceLine < 0`)
+ * are inserted after the last bind line, in row order, or at end of file when the
+ * config has no binds at all.
+ *
+ * shortcut: several commands on one file line (`;`) are re-rendered as several lines,
+ * and a deleted row among several on one line keeps the whole line. Upgrade when a
+ * real config trips over it.
+ */
+bool ConfigController::writeConfig(const QString &path, QString *error) {
+    // The target may not exist yet (Save As): that is an empty original, not an error.
+    QByteArray bytes;
+    if (QFile::exists(path)) {
+        QFile original(path);
+        if (!original.open(QIODevice::ReadOnly)) {
+            *error = QStringLiteral("cannot read %1").arg(path);
+            return false;
+        }
+        // No QIODevice::Text: it would normalize line endings and rewrite the whole file.
+        bytes = original.readAll();
+        original.close();
+    }
+
+    // Split keeping the terminators, so the join at the end reproduces the file exactly.
+    // \r\n is one terminator; a bare \r or \n is one on its own.
+    QList<QByteArray> lines;
+    {
+        int start = 0;
+        while (start < bytes.size()) {
+            int i = start;
+            while (i < bytes.size() && bytes.at(i) != '\n' && bytes.at(i) != '\r')
+                ++i;
+            if (i == bytes.size()) {
+                lines.append(bytes.mid(start)); // final unterminated line
+                break;
+            }
+            const int len = (bytes.at(i) == '\r' && i + 1 < bytes.size()
+                                 && bytes.at(i + 1) == '\n')
+                                ? 2
+                                : 1;
+            lines.append(bytes.mid(start, i - start + len));
+            start = i + len;
+        }
+    }
+
+    const QVector<cmd::Entry> &entries = m_commands.entries();
+
+    // ownedByLine[i] = rows the app owns on file line i (several when the line used
+    // `;`), each re-rendered on its own output line. modelLines is every file line the
+    // model still holds a row for; a line the parse covered (parsedLines, the load-time
+    // snapshot) but the model no longer does was deleted by the user (clearBind), so it
+    // is dropped instead of copied verbatim.
+    QMultiHash<int, int> ownedByLine;
+    QSet<int> modelLines;
+    QSet<int> parsedLines;
+    for (const cmd::Entry &parsed : m_parsed)
+        if (parsed.sourceLine >= 0)
+            parsedLines.insert(parsed.sourceLine);
+    int insertAfter = -1; // last bind line: session rows land right after the binds
+    for (int row = 0; row < entries.size(); ++row) {
+        const cmd::Entry &entry = entries.at(row);
+        if (entry.sourceLine < 0)
+            continue;
+        modelLines.insert(entry.sourceLine);
+        if (entry.appOwned
+            || CommandListModel::isBindCommand(entry.args.value(0).toLower()))
+            insertAfter = qMax(insertAfter, entry.sourceLine);
+        if (entry.appOwned)
+            ownedByLine.insert(entry.sourceLine, row);
+    }
+
+    QByteArray out;
+    out.reserve(bytes.size() + 128);
+    qint64 insertOffset = -1; // byte offset in out right after the insertAfter line
+    for (int i = 0; i < lines.size(); ++i) {
+        const QByteArray lineBytes = lines.at(i);
+        QByteArray terminator;
+        if (lineBytes.endsWith("\r\n"))
+            terminator = QByteArrayLiteral("\r\n");
+        else if (lineBytes.endsWith('\n') || lineBytes.endsWith('\r'))
+            terminator = QByteArray(1, lineBytes.at(lineBytes.size() - 1));
+
+        if (ownedByLine.contains(i)) {
+            QList<int> rows = ownedByLine.values(i);
+            std::sort(rows.begin(), rows.end());
+            for (const int row : rows) {
+                const cmd::Entry &entry = entries.at(row);
+                if (entry.args.isEmpty())
+                    continue; // owned but emptied: the line is dropped
+                // args.join(" ") is the exact text the Command Overview shows, so what
+                // the user reviewed is what lands on disk; the line's own terminator
+                // is reused so the file's endings survive.
+                out += entry.args.join(QLatin1Char(' ')).toUtf8();
+                out += terminator;
+            }
+        } else if (!parsedLines.contains(i) || modelLines.contains(i)) {
+            out += lineBytes; // never parsed, or a row still holds it: byte-for-byte
+        }
+        // else: parsed once, but its row is gone from the model - drop the line.
+
+        if (i == insertAfter)
+            insertOffset = out.size();
+    }
+
+    // Rows created in this session, right after the last bind line (so new binds stay
+    // with the binds) or at end of file when the config has no binds.
+    QByteArray sessionBlock;
+    QByteArray nl = QByteArrayLiteral("\n");
+    if (insertAfter >= 0 && insertAfter < lines.size()) {
+        const QByteArray &nb = lines.at(insertAfter);
+        if (nb.endsWith("\r\n"))
+            nl = QByteArrayLiteral("\r\n");
+        else if (nb.endsWith('\n') || nb.endsWith('\r'))
+            nl = QByteArray(1, nb.at(nb.size() - 1));
+    }
+    for (const cmd::Entry &entry : entries) {
+        if (!entry.appOwned || entry.sourceLine >= 0 || entry.args.isEmpty())
+            continue;
+        sessionBlock += entry.args.join(QLatin1Char(' ')).toUtf8() + nl;
+    }
+    if (!sessionBlock.isEmpty()) {
+        // If the anchor line itself had no terminator, the first row would glue onto it.
+        if (insertAfter >= 0 && insertAfter < lines.size()) {
+            const QByteArray &nb = lines.at(insertAfter);
+            if (!nb.endsWith('\n') && !nb.endsWith('\r'))
+                sessionBlock.prepend(nl);
+        }
+        if (insertOffset < 0)
+            out += sessionBlock;
+        else
+            out.insert(insertOffset, sessionBlock);
+    }
+
+    // Backup first: the only insurance against a wrong-but-successful write.
+    const QFileInfo info(path);
+    const QString backup = info.dir().filePath(info.fileName() + QStringLiteral(".bak"));
+    if (info.exists()) {
+        QFile backupFile(backup);
+        if (backupFile.exists())
+            backupFile.remove();
+        if (!QFile::copy(path, backup)) {
+            *error = QStringLiteral("cannot write the backup %1").arg(backup);
+            return false;
+        }
+    }
+
+    QSaveFile out2(path);
+    if (!out2.open(QIODevice::WriteOnly)) {
+        *error = QStringLiteral("cannot write %1").arg(path);
+        return false;
+    }
+    if (out2.write(out) != out.size()) {
+        *error = QStringLiteral("cannot write %1").arg(path);
+        out2.cancelWriting();
+        return false;
+    }
+    if (!out2.commit()) {
+        *error = QStringLiteral("cannot write %1").arg(path);
+        return false;
+    }
+    return true;
 }
 
 QAbstractItemModel *ConfigController::commandModel() {
@@ -125,7 +381,9 @@ void ConfigController::loadCfg(const QString &path) {
                 return;
             }
             m_commands.setEntries(m_cfg.getCmdList());
+            m_parsed = m_cfg.getCmdList(); // deletion baseline for the surgical save
             setCfgPath(path);
+            recordFileStamp(); // baseline for the disk-changed check at save time
             setLastError(QString());
             setLoading(false);
             emit loadedChanged();
