@@ -68,6 +68,95 @@ Dialog {
     function validBottom(bound) { return bound === "" ? -2147483647 : parseInt(bound, 10) }
     function validTop(bound) { return bound === "" ? 2147483647 : parseInt(bound, 10) }
 
+    function splitArgs(text) {
+        const parts = []
+        let cur = ""
+        let inQuotes = false
+        for (let i = 0; i < text.length; i++) {
+            const c = text.charAt(i)
+            if (inQuotes) {
+                if (c === '"') {
+                    if (i + 1 < text.length && text.charAt(i + 1) === '"') {
+                        cur += '"'
+                        i++
+                    } else
+                        inQuotes = false
+                } else
+                    cur += c
+            } else if (c === '"') {
+                inQuotes = true
+            } else if (/\s/.test(c)) {
+                if (cur !== "")
+                    parts.push(cur)
+                cur = ""
+            } else
+                cur += c
+        }
+        if (cur !== "")
+            parts.push(cur)
+        return parts
+    }
+
+    function prefillFromCommand() {
+        const text = customCommand.text.trim()
+        if (text === "")
+            return
+        const parts = splitArgs(text)
+        if (parts.length === 0)
+            return
+        const name = parts[0]
+        const rec = dialog.cfgRef.findCommand(name)
+        if (rec.name === undefined)
+            return
+
+        // Match settleCommand's filter handling so a hidden command becomes visible.
+        if (rec.context !== undefined)
+            applyCategoryFilter(rec.context)
+        if (rec.platform !== undefined)
+            applyPlatformFilter(rec.platform)
+
+        const idx = commandCombo.find(name, Qt.MatchFixedString)
+        if (idx < 0)
+            return
+        commandCombo.currentIndex = idx
+        rebuildArgs()
+
+        if (!commandInfo)
+            return
+
+        if (commandInfo.name.toLowerCase() === "incrementvar") {
+            modeToggle.checked = true
+            const values = parts.slice(1)
+            for (let i = 0; i < argModel.count && i < values.length; i++)
+                argModel.get(i).value = values[i]
+            for (let i = 0; i < argModel.count; i++)
+                if (i < values.length)
+                    argModel.get(i).included = true
+            return
+        }
+
+        // Bool cvars appear as their bare name when toggling; otherwise the first
+        // extra token (if any) is treated as a fixed value.
+        if (commandInfo.isCvar) {
+            if (parts.length <= 1)
+                modeToggle.checked = commandInfo.input === "bool"
+            else {
+                modeToggle.checked = false
+                if (argModel.count > 0)
+                    argModel.get(0).value = parts[1]
+            }
+            return
+        }
+
+        for (let i = 0; i < argModel.count; i++) {
+            if (parts[i + 1] !== undefined) {
+                argModel.get(i).value = parts[i + 1]
+                argModel.get(i).included = true
+            } else if (argModel.get(i).optional)
+                argModel.get(i).included = false
+        }
+    }
+
     /// Rebuild the argument editors from the selected command's signature.
     function rebuildArgs() {
         commandInfo = commandCombo.currentIndex >= 0
@@ -289,6 +378,8 @@ Dialog {
         suggestionList = []
         suggestionIndex = -1
         suggestionPopup.close()
+        // Reflect the bound command in Build-A-Bind when possible.
+        prefillFromCommand()
         // Center on the window each time it opens (a plain Dialog sits at 0,0).
         if (dialog.parent) {
             dialog.x = Math.max(0, Math.round((dialog.parent.width - dialog.width) / 2))
