@@ -24,10 +24,13 @@ Numbered across all groups so you can say "fix 2 and 5".
 
 5. ~~**`cmdLex::Token` has `const QString` members, making it non-movable and expensive to return by value**~~ **FIXED** — dropped `const` on all `QString` members in `Token` struct.
 
-6. **Config lexer does not handle escaped quotes inside quoted strings** (`src/gamecfg/lex/configlexer.cpp:23-30`)
+6. ~~**Config lexer does not handle escaped quotes inside quoted strings** (`src/gamecfg/lex/configlexer.cpp:23-30`)~~ **FIXED**
    - **What this is:** The DFA treats a `"` inside a quoted token as the end of the token. TF2 configs allow `\"` inside quotes (e.g. `alias test "say \"hello\""`). The current lexer would split this into two tokens.
-   - **Fix:** In `STATE_ESCP` (entered after `\`), treat the next char as literal and append it, including `"` and `\`. The DFA already has `STATE_ESCP` — wire it to append `c` unconditionally and return to `STATE_CHAR`.
-   - **If we skip it:** Aliases with embedded quotes parse incorrectly; rare but valid.
+   - **Fix as built:** A backslash inside a quoted token now marks the next character as literal, so the token no longer ends there (`src/gamecfg/lex/configlexer.cpp`, one `escaped` flag). The backslash itself is kept, because a token is what the line says; `CommandListModel::unquoted()` is the single place that reads `\"` and `\\`, and `quoted()` writes them back — so a row `setBind()` produced and the same row read from a file both yield one identical command.
+   - **Found while fixing it:** `cfgLex::preprocess` cut the line at the first `//` **anywhere**, including inside quotes. `alias t "echo http://host/x"` lost its tail, and the unterminated quote then appended an `error` token to the row. `//` now only starts a comment outside a quoted token, matching the game's tokenizer.
+   - **Matches the game:** Valve's own escape table for quoted strings is `s_StringCharConversion` in `src/tier1/utlbuffer.cpp` (public Source SDK 2013): escape char `\`, delimiter `"`, with `\\` and `\"` among its entries and nothing for an unknown escape. So the two escapes that can end or continue a token are exactly the two `unquoted()` understands. Anything else after a backslash is kept verbatim in both (`"C:\temp"` stays `C:\temp`; no character is dropped), because a token is the line as written.
+   - **Known, deliberate gap:** the game also turns `\n`, `\t`, `\r`, `\v`, `\b`, `\f`, `\a`, `\'` and `\?` into control characters inside quoted tokens; we keep those two-character sequences as text. Reproducing them would need a control-character table in the tokenizer for input no real TF2 config contains.
+   - **Verified:** all four bundled configs tokenize identically before and after the change (diffed old vs new lexer build over every token); the escaped-quote case is pinned by `tests/tst_engine.cpp`.
 
 7. ~~**KeyCap tooltip interpolates user data into a format string**~~ **FIXED** — changed to string concatenation: `'bind "' + cap.token + '" "' + cap.boundCommand + '"'`.
 
@@ -37,10 +40,11 @@ Numbered across all groups so you can say "fix 2 and 5".
 
 ### Should fix (risky code without test, real slowness, duplication, mixed jobs, dead code)
 
-10. **No automated tests anywhere**
-    - **What this is:** Zero unit tests. Parsing logic (`cfgLex`, `cmdLex`), bind resolution (`binds()`, `setBind`, `clearBind`), CSV I/O (`csvio.py`), flag normalization (`flags_update.py`) — all untested. A single regression in the lexer or bind logic would ship silently.
-    - **Fix:** Add a minimal Qt Test target (`tf2cfg_test`) covering: `cfgLex` tokenization of quoted/escaped strings, `cmdLex` CSV row round-trip, `CommandListModel::binds()` replay semantics (unbindall, later bind wins, empty command clears), `setBind`/`clearBind` idempotence. One test binary run in CI.
-    - **If we skip it:** Every refactor is a gamble; the parser has known bugs (#6) with no safety net.
+10. ~~**No automated tests anywhere**~~ **FIXED** — `tests/tst_engine.cpp` + `tests/tests.pro` (Qt Test), 21 cases: cfgLex tokenization (quotes, escapes, comments, case folding, `;` inside quotes), cmdLex CSV mapping/round-trip/padding, `GameCfg` catalog load (one cvar of each type), and `CommandListModel` bind replay (`unbindall`, `unbind`, later-wins, empty command, `setBind` replace/idempotence/case/escaping, `clearBind`). Built and run separately from the app, so a red test never blocks a release build:
+   ```
+   cd build-test && qmake ../tests/tests.pro && mingw32-make && release/tf2cfg_test.exe
+   ```
+   Still untested: QML itself, and `ConsoleCommandModel` filtering/suggestion.
 
 11. **`GameCfg::loadAllCmds()` mixes CSV parsing, type inference, and object creation** (`src/gamecfg/gameconfig.cpp:44-105`)
     - **What this is:** One 60-line function reads the CSV, decides the C++ subclass (`ConCmd` vs `BoolVar` vs `IntVar`...), parses min/max/def, and `new`s the object. Hard to test in isolation; any change to the type logic requires a full parse.
@@ -67,10 +71,7 @@ Numbered across all groups so you can say "fix 2 and 5".
     - **Fix:** Remove from `SOURCES` in `.pro`. Delete the file.
     - **If we skip it:** Wasted compile time (negligible), dead file in tree.
 
-16. **`CommandListModel::setBind()` lowercases the command, but TF2 aliases/commands can have case-sensitive arguments**
-    - **What this is:** Line 152: `cleanCommand = command.trimmed().toLower()`. TF2 console commands are case-insensitive, but *arguments* to commands (e.g. `say "Hello World"`) preserve case. Lowercasing the whole command string mangles alias bodies and say-text.
-    - **Fix:** Only lowercase the command *name* (first word). Keep the rest as typed. The parser lowercases config lines on load, so round-tripping a loaded bind already loses case — but a user typing a new bind in the Custom Command tab should keep case.
-    - **If we skip it:** Aliases and `say` binds lose capitalization; minor but wrong.
+16. ~~**`CommandListModel::setBind()` lowercases the command, but TF2 aliases/commands can have case-sensitive arguments**~~ **FIXED** — only the first word is folded to lower case; the rest is stored as typed. Rows read from a file stay lower case, because `cfgLex` folds every line, so an edit applied twice still produces one identical row.
 
 17. **Theme.qml not reviewed for hardcoded duplication** — likely has color literals that could be centralized. (Did not read `qml/theme/Theme.qml`.)
 
@@ -108,12 +109,13 @@ Numbered across all groups so you can say "fix 2 and 5".
 
 ## Verdict
 
-**Healthy core, missing safety net.** The engine and UI are functionally complete for the read-only use case. The parser has a known escape bug (#6) but it doesn't affect typical TF2 configs today. The **biggest risk is zero tests** (#10) — any future change (save feature, Linux port, config refresh) has no guard rails. The **biggest missing feature is save-to-disk**, which the docs already track. Eight of the nine "Must fix" items are now resolved.
+**Healthy core, safety net now in place.** The engine and UI are functionally complete for the read-only use case. All nine "Must fix" items are resolved, and `tests/tst_engine.cpp` guards the parser and bind logic. The **biggest missing feature is save-to-disk**, which the docs already track.
 
-**Priority order if you continue:**
-1. Add a minimal test suite (#10) — covers the parser and bind logic.
-2. Fix the escaped-quote lexer bug (#6) — corrects a real config case.
-3. (Done) Memory leak, binds caching, async loadCfg, Token movability, tooltip format string, bindRows deduplication, missing presets, suggest() filter cache.
+**Next up, in order:**
+1. CI (#22) — run `tf2cfg_test` and `qmllint` on every push, and a Linux `qmake` so half the player base is not the first to find a compile error.
+2. Save-to-disk (docs/legacy/ui-qml-rewrite.md section 10) — the editor has been writable in memory since D16 with nowhere to write.
+3. Remaining cheap wins: #13, #14, #15, #23.
+4. Not worth it unless something asks: #11 and #12 (refactors with no caller), #18 (cosmetic), #19/#21 (deletions only).
 
 ## Lean
 
