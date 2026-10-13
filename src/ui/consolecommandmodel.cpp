@@ -57,9 +57,9 @@ QVariant ConsoleCommandModel::data(const QModelIndex &index, int role) const {
     case DefaultRole:
         return cmd->defaultStr();
     case MinRole:
-        return cmd->hasRange() ? number(cmd->minVal()) : QString();
+        return cmd->hasMinBound() ? number(cmd->minVal()) : QString();
     case MaxRole:
-        return cmd->hasRange() ? number(cmd->maxVal()) : QString();
+        return cmd->hasMaxBound() ? number(cmd->maxVal()) : QString();
     default:
         return {};
     }
@@ -209,8 +209,8 @@ QVariantMap ConsoleCommandModel::commandAt(int row) const {
     map.insert(QStringLiteral("context"), cmd->get_context());
     map.insert(QStringLiteral("cheat"), cmd->isCheat());
     map.insert(QStringLiteral("def"), cmd->defaultStr());
-    map.insert(QStringLiteral("min"), cmd->hasRange() ? number(cmd->minVal()) : QString());
-    map.insert(QStringLiteral("max"), cmd->hasRange() ? number(cmd->maxVal()) : QString());
+    map.insert(QStringLiteral("min"), cmd->hasMinBound() ? number(cmd->minVal()) : QString());
+    map.insert(QStringLiteral("max"), cmd->hasMaxBound() ? number(cmd->maxVal()) : QString());
     // A bare type (bool/int/flt/str, no brackets) is a cvar value; commands carry a
     // signature with []/<>/none. The arguments pane switches on this.
     const QString input = cmd->get_usage();

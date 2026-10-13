@@ -79,6 +79,11 @@ private slots:
     void catalogLoadsEveryRowAsACommand();
     void catalogRowsHaveTenFields();
 
+    // Per-argument + one-sided bounds (docs/DESIGN-arg-bounds.md)
+    void oneSidedCvarBoundsKeepTheirSide();
+    void argBoundsAttachFromCompanionFile();
+    void argBoundsTolerateAMissingFile();
+
     // CommandListModel
     void appendCfgReportsAnUnreadableFile();
     void laterBindWins();
@@ -375,6 +380,100 @@ void EngineTest::catalogRowsHaveTenFields() {
         ++rows;
     }
     QCOMPARE(rows, 3825);
+}
+
+// --- Per-argument + one-sided bounds (docs/DESIGN-arg-bounds.md) ---
+
+void EngineTest::oneSidedCvarBoundsKeepTheirSide() {
+    // The engine clamps each side independently; a lone min (35 catalog rows carry
+    // exactly that) must survive the loader instead of being dropped as "no range".
+    const cmd::IntVar ivar(QStringLiteral("t"), QStringLiteral("d"), 1, -5, 0,
+                           true, false, QStringLiteral("client"), QStringLiteral("universal"),
+                           QStringLiteral("client settings"));
+    QVERIFY(ivar.hasMinBound());
+    QVERIFY(!ivar.hasMaxBound());
+    QVERIFY(ivar.hasRange());
+    QCOMPARE(ivar.minVal(), -5.0);
+
+    const cmd::FltVar fvar(QStringLiteral("t"), QStringLiteral("d"), 1.0, 0.0, 2.5,
+                           false, true, QStringLiteral("client"), QStringLiteral("universal"),
+                           QStringLiteral("client settings"));
+    QVERIFY(!fvar.hasMinBound());
+    QVERIFY(fvar.hasMaxBound());
+    QCOMPARE(fvar.maxVal(), 2.5);
+
+    // And the catalog's own min-only rows now keep their side.
+    const auto row = findCmdRow(QStringLiteral("mp_maxrounds"));
+    QVERIFY(row.hasMin());
+    QVERIFY(!row.hasMax());
+}
+
+void EngineTest::argBoundsAttachFromCompanionFile() {
+    GameCfg cfg; // the default ctor already loaded the bundled argbounds.csv
+
+    // A temp companion file mixing valid rows and every rejection path:
+    // addcond [int] <int>, drawline six [flt]s, mp_maxrounds is a cvar.
+    const QStringList lines = {
+        QStringLiteral("addcond,0,int,0,"),        // min only, int
+        QStringLiteral("drawline,2,flt,,-1"),      // max only, flt
+        QStringLiteral("nosuchcmd,0,int,0,1"),     // unknown command: skipped
+        QStringLiteral("addcond,5,int,0,1"),       // arg index outside the signature
+        QStringLiteral("mp_maxrounds,0,int,0,1"),  // not a cmd row: skipped
+        QStringLiteral("addcond,1,flt,10,5"),      // min > max: skipped
+        QStringLiteral("drawline,3,flt,-5,5"),     // second valid row for sorting
+    };
+    const QString path = writeFile(QStringLiteral("argbounds-test.csv"), lines.join('\n') + '\n');
+    cfg.loadArgBounds(path);
+
+    const auto findCmd = [&cfg](const QString &name) -> cmd::ConCmd * {
+        for (cmd::ConVar *cv : cfg.allCmds())
+            if (cv->get_name() == name && cv->get_type() == cmd::CMD_CMD)
+                return static_cast<cmd::ConCmd *>(cv);
+        return nullptr;
+    };
+
+    cmd::ConCmd *addcond = findCmd(QStringLiteral("addcond"));
+    QVERIFY(addcond);
+    QCOMPARE(addcond->argSpecs().size(), 1);
+    QCOMPARE(addcond->argSpecs().at(0).index, 0);
+    QVERIFY(!addcond->argSpecs().at(0).isFloat);
+    QVERIFY(addcond->argSpecs().at(0).hasMin);
+    QCOMPARE(addcond->argSpecs().at(0).min, 0.0);
+    QVERIFY(!addcond->argSpecs().at(0).hasMax);
+
+    cmd::ConCmd *drawline = findCmd(QStringLiteral("drawline"));
+    QVERIFY(drawline);
+    QCOMPARE(drawline->argSpecs().size(), 2);
+    QCOMPARE(drawline->argSpecs().at(0).index, 2); // sorted by index
+    QVERIFY(drawline->argSpecs().at(0).isFloat);
+    QVERIFY(!drawline->argSpecs().at(0).hasMin);
+    QVERIFY(drawline->argSpecs().at(0).hasMax);
+    QCOMPARE(drawline->argSpecs().at(0).max, -1.0);
+    QCOMPARE(drawline->argSpecs().at(1).index, 3);
+    QCOMPARE(drawline->argSpecs().at(1).min, -5.0);
+    QCOMPARE(drawline->argSpecs().at(1).max, 5.0);
+
+    // The bundled resource file already carries the user-verified seed row.
+    cmd::ConCmd *lip = findCmd(QStringLiteral("load_itempreset"));
+    QVERIFY(lip);
+    QCOMPARE(lip->argSpecs().size(), 1);
+    QCOMPARE(lip->argSpecs().at(0).min, 0.0);
+    QCOMPARE(lip->argSpecs().at(0).max, 3.0);
+}
+
+void EngineTest::argBoundsTolerateAMissingFile() {
+    GameCfg cfg;
+    // A missing companion file is normal: no crash, existing specs untouched.
+    cfg.loadArgBounds(m_dir.filePath(QStringLiteral("no-such-argbounds.csv")));
+    const auto findLip = [&cfg]() -> cmd::ConCmd * {
+        for (cmd::ConVar *cv : cfg.allCmds())
+            if (cv->get_name() == QStringLiteral("load_itempreset"))
+                return static_cast<cmd::ConCmd *>(cv);
+        return nullptr;
+    };
+    cmd::ConCmd *lip = findLip();
+    QVERIFY(lip);
+    QCOMPARE(lip->argSpecs().size(), 1); // the resource-loaded spec survives
 }
 
 // --- CommandListModel ---

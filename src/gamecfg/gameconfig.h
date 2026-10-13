@@ -28,6 +28,12 @@ public:
 
     void loadAllCmds();
 
+    /// Attach per-argument authoring bounds from the argbounds companion file
+    /// (docs/DESIGN-arg-bounds.md). Optional file: a missing one leaves every command
+    /// unbounded. Parameterized so tests can point it at a temp file.
+    void loadArgBounds(
+        const QString &path = QStringLiteral("://cfg/argbounds.csv"));
+
     QVector<cmd::Entry> const &getCmdList() const;
 
     /// Every allcmds.csv entry, with its input type, platform and context metadata.

@@ -4,10 +4,13 @@
 #include <QDebug>
 #include <QLoggingCategory>
 
+#include <algorithm>
+
 Q_LOGGING_CATEGORY(lcCfg, "tf2cfg.config")
 
 GameCfg::GameCfg() {
     loadAllCmds();
+    loadArgBounds();
 }
 
 GameCfg::GameCfg(const QString &filename)
@@ -98,6 +101,13 @@ void GameCfg::loadAllCmds() {
                 known_cmds.push_back(new cmd::IntVar(tok.name(), tok.docStr(), def,
                                                      tok.minVal().toLongLong(), tok.maxVal().toLongLong(),
                                                      tok.flagsVal(), tok.platform(), tok.context()));
+            } else if (tok.hasMin() || tok.hasMax()) {
+                // One-sided: the engine clamps each side independently, so keep the
+                // present side and treat the absent one as 0 (its value is unused).
+                known_cmds.push_back(new cmd::IntVar(tok.name(), tok.docStr(), def,
+                                                     tok.minVal().toLongLong(), tok.maxVal().toLongLong(),
+                                                     tok.hasMin(), tok.hasMax(),
+                                                     tok.flagsVal(), tok.platform(), tok.context()));
             } else {
                 known_cmds.push_back(new cmd::IntVar(tok.name(), tok.docStr(), def,
                                                      tok.flagsVal(), tok.platform(), tok.context()));
@@ -113,6 +123,11 @@ void GameCfg::loadAllCmds() {
                 known_cmds.push_back(new cmd::FltVar(tok.name(), tok.docStr(), def,
                                                      tok.minVal().toDouble(), tok.maxVal().toDouble(),
                                                      tok.flagsVal(), tok.platform(), tok.context()));
+            } else if (tok.hasMin() || tok.hasMax()) {
+                known_cmds.push_back(new cmd::FltVar(tok.name(), tok.docStr(), def,
+                                                     tok.minVal().toDouble(), tok.maxVal().toDouble(),
+                                                     tok.hasMin(), tok.hasMax(),
+                                                     tok.flagsVal(), tok.platform(), tok.context()));
             } else {
                 known_cmds.push_back(new cmd::FltVar(tok.name(), tok.docStr(), def,
                                                      tok.flagsVal(), tok.platform(), tok.context()));
@@ -125,6 +140,101 @@ void GameCfg::loadAllCmds() {
             cmd_types.insert(key, cmd::CMD_SVAR);
         }
         cmd_map.insert(key, known_cmds.size() - 1);
+    }
+}
+
+/**
+ * Per-argument authoring bounds from the companion catalog file
+ * (docs/DESIGN-arg-bounds.md §4). Row layout: command, argIndex, type (int/flt),
+ * min, max - empty min or max means that side is unbounded, the way the engine's
+ * independent clamps work. Every invalid row is warned about and skipped; a missing
+ * file is normal and leaves every command unbounded.
+ *
+ * The catalog is the shape authority: bounds only attach to commands allcmds.csv
+ * knows as cmd rows, and an arg index must land inside the command's usage
+ * signature. cmdLex::Token::field() maps the 5 columns onto fields 0-4.
+ */
+void GameCfg::loadArgBounds(const QString &path) {
+    // command -> arg index -> spec, so a command's specs can be validated as a set.
+    QHash<QString, QHash<int, cmd::ArgSpec>> collected;
+
+    Lexers::cmdLex lex;
+    if (!lex.open(path)) {
+        // Optional file by design; only a debug note, never an error.
+        qCDebug(lcCfg, "no arg bounds at %s - commands stay unbounded", qPrintable(path));
+        return;
+    }
+    while (lex.hasNext()) {
+        const auto tok = lex.nextToken();
+        if (tok.name().isEmpty()) {
+            continue; // EOF or malformed row
+        }
+        const QString key = tok.name().toLower();
+        bool okIndex = false;
+        const int index = tok.field(1).toInt(&okIndex);
+        const QString type = tok.field(2);
+        if (!okIndex || index < 0 || (type != QLatin1String("int")
+                                      && type != QLatin1String("flt"))) {
+            qWarning("argbounds: skipping malformed row for %s", qPrintable(key));
+            continue;
+        }
+        bool okMin = false;
+        bool okMax = false;
+        const double min = tok.field(3).toDouble(&okMin);
+        const double max = tok.field(4).toDouble(&okMax);
+        const bool hasMin = !tok.field(3).isEmpty() && okMin;
+        const bool hasMax = !tok.field(4).isEmpty() && okMax;
+        if ((hasMin && !okMin) || (hasMax && !okMax) || (!hasMin && !hasMax)) {
+            qWarning("argbounds: skipping unparseable bounds for %s arg %d",
+                     qPrintable(key), index);
+            continue;
+        }
+        if (hasMin && hasMax && min > max) {
+            qWarning("argbounds: min > max for %s arg %d", qPrintable(key), index);
+            continue;
+        }
+        if (collected.value(key).contains(index)) {
+            qWarning("argbounds: duplicate entry for %s arg %d", qPrintable(key), index);
+            continue;
+        }
+        cmd::ArgSpec spec;
+        spec.index = index;
+        spec.isFloat = type == QLatin1String("flt");
+        spec.hasMin = hasMin;
+        spec.min = min;
+        spec.hasMax = hasMax;
+        spec.max = max;
+        collected[key][index] = spec;
+    }
+
+    for (auto it = collected.constBegin(); it != collected.constEnd(); ++it) {
+        const auto ci = cmd_map.constFind(it.key());
+        if (ci == cmd_map.cend() || cmd_types.value(it.key()) != cmd::CMD_CMD) {
+            qWarning("argbounds: %s is not a known command", qPrintable(it.key()));
+            continue;
+        }
+        // The usage signature is the shape authority: "[str] [flt] ..." tokens, one
+        // per argument; a command with none accepts no bounds at all.
+        const QStringList tokens =
+            known_cmds.at(ci.value())->get_usage().split(QLatin1Char(' '), Qt::SkipEmptyParts);
+        const int argc = std::count_if(tokens.cbegin(), tokens.cend(), [](const QString &t) {
+            return t.startsWith(QLatin1Char('[')) || t.startsWith(QLatin1Char('<'));
+        });
+        if (argc == 0) {
+            qWarning("argbounds: %s takes no documented arguments", qPrintable(it.key()));
+            continue;
+        }
+        QVector<cmd::ArgSpec> specs;
+        specs.reserve(argc);
+        for (int i = 0; i < argc; ++i) {
+            if (it.value().contains(i))
+                specs.append(it.value().value(i));
+        }
+        if (specs.isEmpty())
+            continue; // every row for this command failed validation
+        std::sort(specs.begin(), specs.end(),
+                  [](const cmd::ArgSpec &a, const cmd::ArgSpec &b) { return a.index < b.index; });
+        static_cast<cmd::ConCmd *>(known_cmds.at(ci.value()))->setArgSpecs(specs);
     }
 }
 

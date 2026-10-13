@@ -3,10 +3,27 @@
 
 #include <QString>
 #include <QStringList>
+#include <QVector>
 
 namespace cmd {
 typedef long long int i64;
 enum CmdType { CMD_IVAR, CMD_FVAR, CMD_SVAR, CMD_BVAR, CMD_CMD, CMD_BIND, CMD_ALIAS, CMD_UNKWN };
+
+/**
+ * Authoring bounds for one argument of a console command (docs/DESIGN-arg-bounds.md).
+ * The engine passes command arguments as strings and never clamps them; these exist
+ * only to shape the Build-A-Bind editors. One-sided bounds are explicit flags, the
+ * same way ConVar clamps each side independently.
+ */
+struct ArgSpec {
+    int index = 0;      ///< position in the usage signature
+    bool isFloat = false; ///< int vs flt editor mode
+    bool hasMin = false;
+    double min = 0.0;
+    bool hasMax = false;
+    double max = 0.0;
+};
+
 
 struct Entry {
     QStringList args;
@@ -51,8 +68,11 @@ public:
     bool isCheat() const { return flags.split(' ', Qt::SkipEmptyParts).contains(QLatin1String("cheat")); };
     virtual CmdType get_type() const { return m_type; };
     /// Range bounds for the Build-A-Bind argument editors; doubles so int and flt
-    /// cvars feed the same spin box. Empty strings = no bound known.
+    /// cvars feed the same spin box. Each side stands alone, matching the engine's
+    /// independent m_bHasMin/m_bHasMax clamps; empty = no bound on that side.
     virtual bool hasRange() const { return false; };
+    virtual bool hasMinBound() const { return false; };
+    virtual bool hasMaxBound() const { return false; };
     virtual double minVal() const { return 0.0; };
     virtual double maxVal() const { return 0.0; };
     virtual QString defaultStr() const { return {}; };
@@ -66,25 +86,35 @@ class IntVar : public ConVar {
 public:
     struct Range {
         const i64 min, max;
-        Range(i64 minval, i64 maxval)
+        const bool hasMin, hasMax;
+        Range(i64 minval, i64 maxval, bool hasmn, bool hasmx)
             : min(minval)
-            , max(maxval){};
+            , max(maxval)
+            , hasMin(hasmn)
+            , hasMax(hasmx){};
     };
 
     IntVar(const QString &nm, const QString &doc, i64 def, i64 min, i64 max, const QString &fl,
            const QString &pl, const QString &cx)
         : ConVar(nm, doc, CMD_IVAR, "int", fl, pl, cx)
         , defVal(def)
-        , r(min, max)
-        , minMax(min != max){};
+        , r(min, max, true, true){};
     IntVar(const QString &nm, const QString &doc, i64 def, const QString &fl, const QString &pl,
            const QString &cx)
         : IntVar(nm, doc, def, 0, 0, fl, pl, cx){};
+    /// Full-control ctor: each bound side is present or absent on its own.
+    IntVar(const QString &nm, const QString &doc, i64 def, i64 min, i64 max, bool hasmn,
+           bool hasmx, const QString &fl, const QString &pl, const QString &cx)
+        : ConVar(nm, doc, CMD_IVAR, "int", fl, pl, cx)
+        , defVal(def)
+        , r(min, max, hasmn, hasmx){};
 
     auto getDefaultVal() const { return defVal; }
-    auto getMinVal() const { return minMax ? r.min : 0; }
-    auto getMaxVal() const { return minMax ? r.max : 0; }
-    bool hasRange() const override { return minMax; }
+    auto getMinVal() const { return r.min; }
+    auto getMaxVal() const { return r.max; }
+    bool hasMinBound() const override { return r.hasMin; }
+    bool hasMaxBound() const override { return r.hasMax; }
+    bool hasRange() const override { return r.hasMin || r.hasMax; }
     double minVal() const override { return static_cast<double>(r.min); }
     double maxVal() const override { return static_cast<double>(r.max); }
     QString defaultStr() const override { return QString::number(defVal); }
@@ -93,31 +123,40 @@ public:
 private:
     i64 defVal;
     Range r;
-    bool minMax;
 };
 
 class FltVar : public ConVar {
 public:
     struct Range {
         const double min, max;
-        Range(double minval, double maxval)
+        const bool hasMin, hasMax;
+        Range(double minval, double maxval, bool hasmn, bool hasmx)
             : min(minval)
-            , max(maxval){};
+            , max(maxval)
+            , hasMin(hasmn)
+            , hasMax(hasmx){};
     };
     FltVar(const QString &nm, const QString &doc, double def, double min, double max,
            const QString &fl, const QString &pl, const QString &cx)
         : ConVar(nm, doc, CMD_FVAR, "flt", fl, pl, cx)
         , defVal(def)
-        , r(min, max)
-        , minMax(min != max){};
+        , r(min, max, true, true){};
     FltVar(const QString &nm, const QString &doc, double def, const QString &fl,
            const QString &pl, const QString &cx)
         : FltVar(nm, doc, def, 0.0, 0.0, fl, pl, cx){};
+    /// Full-control ctor: each bound side is present or absent on its own.
+    FltVar(const QString &nm, const QString &doc, double def, double min, double max,
+           bool hasmn, bool hasmx, const QString &fl, const QString &pl, const QString &cx)
+        : ConVar(nm, doc, CMD_FVAR, "flt", fl, pl, cx)
+        , defVal(def)
+        , r(min, max, hasmn, hasmx){};
 
     auto getDefaultVal() const { return defVal; }
-    auto getMinVal() const { return minMax ? r.min : 0.0; }
-    auto getMaxVal() const { return minMax ? r.max : 0.0; }
-    bool hasRange() const override { return minMax; }
+    auto getMinVal() const { return r.min; }
+    auto getMaxVal() const { return r.max; }
+    bool hasMinBound() const override { return r.hasMin; }
+    bool hasMaxBound() const override { return r.hasMax; }
+    bool hasRange() const override { return r.hasMin || r.hasMax; }
     double minVal() const override { return r.min; }
     double maxVal() const override { return r.max; }
     QString defaultStr() const override { return QString::number(defVal); }
@@ -126,7 +165,6 @@ public:
 private:
     double defVal;
     Range r;
-    bool minMax;
 };
 
 class StrVar : public ConVar {
@@ -165,7 +203,16 @@ public:
            const QString &pl, const QString &cx)
         : ConVar(nm, doc, CMD_CMD, usg, fl, pl, cx) {}
 
+    /// Per-argument authoring bounds (docs/DESIGN-arg-bounds.md). Attached by
+    /// GameCfg::loadArgBounds() after the catalog loads; empty unless the companion
+    /// file bounds this command.
+    void setArgSpecs(const QVector<ArgSpec> &specs) { m_argSpecs = specs; }
+    const QVector<ArgSpec> &argSpecs() const { return m_argSpecs; }
+
     CmdType get_type() const override { return CMD_CMD; }
+
+private:
+    QVector<ArgSpec> m_argSpecs;
 };
 
 } // namespace cmd

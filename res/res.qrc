@@ -9,5 +9,6 @@
         <file>font/tf2secondary.ttf</file>
         <file>font/LiberationMono-Regular.ttf</file>
         <file>cfg/allcmds.csv</file>
+        <file>cfg/argbounds.csv</file>
     </qresource>
 </RCC>

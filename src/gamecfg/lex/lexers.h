@@ -182,8 +182,28 @@ public:
         inline bool isCmd() const { return !is_cmd.isEmpty(); }
         inline bool isBool() const { return input == QLatin1String("bool"); }
         inline bool hasDefault() const { return !def.isEmpty(); };
-        inline bool hasRange() const { return !min.isEmpty() && !max.isEmpty(); }
+        /// One-sided bounds: the engine clamps each side independently, so a row with
+        /// only a min (or only a max) keeps that side (docs/DESIGN-arg-bounds.md).
+        inline bool hasMin() const { return !min.isEmpty(); }
+        inline bool hasMax() const { return !max.isEmpty(); }
+        inline bool hasRange() const { return hasMin() && hasMax(); }
         inline bool hasUsage() const { return !input.isEmpty() && input != QLatin1String("none"); };
+        /// Positional access to the 10 fields, for readers whose layout differs from
+        /// allcmds.csv (the argbounds companion file reuses fields 1-5).
+        inline QString field(int i) const {
+            switch (i) {
+            case 0: return cmd_name;
+            case 1: return is_cmd;
+            case 2: return def;
+            case 3: return min;
+            case 4: return max;
+            case 5: return flags;
+            case 6: return doc;
+            case 7: return input;
+            case 8: return platformStr;
+            default: return contextStr;
+            }
+        }
 
     private:
         QString cmd_name, is_cmd, def, min, max, flags, doc, input;
