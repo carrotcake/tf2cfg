@@ -107,6 +107,7 @@ private slots:
     void saveIsIdempotent();
     void saveWritesABakBesideTheFile();
     void saveRefusesAResourcePath();
+    void saveRecreatesAVanishedFile();
     void saveDetectsAnExternallyModifiedFile();
 
 private:
@@ -708,11 +709,42 @@ void EngineTest::saveRefusesAResourcePath() {
     QVERIFY(controller.saveCfg() == false); // refuses, with lastError set
     QVERIFY(!controller.lastError().isEmpty());
 
-    // Save As to a real path works and re-points cfgPath at the file.
+    // Save As to a real path works and re-points cfgPath at the file. The surgical
+    // baseline is the loaded preset, so the target must hold the preset's content -
+    // an empty file here would mean the save lost everything not app-owned.
     const QString target = m_dir.filePath(QStringLiteral("saved-from-preset.cfg"));
     QVERIFY(controller.saveCfgAs(target));
     QCOMPARE(controller.cfgPath(), target);
-    QVERIFY(QFile::exists(target));
+    QFile savedPreset(target);
+    QVERIFY(savedPreset.open(QIODevice::ReadOnly));
+    const QString savedText = QString::fromUtf8(savedPreset.readAll());
+    savedPreset.close();
+    QFile preset(QStringLiteral(":/cfg/default.cfg"));
+    QVERIFY(preset.open(QIODevice::ReadOnly));
+    const QString presetText = QString::fromUtf8(preset.readAll());
+    preset.close();
+    QCOMPARE(savedText, presetText);
+    QVERIFY(!savedText.isEmpty());
+}
+
+void EngineTest::saveRecreatesAVanishedFile() {
+    // The file is gone when the (confirmed) save runs: with no baseline to copy from,
+    // the model's rows are all the knowledge there is and must all reach the file,
+    // unowned parsed ones included - not just the app-owned lines.
+    const QString path = writeFile(QStringLiteral("vanish.cfg"),
+                                   QStringLiteral("bind \"a\" \"+moveleft\"\nsv_cheats 1\n"));
+
+    ConfigController controller;
+    LOAD_CONFIG(controller, path);
+    QVERIFY(QFile::remove(path));
+    QVERIFY(controller.needsConfirm());
+    QVERIFY(controller.saveCfg());
+
+    QFile saved(path);
+    QVERIFY(saved.open(QIODevice::ReadOnly | QIODevice::Text));
+    const QString text = QString::fromUtf8(saved.readAll());
+    saved.close();
+    QCOMPARE(text, QStringLiteral("bind \"a\" \"+moveleft\"\nsv_cheats 1\n"));
 }
 
 void EngineTest::saveDetectsAnExternallyModifiedFile() {

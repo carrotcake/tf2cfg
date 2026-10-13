@@ -105,7 +105,12 @@ private:
     void setCfgPath(const QString &path);
     void setLastError(const QString &error);
     void setLoading(bool loading);
-    bool writeConfig(const QString &path, QString *error);
+    /// `source` is the surgical baseline: the file whose bytes every non-owned line is
+    /// copied from. Plain save rewrites `path` itself, so source == path; Save As seeds
+    /// the new file from the loaded config instead, which may be a `:/` resource.
+    bool writeConfig(const QString &path, const QString &source, QString *error);
+    /// The `.bak`-then-`QSaveFile` tail both write paths share.
+    bool commitWrite(const QString &path, const QByteArray &out, QString *error);
     void recordFileStamp();
 
     GameCfg m_cfg; ///< default ctor loads res/cfg/allcmds.csv once

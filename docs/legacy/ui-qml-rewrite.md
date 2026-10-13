@@ -333,9 +333,14 @@ app never showed. The design below is built around that fact.
 1. Target path is `cfgPath`. If it starts with `:/` it is a bundled preset (a Qt resource,
    read-only; `QFile::exists()` is true for it, so the check is explicit): Save refuses and
    Save As opens instead.
-2. Target missing, unreadable or read-only → error via `lastError`, no write.
+2. The surgical baseline is the file the non-owned lines are copied from: the target itself
+   for Save, the loaded config for Save As (a `:/` preset is readable, so saving one to a
+   new path reproduces its bytes, and a preset is never merged into a different target's
+   old content). A missing or vanished baseline is not an error: with nothing to preserve,
+   every model row is rendered, so a confirmed save over a vanished file recreates the
+   whole config.
 3. Current mtime/size differ from the load-time record → confirm dialog with both timestamps.
-4. Write `<name>.bak` (copy of the current file).
+4. Write `<name>.bak` (copy of the target, when it exists).
 5. Read the original bytes and split on line boundaries **preserving each terminator**, so a
    CRLF config stays CRLF (open without `QIODevice::Text`, which would normalize).
 6. Walk the lines in order: a line whose model row is app-owned is emitted as

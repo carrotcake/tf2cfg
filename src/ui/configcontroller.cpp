@@ -77,7 +77,7 @@ bool ConfigController::saveCfg() {
         return false;
     }
     QString error;
-    if (!writeConfig(m_cfgPath, &error)) {
+    if (!writeConfig(m_cfgPath, m_cfgPath, &error)) {
         setLastError(error);
         return false;
     }
@@ -97,7 +97,10 @@ bool ConfigController::saveCfgAs(const QString &path) {
         return false;
     }
     QString error;
-    if (!writeConfig(path, &error)) {
+    // The target should become the loaded config, so the surgical baseline is the
+    // loaded file (a `:/` preset for bundled presets), never the target's old bytes -
+    // merging a preset's binds into some unrelated file's content would be a chimera.
+    if (!writeConfig(path, m_cfgPath, &error)) {
         setLastError(error);
         return false;
     }
@@ -125,13 +128,15 @@ bool ConfigController::saveCfgAs(const QString &path) {
  * and a deleted row among several on one line keeps the whole line. Upgrade when a
  * real config trips over it.
  */
-bool ConfigController::writeConfig(const QString &path, QString *error) {
-    // The target may not exist yet (Save As): that is an empty original, not an error.
+bool ConfigController::writeConfig(const QString &path, const QString &source,
+                                   QString *error) {
+    // The source may not exist (a fresh Save As target, or a file that vanished since
+    // load): that is an empty baseline, not an error.
     QByteArray bytes;
-    if (QFile::exists(path)) {
-        QFile original(path);
+    if (QFile::exists(source)) {
+        QFile original(source);
         if (!original.open(QIODevice::ReadOnly)) {
-            *error = QStringLiteral("cannot read %1").arg(path);
+            *error = QStringLiteral("cannot read %1").arg(source);
             return false;
         }
         // No QIODevice::Text: it would normalize line endings and rewrite the whole file.
@@ -162,6 +167,20 @@ bool ConfigController::writeConfig(const QString &path, QString *error) {
     }
 
     const QVector<cmd::Entry> &entries = m_commands.entries();
+
+    // Empty or vanished source: there is nothing to preserve, so the model's rows are
+    // the whole file. Render every row - the surgical machinery below would drop the
+    // unowned parsed ones along with the missing baseline.
+    if (lines.isEmpty() && !entries.isEmpty()) {
+        QByteArray out;
+        for (const cmd::Entry &entry : entries) {
+            if (entry.args.isEmpty())
+                continue;
+            out += entry.args.join(QLatin1Char(' ')).toUtf8();
+            out += '\n';
+        }
+        return commitWrite(path, out, error);
+    }
 
     // ownedByLine[i] = rows the app owns on file line i (several when the line used
     // `;`), each re-rendered on its own output line. modelLines is every file line the
@@ -249,6 +268,11 @@ bool ConfigController::writeConfig(const QString &path, QString *error) {
             out.insert(insertOffset, sessionBlock);
     }
 
+    return commitWrite(path, out, error);
+}
+
+bool ConfigController::commitWrite(const QString &path, const QByteArray &out,
+                                   QString *error) {
     // Backup first: the only insurance against a wrong-but-successful write.
     const QFileInfo info(path);
     const QString backup = info.dir().filePath(info.fileName() + QStringLiteral(".bak"));
