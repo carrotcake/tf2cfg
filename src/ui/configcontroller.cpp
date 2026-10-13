@@ -388,8 +388,20 @@ QVariantMap ConfigController::binds() const {
     return m_commands.binds();
 }
 
+QVariantMap ConfigController::bindingKinds() const {
+    return m_commands.bindingKinds();
+}
+
+QString ConfigController::bindingKind(const QString &key) const {
+    return m_commands.bindingKind(key);
+}
+
 bool ConfigController::setBind(const QString &key, const QString &command) {
     return m_commands.setBind(key, command);
+}
+
+bool ConfigController::setBindToggle(const QString &key, const QString &command) {
+    return m_commands.setBindToggle(key, command);
 }
 
 bool ConfigController::clearBind(const QString &key) {

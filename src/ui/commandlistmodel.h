@@ -63,10 +63,21 @@ public:
     /// Bind `command` to key token `key`, replacing every earlier bind of that key.
     /// Adds one `bind "<key>" "<command>"` row at the end of the list, so a key never
     /// ends up with two competing rows. False when nothing changed.
-    bool setBind(const QString &key, const QString &command);
+    bool setBind(const QString &key, const QString &command, bool toggle = false);
+
+    /// Bind a key as a TF2 `bindtoggle` row (`bindtoggle "<key>" "<command>"`)
+    /// instead of a plain `bind`. Used when the authored command is a cvar toggle.
+    bool setBindToggle(const QString &key, const QString &command);
 
     /// Drop every bind row for key token `key`. False when the key had no bind row.
     bool clearBind(const QString &key);
+
+    /// Binding kind for key token `key`: "bind", "bindtoggle", or "" when unbound.
+    QString bindingKind(const QString &key) const;
+
+    /// Active binding kinds: lowercase key token -> "bind"/"bindtoggle", in step with
+    /// binds(). Empty when the key is unbound.
+    QVariantMap bindingKinds() const;
 
     static QString typeName(cmd::CmdType type);
 
@@ -80,6 +91,7 @@ private:
 
     struct BindScanResult {
         QVariantMap binds;
+        QVariantMap bindingKinds;
         QHash<QString, QVector<int>> rowsByKey;
     };
     BindScanResult scanBinds() const;
@@ -87,6 +99,8 @@ private:
     QVector<cmd::Entry> m_entries;
     mutable QVariantMap m_bindsCache;
     mutable bool m_bindsCacheValid = false;
+    mutable QVariantMap m_bindingKindsCache;
+    mutable bool m_bindingKindsCacheValid = false;
 };
 
 #endif // COMMANDLISTMODEL_H

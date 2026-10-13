@@ -33,6 +33,7 @@ class ConfigController : public QObject {
     Q_PROPERTY(bool dirty READ isDirty NOTIFY bindsChanged)
     Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
     Q_PROPERTY(QVariantMap binds READ binds NOTIFY bindsChanged)
+    Q_PROPERTY(QVariantMap bindingKinds READ bindingKinds NOTIFY bindsChanged)
 
 public:
     explicit ConfigController(QObject *parent = nullptr);
@@ -51,6 +52,10 @@ public:
     /// so the caps recolour the moment a bind is added or removed (D16).
     QVariantMap binds() const;
 
+    /// Active binding kinds, key token -> "bind" or "bindtoggle", updated alongside
+    /// binds (audit #6), so a future key cap can show toggle-specific text.
+    QVariantMap bindingKinds() const;
+
     /// ":/cfg/..." path of a preset, or an empty string for an invalid index.
     Q_INVOKABLE QString presetAt(int index) const;
 
@@ -68,9 +73,13 @@ public:
     /// bind the key already had. An empty command removes the bind instead. Edits the
     /// model; it reaches the file on the next saveCfg() (D16, D20).
     Q_INVOKABLE bool setBind(const QString &key, const QString &command);
+    Q_INVOKABLE bool setBindToggle(const QString &key, const QString &command);
 
     /// Remove the bind of TF2 key token `key`.
     Q_INVOKABLE bool clearBind(const QString &key);
+
+    /// "bind" or "bindtoggle" for key token `key`, else "".
+    Q_INVOKABLE QString bindingKind(const QString &key) const;
 
     /**
      * Surgical save (docs/legacy/ui-qml-rewrite.md 10.1): rewrite only the lines the

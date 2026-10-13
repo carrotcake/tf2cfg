@@ -118,6 +118,7 @@ void CommandListModel::setEntries(const QVector<cmd::Entry> &entries) {
     m_entries = entries;
     endResetModel();
     m_bindsCacheValid = false;
+    m_bindingKindsCacheValid = false;
     emit bindsChanged();
 }
 
@@ -126,6 +127,7 @@ void CommandListModel::clearEntries() {
     m_entries.clear();
     endResetModel();
     m_bindsCacheValid = false;
+    m_bindingKindsCacheValid = false;
     emit bindsChanged();
 }
 
@@ -136,8 +138,29 @@ QVariantMap CommandListModel::binds() const {
 
     const BindScanResult result = scanBinds();
     m_bindsCache = result.binds;
+    m_bindingKindsCache = result.bindingKinds;
     m_bindsCacheValid = true;
+    m_bindingKindsCacheValid = true;
     return m_bindsCache;
+}
+
+QVariantMap CommandListModel::bindingKinds() const {
+    if (m_bindingKindsCacheValid) {
+        return m_bindingKindsCache;
+    }
+
+    const BindScanResult result = scanBinds();
+    m_bindsCache = result.binds;
+    m_bindingKindsCache = result.bindingKinds;
+    m_bindsCacheValid = true;
+    m_bindingKindsCacheValid = true;
+    return m_bindingKindsCache;
+}
+
+QString CommandListModel::bindingKind(const QString &key) const {
+    const QVariantMap kinds = bindingKinds();
+    const QString cleanKey = unquoted(key).toLower();
+    return kinds.value(cleanKey).toString();
 }
 
 QVector<int> CommandListModel::bindRows(const QString &key) const {
@@ -158,6 +181,7 @@ CommandListModel::BindScanResult CommandListModel::scanBinds() const {
 
         if (head == BindSyntax::UnbindAll) {
             result.binds.clear();
+            result.bindingKinds.clear();
             result.rowsByKey.clear();
             continue;
         }
@@ -165,6 +189,7 @@ CommandListModel::BindScanResult CommandListModel::scanBinds() const {
             if (entry.args.size() >= 2) {
                 const QString key = unquoted(entry.args.at(1)).toLower();
                 result.binds.remove(key);
+                result.bindingKinds.remove(key);
                 result.rowsByKey[key].append(row);
             }
             continue;
@@ -179,16 +204,22 @@ CommandListModel::BindScanResult CommandListModel::scanBinds() const {
         // `bind "r" ""` is how a config unbinds a key.
         const QString command = entry.args.size() >= 3 ? unquoted(entry.args.at(2)) : QString();
         result.rowsByKey[key].append(row);
-        if (command.isEmpty())
+        if (command.isEmpty()) {
             result.binds.remove(key);
-        else
+            result.bindingKinds.remove(key);
+        } else {
             result.binds.insert(key, command);
+            result.bindingKinds.insert(key, head == BindSyntax::BindToggle
+                                               ? QStringLiteral("bindtoggle")
+                                               : QStringLiteral("bind"));
+        }
     }
 
     return result;
 }
 
-bool CommandListModel::setBind(const QString &key, const QString &command) {
+bool CommandListModel::setBind(const QString &key, const QString &command, bool toggle) {
+    const QString verb = toggle ? QString(BindSyntax::BindToggle) : QString(BindSyntax::Bind);
     const QString cleanKey = unquoted(key).toLower();
     // The command name is case-insensitive, its arguments are not: `say "Hello"` must not
     // become `say "hello"`. Rows read from a file are all lowercase anyway, because cfgLex
@@ -203,18 +234,20 @@ bool CommandListModel::setBind(const QString &key, const QString &command) {
         return false;
     if (cleanCommand.isEmpty())
         return clearBind(cleanKey);
-    if (binds().value(cleanKey).toString() == cleanCommand)
+    if (binds().value(cleanKey).toString() == cleanCommand
+        && bindingKinds().value(cleanKey).toString() == verb)
         return false; // already bound to exactly this
 
     const QVector<int> rows = bindRows(cleanKey);
-    // Rebind the key's most recent row in place when it is a real bind line, so the row
-    // keeps its sourceLine and the surgical save rewrites the line where it is instead
-    // of moving the bind to the end of the file (10.1: an edit keeps its position).
+    // Rebind the key's most recent row of the same kind in place when it exists, so
+    // the row keeps its sourceLine and the surgical save rewrites the line where it is
+    // instead of moving the bind to the end of the file (10.1: an edit keeps its
+    // position). Rows of the other kind and unbind rows are reviewed below.
     for (int i = rows.size() - 1; i >= 0; --i) {
         const int row = rows.at(i);
         const QString head = unquoted(m_entries.at(row).args.value(0)).toLower();
-        if (head != BindSyntax::Bind)
-            continue; // unbind rows stay put; they are dropped at save with the key gone
+        if (head != verb)
+            continue; // other kinds are replaced below instead of patched in place
         // A later unbind/bindtoggle row for the same key would replay after this one
         // and override the new command (audit docs/AUDIT.md #1), so drop them too; the
         // append path already drops every row for the key.
@@ -227,12 +260,13 @@ bool CommandListModel::setBind(const QString &key, const QString &command) {
         cmd::Entry &entry = m_entries[row];
         entry.appOwned = true; // now the app owns this line
         entry.args.clear();
-        entry.args << QString(BindSyntax::Bind) << quoted(cleanKey) << quoted(cleanCommand);
+        entry.args << verb << quoted(cleanKey) << quoted(cleanCommand);
         entry.type = cmd::CMD_CMD;
         const QModelIndex idx = index(row);
         emit dataChanged(idx, idx, {LineRole, CommandRole, ArgsRole, TypeRole, TypeNameRole,
                                     BoundKeyRole});
         m_bindsCacheValid = false;
+        m_bindingKindsCacheValid = false;
         emit bindsChanged();
         return true;
     }
@@ -249,7 +283,7 @@ bool CommandListModel::setBind(const QString &key, const QString &command) {
     // every parsed line byte-for-byte (docs/legacy/ui-qml-rewrite.md 10.1). sourceLine
     // stays -1, which is what puts it after the last owned line at save time.
     entry.appOwned = true;
-    entry.args << QString(BindSyntax::Bind) << quoted(cleanKey) << quoted(cleanCommand);
+    entry.args << verb << quoted(cleanKey) << quoted(cleanCommand);
     // `bind` is a plain console command in allcmds.csv, which is the type the parser gives
     // an identical line in a config file. Keep the two indistinguishable.
     entry.type = cmd::CMD_CMD;
@@ -260,8 +294,13 @@ bool CommandListModel::setBind(const QString &key, const QString &command) {
     endInsertRows();
 
     m_bindsCacheValid = false;
+    m_bindingKindsCacheValid = false;
     emit bindsChanged();
     return true;
+}
+
+bool CommandListModel::setBindToggle(const QString &key, const QString &command) {
+    return setBind(key, command, true);
 }
 
 bool CommandListModel::clearBind(const QString &key) {
@@ -277,6 +316,7 @@ bool CommandListModel::clearBind(const QString &key) {
     }
 
     m_bindsCacheValid = false;
+    m_bindingKindsCacheValid = false;
     emit bindsChanged();
     return true;
 }
