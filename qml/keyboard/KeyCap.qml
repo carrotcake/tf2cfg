@@ -11,9 +11,9 @@ Rectangle {
 
     /// Key name into KeyTable (e.g. "esc", "bkspc", "kpplus").
     property string keyName: ""
-    /// Reserved for the bind overlay. Always empty: a bound cap is shown by its colour
-    /// (see `bound` below), and a 64px cap has no room for a command string (D16).
-    property string bindText: ""
+    /// Command shown in the cap's bind overlay for the future "show what this key does"
+    /// mode (D16). Now populated for bound caps; empty when unbound.
+    property string bindText: cap.bound ? cap.boundCommand : ""
 
     readonly property var keyInfo: KeyTable.keyData(keyName)
     readonly property bool bindable: KeyTable.isBindable(keyName)

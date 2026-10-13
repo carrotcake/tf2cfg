@@ -270,6 +270,9 @@ Dialog {
     onOpened: {
         existingBindField.text = dialog.originalBind
         customCommand.text = dialog.boundCommand
+        // Pre-select the verb from the binding the key carries today.
+        bindToggleCheck.checked = dialog.boundCommand !== ""
+                                 && cfg.bindingKind(dialog.keyToken.toLowerCase()) === "bindtoggle"
         // Start each edit from a clean Build-A-Bind pane; the chosen category and
         // platform filters persist across opens on purpose.
         commandCombo.currentIndex = -1
@@ -291,6 +294,8 @@ Dialog {
         const command = customCommand.text.trim()
         if (command === "")
             cfg.clearBind(dialog.keyToken)
+        else if (bindToggleCheck.checked)
+            cfg.setBindToggle(dialog.keyToken, command)
         else
             cfg.setBind(dialog.keyToken, command)
     }
@@ -796,6 +801,22 @@ Dialog {
                     }
                 }
             }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+
+            CheckBox {
+                id: bindToggleCheck
+                text: "Save as bindtoggle (TF2 `bindtoggle` syntax)"
+                checked: dialog.boundCommand !== ""
+                         && cfg.bindingKind(dialog.keyToken.toLowerCase()) === "bindtoggle"
+                ToolTip.visible: hovered
+                ToolTip.text: "Writes `bindtoggle \"key\" \"command\"` so the game toggles "
+                              + "the target cvar each press instead of binding a raw command."
+            }
+
+            Item { Layout.fillWidth: true }
         }
 
         // Says what OK does, because neither tab did anything in the widget build and
