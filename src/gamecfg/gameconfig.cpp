@@ -30,8 +30,10 @@ bool GameCfg::appendCfg(const QString &filename) {
     while (lex.hasNext()) {
         // The lexer tokenizes line by line, so the cursor's line index is the file line
         // the command started on. Recorded per row: the surgical save regenerates exactly
-        // these lines (docs/legacy/ui-qml-rewrite.md 10.1).
+        // these lines (docs/legacy/ui-qml-rewrite.md 10.1). The comment tail, if any,
+        // rides on every row parsed from that line (docs/DESIGN-config-editor.md §6).
         cmd.sourceLine = lex.currentLine();
+        cmd.commentTail = lex.tailAt(lex.currentLine());
         const auto tok = lex.nextToken();
         if (cmd.args.empty()) {
             cmd.type = cmdToType(tok.string());
@@ -43,6 +45,15 @@ bool GameCfg::appendCfg(const QString &filename) {
         }
         if (tok.isEndToken()) {
             if (!cmd.args.empty()) {
+                cmd_list.push_back(cmd);
+                cmd.args.clear();
+            } else if (!cmd.commentTail.isEmpty()) {
+                // Standalone comment line: one CMD_COMMENT row whose args hold the
+                // raw tail text, so args.join(" ") re-renders it verbatim (§6). The
+                // tail member stays empty - the content IS the args.
+                cmd.type = cmd::CMD_COMMENT;
+                cmd.args << cmd.commentTail;
+                cmd.commentTail.clear();
                 cmd_list.push_back(cmd);
                 cmd.args.clear();
             }

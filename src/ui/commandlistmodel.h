@@ -89,19 +89,24 @@ public:
     /// binds(). Empty when the key is unbound.
     QVariantMap bindingKinds() const;
 
-    /// Replace a row's parsed args and re-classify its type (Config Editor raw edit,
-    /// docs/DESIGN-config-editor.md §4.2). Keeps the row's sourceLine, marks it
-    /// app-owned. False when the row is out of range or args is empty.
-    bool setEntryArgs(int row, const QStringList &args, cmd::CmdType type);
+    /// Replace the LINE-GROUP of `row` with `segments` (docs/DESIGN-config-editor.md
+    /// §5/§6): a group is the rows sharing the row's sourceLine (a parsed compound
+    /// line), the rows sharing its groupId (a session compound insert), or the row
+    /// alone. Surviving rows keep their line identity; extra segments insert as new
+    /// group members, extra model rows are removed (their lines drop on save). Each
+    /// segment carries its own args/type/commentTail; appOwned is set. False when the
+    /// row is out of range or segments is empty.
+    bool setRowGroup(int row, const QVector<cmd::Entry> &segments);
 
     /// Remove a row (Config Editor delete). The surgical save then drops its line.
     /// False when the row is out of range.
     bool deleteEntry(int row);
 
-    /// Insert a session row whose save position is anchored to `anchorRow`'s file line
-    /// (Config Editor insert-after-selected, §9). anchorRow < 0 appends at end of file.
-    /// Returns the new row index, -1 on refusal (empty args).
-    int insertEntry(int anchorRow, const QStringList &args, cmd::CmdType type);
+    /// Insert a session LINE of one or more segments (`;`-joined on save for >1,
+    /// sharing a fresh groupId) whose save position is anchored to `anchorRow`'s file
+    /// line (Config Editor insert-after-selected, §9). anchorRow < 0 appends at end of
+    /// file. Returns the first new row index, -1 on refusal (empty segments).
+    int insertLine(int anchorRow, const QVector<cmd::Entry> &segments);
 
     /// Define or update an alias (docs/DESIGN-config-editor.md §5.3, BindEditorDialog
     /// "Alias" tab). `body` is raw command text (`slot3; slot1`), stored quoted. The
@@ -157,6 +162,7 @@ private:
     void invalidateDerived();
 
     QVector<cmd::Entry> m_entries;
+    int m_nextGroupId = 1; ///< session compound identity (§5); reset on every reload
     mutable QVariantMap m_bindsCache;
     mutable bool m_bindsCacheValid = false;
     mutable QVariantMap m_bindingKindsCache;

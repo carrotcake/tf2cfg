@@ -7,7 +7,8 @@
 
 namespace cmd {
 typedef long long int i64;
-enum CmdType { CMD_IVAR, CMD_FVAR, CMD_SVAR, CMD_BVAR, CMD_CMD, CMD_BIND, CMD_ALIAS, CMD_UNKWN };
+enum CmdType { CMD_IVAR, CMD_FVAR, CMD_SVAR, CMD_BVAR, CMD_CMD, CMD_BIND, CMD_ALIAS, CMD_UNKWN,
+               CMD_COMMENT };
 
 /**
  * Authoring bounds for one argument of a console command (docs/DESIGN-arg-bounds.md).
@@ -40,6 +41,14 @@ struct Entry {
     /// -1 keeps the legacy bind rule (after the last bind line), AnchorEof appends at
     /// end of file (docs/DESIGN-config-editor.md §9).
     int anchorLine = -1;
+    /// Comment tail (`// ...` raw text, never case-folded) the source line carried
+    /// after the command part (docs/DESIGN-config-editor.md §6). A standalone comment
+    /// line is a CMD_COMMENT row whose args hold the tail text instead.
+    QString commentTail;
+    /// Session compound identity (docs/DESIGN-config-editor.md §5): rows sharing a
+    /// nonzero groupId render as ONE `;`-joined line at save time. 0 = not grouped;
+    /// parsed rows group by sourceLine and never need this.
+    int groupId = 0;
     Entry()
         : type(CMD_UNKWN){};
 };

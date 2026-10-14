@@ -205,7 +205,15 @@ duplicates, anchors new definitions after the last alias line (end of file when 
 the presets define aliases after their binds, and TF2 resolves alias names on keypress,
 not at parse), and an empty body removes the definition. Segment splitting and token
 quoting run through the controller (`splitSegments`/`quoteToken`/`unquoteToken`), so
-the lexers stay the only quote authority.
+the lexers stay the only quote authority. Chunk D landed 2026-10-14: `cfgLex::preprocess`
+returns the comment tail (raw, never folded) and `appendCfg` emits standalone comment
+lines as `CMD_COMMENT` rows (args hold the raw text) and trailing tails as a
+`commentTail` member on the row; `LineRole`/`rowInfo` render command+tail so nothing
+turns invisible; `setRowText`/`insertRowAfter` take `//` text verbatim and
+`;`-separated text as one line-group (`setRowGroup`/`insertLine`, shared groupId for
+session compounds); owned-line renders re-emit the tail once after the last command;
+edits of a segment row replace the whole group. This closed the chunk-C commit gap
+where multi-segment text silently kept only its first segment.
 
 Each chunk commits separately; `qml` additions carry
 `pragma ComponentBehavior: Bound` (AGENTS.md bar) and no new qmllint advisories.

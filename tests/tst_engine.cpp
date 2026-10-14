@@ -140,6 +140,12 @@ private slots:
     void splitSegmentsIsQuoteAware();
     void quoteUnquoteRoundTrips();
 
+    // Comments (docs/DESIGN-config-editor.md §6, chunk D)
+    void commentRowsParseAndRoundTrip();
+    void trailingCommentEditsThroughTheRawField();
+    void compoundInsertStaysOneLine();
+    void compoundTailSurvivesAnEdit();
+
 private:
     QTemporaryDir m_dir;
     int m_fileCount = 0;
@@ -1097,11 +1103,11 @@ void EngineTest::setRowTextReclassifiesAndOwnsTheRow() {
 
     ConfigController controller;
     LOAD_CONFIG(controller, path);
-    // Rows: 0 volume, 1 bind (the comment is not a row).
-    QVERIFY(controller.setRowText(0, QStringLiteral("volume 0.9")));
+    // Rows: 0 standalone comment, 1 volume, 2 bind.
+    QVERIFY(controller.setRowText(1, QStringLiteral("volume 0.9")));
     QVERIFY(controller.isDirty());
 
-    const QVariantMap info = controller.rowInfo(0);
+    const QVariantMap info = controller.rowInfo(1);
     QCOMPARE(info.value(QStringLiteral("line")).toString(), QStringLiteral("volume 0.9"));
     QCOMPARE(info.value(QStringLiteral("typeName")).toString(), QStringLiteral("float"));
     QVERIFY(info.value(QStringLiteral("warning")).toString().isEmpty());
@@ -1117,9 +1123,9 @@ void EngineTest::setRowTextReclassifiesAndOwnsTheRow() {
     QCOMPARE(lines.at(2), QStringLiteral("bind \"a\" \"+moveleft\""));
 
     // An empty or comment-only replacement is refused and changes nothing.
-    QVERIFY(!controller.setRowText(0, QString()));
-    QVERIFY(!controller.setRowText(0, QStringLiteral("// only a comment")));
-    QCOMPARE(controller.rowInfo(0).value(QStringLiteral("line")).toString(),
+    QVERIFY(!controller.setRowText(1, QString()));
+    QVERIFY(!controller.setRowText(1, QStringLiteral("// only a comment")));
+    QCOMPARE(controller.rowInfo(1).value(QStringLiteral("line")).toString(),
              QStringLiteral("volume 0.9"));
 }
 
@@ -1370,6 +1376,122 @@ void EngineTest::quoteUnquoteRoundTrips() {
     const QString raw = QStringLiteral("say \"hi\" \\ path");
     QCOMPARE(controller.unquoteToken(controller.quoteToken(raw)), raw);
     QCOMPARE(controller.unquoteToken(QStringLiteral("\"slot3\"")), QStringLiteral("slot3"));
+}
+
+// --- Comments (docs/DESIGN-config-editor.md §6, chunk D) ---
+
+void EngineTest::commentRowsParseAndRoundTrip() {
+    const QString path = writeFile(QStringLiteral("comments.cfg"),
+                                   QStringLiteral("// header note\n"
+                                                  "sv_cheats 1 // cheats on\n"
+                                                  "volume 0.5\n"));
+
+    ConfigController controller;
+    LOAD_CONFIG(controller, path);
+    // Rows: 0 standalone comment, 1 sv_cheats with tail, 2 volume.
+    QCOMPARE(controller.rowInfo(0).value(QStringLiteral("typeName")).toString(),
+             QStringLiteral("comment"));
+    QCOMPARE(controller.rowInfo(0).value(QStringLiteral("line")).toString(),
+             QStringLiteral("// header note"));
+    QCOMPARE(controller.rowInfo(1).value(QStringLiteral("line")).toString(),
+             QStringLiteral("sv_cheats 1 // cheats on"));
+
+    // Edit the standalone comment: raw text, no tokenizing; a missing `//` is
+    // restored so the row still reads back as a comment after a resync.
+    QVERIFY(controller.setRowText(0, QStringLiteral("edited note")));
+    QCOMPARE(controller.rowInfo(0).value(QStringLiteral("line")).toString(),
+             QStringLiteral("// edited note"));
+
+    // Insert a comment line, then delete it again: net zero.
+    const int inserted = controller.insertRowAfter(2, QStringLiteral("// new note"));
+    QVERIFY(inserted >= 0);
+    QCOMPARE(controller.rowInfo(inserted).value(QStringLiteral("typeName")).toString(),
+             QStringLiteral("comment"));
+    QVERIFY(controller.deleteRow(inserted));
+
+    QVERIFY(controller.saveCfg());
+    QFile saved(path);
+    QVERIFY(saved.open(QIODevice::ReadOnly | QIODevice::Text));
+    const QStringList lines = QString::fromUtf8(saved.readAll()).split(QLatin1Char('\n'));
+    saved.close();
+    QCOMPARE(lines.at(0), QStringLiteral("// edited note"));
+    QCOMPARE(lines.at(1), QStringLiteral("sv_cheats 1 // cheats on"));
+    QCOMPARE(lines.at(2), QStringLiteral("volume 0.5"));
+    QCOMPARE(lines.size(), 4); // the trailing terminator split leaves an empty piece
+}
+
+void EngineTest::trailingCommentEditsThroughTheRawField() {
+    const QString path = writeFile(QStringLiteral("trailing.cfg"),
+                                   QStringLiteral("sv_cheats 1 // cheats on\n"));
+
+    ConfigController controller;
+    LOAD_CONFIG(controller, path);
+    // The user's raw text is authoritative: the field shows the tail, so an edit that
+    // keeps the text keeps the comment, and dropping the text drops it (§6).
+    QVERIFY(controller.setRowText(0, QStringLiteral("sv_cheats 0 // cheats off")));
+    QVERIFY(controller.saveCfg());
+    QFile saved(path);
+    QVERIFY(saved.open(QIODevice::ReadOnly | QIODevice::Text));
+    QCOMPARE(QString::fromUtf8(saved.readAll()), QStringLiteral("sv_cheats 0 // cheats off\n"));
+    saved.close();
+
+    // The resynced model still carries the tail, so the next edit sees it too.
+    QCOMPARE(controller.rowInfo(0).value(QStringLiteral("line")).toString(),
+             QStringLiteral("sv_cheats 0 // cheats off"));
+    QVERIFY(controller.setRowText(0, QStringLiteral("sv_cheats 1")));
+    QVERIFY(controller.saveCfg());
+    QFile second(path);
+    QVERIFY(second.open(QIODevice::ReadOnly | QIODevice::Text));
+    QCOMPARE(QString::fromUtf8(second.readAll()), QStringLiteral("sv_cheats 1\n"));
+    second.close();
+}
+
+void EngineTest::compoundInsertStaysOneLine() {
+    const QString path = writeFile(QStringLiteral("compound.cfg"),
+                                   QStringLiteral("volume 0.5\n"));
+
+    ConfigController controller;
+    LOAD_CONFIG(controller, path);
+    // A multi-segment insert is ONE file line: the segments share a groupId (§5).
+    const int row = controller.insertRowAfter(-1, QStringLiteral("echo a; echo b"));
+    QVERIFY(row >= 0);
+    QCOMPARE(controller.rowInfo(row + 1).value(QStringLiteral("typeName")).toString(),
+             QStringLiteral("command"));
+    QVERIFY(controller.saveCfg());
+    QFile saved(path);
+    QVERIFY(saved.open(QIODevice::ReadOnly | QIODevice::Text));
+    QCOMPARE(QString::fromUtf8(saved.readAll()),
+             QStringLiteral("volume 0.5\necho a; echo b\n"));
+    saved.close();
+
+    // Editing any segment row replaces the whole line, not just that segment.
+    QVERIFY(controller.setRowText(row, QStringLiteral("echo a2; echo b2")));
+    QVERIFY(controller.saveCfg());
+    QFile second(path);
+    QVERIFY(second.open(QIODevice::ReadOnly | QIODevice::Text));
+    QCOMPARE(QString::fromUtf8(second.readAll()),
+             QStringLiteral("volume 0.5\necho a2; echo b2\n"));
+    second.close();
+}
+
+void EngineTest::compoundTailSurvivesAnEdit() {
+    const QString path = writeFile(QStringLiteral("compoundtail.cfg"),
+                                   QStringLiteral("echo a; echo b // note\n"));
+
+    ConfigController controller;
+    LOAD_CONFIG(controller, path);
+    // Two rows (one per segment), the tail on both; an edit replaces the whole line
+    // and the new tail rides on the last segment's text.
+    QVERIFY(controller.setRowText(0, QStringLiteral("echo a2; echo b2 // new")));
+    QVERIFY(controller.saveCfg());
+    QFile saved(path);
+    QVERIFY(saved.open(QIODevice::ReadOnly | QIODevice::Text));
+    QCOMPARE(QString::fromUtf8(saved.readAll()),
+             QStringLiteral("echo a2; echo b2 // new\n"));
+    saved.close();
+    // The Overview line shows the tail (LineRole), so nothing turns invisible.
+    QVERIFY(controller.rowInfo(1).value(QStringLiteral("line")).toString()
+                .contains(QLatin1String("// new")));
 }
 
 QTEST_MAIN(EngineTest)

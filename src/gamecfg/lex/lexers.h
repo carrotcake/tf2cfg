@@ -16,10 +16,11 @@ public:
         if (!in_file.open(QIODevice::ReadOnly | QIODevice::Text)) {
             return false;
         }
+        tails.clear();
         QTextStream in(&in_file);
         while (!in.atEnd()) {
             QString str = in.readLine();
-            preprocess(str);
+            tails += preprocess(str);
             arr += str;
         }
         line = 0;
@@ -32,14 +33,17 @@ public:
     /// instead of a file. Every line is preprocessed exactly like open() does, so a
     /// buffer tokenizes identically to the same text read from disk.
     void setBuffer(QStringList lines) {
-        arr.clear();
+        tails.clear();
         for (QString &str : lines) {
-            preprocess(str);
+            tails += preprocess(str);
             arr += str;
         }
         line = 0;
         col = 0;
     }
+    /// Comment tail of buffer line i (`// ...` raw text, "" when none); parallels the
+    /// line buffer (docs/DESIGN-config-editor.md §6).
+    QString tailAt(int i) const { return i >= 0 && i < tails.size() ? tails.at(i) : QString(); }
     /// 0-based index of the line the cursor is on. nextToken() reads one line per call,
     /// so this is the line a command starts on - which is what the surgical save keys
     /// app-owned rows to.
@@ -49,10 +53,11 @@ protected:
     int line, col;
     QFile in_file;
     QStringList arr;
+    QStringList tails; ///< per-line comment tail, parallel to arr
     /// Per-line massaging before the line enters the buffer. The base keeps lines
-    /// verbatim: descriptions in allcmds.csv must survive untouched (they carry
-    /// URLs and mixed case). cfgLex overrides this for case-insensitive .cfg files.
-    virtual void preprocess(QString &) {}
+    /// verbatim (descriptions in allcmds.csv must survive untouched) and reports no
+    /// comment tail; cfgLex overrides both (docs/DESIGN-config-editor.md §6).
+    virtual QString preprocess(QString &) { return QString(); }
     inline void advanceOneChar() {
         if (line >= arr.size()) {
             return;
@@ -72,21 +77,29 @@ public:
 
     // A config line is folded to lower case only as far as its command name: the console
     // looks commands up case-insensitively, but an argument is text, so `say "Hello"` and
-    // a say-text alias must keep their case or the loaded config no longer matches what the
-    // file says. `//` starts a comment only outside a quoted token, the way the game's own
-    // tokenizer treats it, so a URL in `alias x "echo http://host/"` survives. (Both used to
-    // live in Lexer::open, where the case fold also corrupted allcmds.csv descriptions.)
-    void preprocess(QString &str) override {
+    // a say-text alias must keep their case or the loaded config no longer matches what
+    // the file says. `//` starts a comment only outside a quoted token, the way the game's
+    // own tokenizer treats it, so a URL in `alias x "echo http://host/"` survives. (Both
+    // rules used to live in Lexer::open, where the case fold also corrupted allcmds.csv
+    // descriptions.) The tail is returned raw, never folded, so comment rows re-render
+    // verbatim (docs/DESIGN-config-editor.md §6).
+    QString preprocess(QString &str) override {
         bool quoted = false;
+        int cut = -1;
         for (int i = 0; i < str.size(); ++i) {
             const QChar c = str.at(i);
             if (c == QLatin1Char('"')) {
                 quoted = !quoted;
             } else if (!quoted && c == QLatin1Char('/') && i + 1 < str.size()
                        && str.at(i + 1) == QLatin1Char('/')) {
-                str.truncate(i);
+                cut = i;
                 break;
             }
+        }
+        QString tail;
+        if (cut >= 0) {
+            tail = str.mid(cut);
+            str.truncate(cut);
         }
 
         // The name is the first unquoted word. A line that starts with a quote has no bare
@@ -95,9 +108,10 @@ public:
         while (nameStart < str.size() && str.at(nameStart).isSpace())
             ++nameStart;
         if (nameStart < str.size() && str.at(nameStart) == QLatin1Char('"'))
-            return;
+            return tail;
         for (int i = nameStart; i < str.size() && !str.at(i).isSpace(); ++i)
             str[i] = str.at(i).toLower();
+        return tail;
     }
 
     struct Token {

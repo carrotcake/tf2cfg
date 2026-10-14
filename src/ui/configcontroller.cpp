@@ -281,6 +281,8 @@ bool ConfigController::writeConfig(const QString &path, const QString &source,
                 // Re-render every surviving command of this source line as one compound
                 // line (`; ` between commands), dropping emptied rows. The original
                 // semicolon stays on one line instead of being exploded by the writer.
+                // The line's comment tail is re-emitted once, after the last surviving
+                // command (docs/DESIGN-config-editor.md §6).
                 QString rebuilt;
                 bool firstCommand = true;
                 for (int row : rows) {
@@ -293,6 +295,9 @@ bool ConfigController::writeConfig(const QString &path, const QString &source,
                     firstCommand = false;
                 }
                 if (!rebuilt.isEmpty()) {
+                    const QString tail = entries.at(rows.last()).commentTail;
+                    if (!tail.isEmpty())
+                        rebuilt += QLatin1Char(' ') + tail;
                     out += rebuilt.toUtf8();
                     out += terminator;
                 }
@@ -333,14 +338,42 @@ bool ConfigController::writeConfig(const QString &path, const QString &source,
         const QByteArray &lineBytes = lines.at(idx);
         return lineBytes.endsWith('\n') || lineBytes.endsWith('\r');
     };
-    // Rows of one group, each rendered on its own line in row order.
-    const auto renderGroup = [&entries](const QVector<int> &rows, const QByteArray &nl) {
-        QByteArray block;
+    // Rows of one session LINE: a groupId > 0 set shares one `;`-joined line (a compound
+    // insert, docs/DESIGN-config-editor.md §5); groupId 0 rows render individually.
+    const auto sessionLinesFor = [&entries](const QVector<int> &rows) {
+        QVector<QVector<int>> lines;
+        QHash<int, int> indexOfGid;
         for (int row : rows) {
-            const cmd::Entry &entry = entries.at(row);
-            if (!entry.appOwned || entry.sourceLine >= 0 || entry.args.isEmpty())
-                continue;
-            block += entry.args.join(QLatin1Char(' ')).toUtf8() + nl;
+            const int gid = entries.at(row).groupId;
+            if (gid > 0 && indexOfGid.contains(gid)) {
+                lines[indexOfGid.value(gid)].append(row);
+            } else {
+                if (gid > 0)
+                    indexOfGid.insert(gid, lines.size());
+                lines.append(QVector<int>{ row });
+            }
+        }
+        return lines;
+    };
+    // Rows of one group, each rendered on its own line in row order.
+    const auto renderGroup = [&entries, &sessionLinesFor](const QVector<int> &rows,
+                                                          const QByteArray &nl) {
+        QByteArray block;
+        for (const QVector<int> &lineRows : sessionLinesFor(rows)) {
+            QString line;
+            bool firstSegment = true;
+            for (int row : lineRows) {
+                const cmd::Entry &entry = entries.at(row);
+                if (!entry.appOwned || entry.sourceLine >= 0 || entry.args.isEmpty())
+                    continue;
+                if (!firstSegment)
+                    line += QStringLiteral("; ");
+                line += entry.args.join(QLatin1Char(' '));
+                firstSegment = false;
+            }
+            if (line.isEmpty())
+                continue; // owned but emptied: that line drops
+            block += line.toUtf8() + nl;
         }
         return block;
     };
@@ -531,18 +564,45 @@ QVariantMap ConfigController::parseCommandLine(const QString &line) const {
     result.insert(QStringLiteral("args"), argList);
     result.insert(QStringLiteral("type"), static_cast<int>(type));
     result.insert(QStringLiteral("typeName"), CommandListModel::typeName(type));
+    // Trailing comment (`// ...` raw text) the line carried; empty when none (§6).
+    result.insert(QStringLiteral("tail"), lex.tailAt(0));
     return result;
 }
 
 bool ConfigController::setRowText(int row, const QString &text) {
-    const QVariantMap parsed = parseCommandLine(text);
-    if (!parsed.value(QStringLiteral("ok")).toBool())
+    if (row < 0 || row >= m_commands.entries().size())
         return false;
-    QStringList args;
-    for (const QVariant &arg : parsed.value(QStringLiteral("args")).toList())
-        args << arg.toString();
-    return m_commands.setEntryArgs(
-        row, args, static_cast<cmd::CmdType>(parsed.value(QStringLiteral("type")).toInt()));
+    const QString trimmed = text.trimmed();
+
+    // Comment rows: the raw text IS the content (§6) - no tokenizing, and a missing
+    // `//` is restored so the row still reads back as a comment after a resync.
+    if (m_commands.entries().at(row).type == cmd::CMD_COMMENT) {
+        if (trimmed.isEmpty())
+            return false;
+        cmd::Entry comment;
+        comment.args << (trimmed.startsWith(QLatin1String("//")) ? trimmed
+                                                                 : QStringLiteral("// ")
+                                                                       + trimmed);
+        comment.type = cmd::CMD_COMMENT;
+        return m_commands.setRowGroup(row, {comment});
+    }
+
+    // The text may be a compound line (`a; b`): split on unquoted `;` and parse each
+    // segment, so an edit of one row replaces the WHOLE line the row belongs to (§5).
+    QVector<cmd::Entry> segments;
+    for (const QString &segment : splitSegments(trimmed)) {
+        const QVariantMap parsed = parseCommandLine(segment);
+        if (!parsed.value(QStringLiteral("ok")).toBool())
+            return false;
+        cmd::Entry entry;
+        for (const QVariant &arg : parsed.value(QStringLiteral("args")).toList())
+            entry.args << arg.toString();
+        entry.type =
+            static_cast<cmd::CmdType>(parsed.value(QStringLiteral("type")).toInt());
+        entry.commentTail = parsed.value(QStringLiteral("tail")).toString();
+        segments << entry;
+    }
+    return m_commands.setRowGroup(row, segments);
 }
 
 bool ConfigController::deleteRow(int row) {
@@ -554,15 +614,32 @@ bool ConfigController::deleteRow(int row) {
 }
 
 int ConfigController::insertRowAfter(int anchorRow, const QString &text) {
-    const QVariantMap parsed = parseCommandLine(text);
-    if (!parsed.value(QStringLiteral("ok")).toBool())
+    const QString trimmed = text.trimmed();
+    if (trimmed.isEmpty())
         return -1;
-    QStringList args;
-    for (const QVariant &arg : parsed.value(QStringLiteral("args")).toList())
-        args << arg.toString();
-    return m_commands.insertEntry(
-        anchorRow, args,
-        static_cast<cmd::CmdType>(parsed.value(QStringLiteral("type")).toInt()));
+
+    // A `//`-prefixed insert is a comment line: raw text, no tokenizing (§6).
+    QVector<cmd::Entry> segments;
+    if (trimmed.startsWith(QLatin1String("//"))) {
+        cmd::Entry comment;
+        comment.args << trimmed;
+        comment.type = cmd::CMD_COMMENT;
+        segments << comment;
+    } else {
+        for (const QString &segment : splitSegments(trimmed)) {
+            const QVariantMap parsed = parseCommandLine(segment);
+            if (!parsed.value(QStringLiteral("ok")).toBool())
+                return -1;
+            cmd::Entry entry;
+            for (const QVariant &arg : parsed.value(QStringLiteral("args")).toList())
+                entry.args << arg.toString();
+            entry.type =
+                static_cast<cmd::CmdType>(parsed.value(QStringLiteral("type")).toInt());
+            entry.commentTail = parsed.value(QStringLiteral("tail")).toString();
+            segments << entry;
+        }
+    }
+    return m_commands.insertLine(anchorRow, segments);
 }
 
 bool ConfigController::setAlias(const QString &name, const QString &body) {

@@ -26,6 +26,9 @@ Panel {
     property var guidedRec: null
     /// The cvar's current value token (raw token, quotes included), one field.
     property string cvarValue: ""
+    /// The trailing comment (§6) captured at rebuild time; regenerated guided lines
+    /// re-attach it so a guided edit never silently drops the file's comment.
+    property string guidedTail: ""
     /// Chain editor state (Chunk C, §5): true when the selection is a compound line
     /// or an alias definition. chainName is the alias's name in body mode, "" when
     /// editing a plain compound line.
@@ -81,6 +84,7 @@ Panel {
         argModel.clear()
         guidedRec = null
         cvarValue = ""
+        guidedTail = ""
         if (addMode || selectedInfo === null || selectedInfo.boundKey !== "")
             return
         const parsed = cfgRef.parseCommandLine(text !== undefined ? text
@@ -92,6 +96,9 @@ Panel {
         if (rec.name === undefined)
             return // not in catalog: raw text only (§3)
         guidedRec = rec
+        // The line's trailing comment (§6): regenerated lines re-attach it so guided
+        // edits never drop what the user's file says after the command.
+        guidedTail = parsed.tail
         if (rec.isCvar) {
             cvarValue = parts.length > 1 ? parts[1] : ""
             cvarField.text = cvarValue
@@ -138,7 +145,7 @@ Panel {
                 parts.push(arg.value)
             }
         }
-        lineEdit.text = parts.join(" ")
+        lineEdit.text = parts.join(" ") + (guidedTail !== "" ? " " + guidedTail : "")
     }
 
     // -- chain editor (Chunk C, §5) -----------------------------------------------
@@ -226,8 +233,8 @@ Panel {
             Tf2ComboBox {
                 id: kindCombo
                 Layout.preferredWidth: Theme.comboDefaultWidth
-                model: ["All types", "Cvars", "Commands", "Aliases", "Not in catalog", "Binds"]
-                // Index 0 = all; the proxy's kinds are 0..4, so the mapping is index - 1.
+                model: ["All types", "Cvars", "Commands", "Aliases", "Not in catalog", "Binds", "Comments"]
+                // Index 0 = all; the proxy's kinds are 0..5, so the mapping is index - 1.
                 onActivated: function (index) {
                     tab.cfgRef.rowFilter.filterKind = index - 1
                 }
@@ -324,7 +331,8 @@ Panel {
                                 id: rowText
                                 Layout.fillWidth: true
                                 text: rowDelegate.line
-                                color: Theme.colorText
+                                color: rowDelegate.typeName === "comment" ? Theme.colorTextMuted
+                                       : Theme.colorText
                                 font.family: Theme.familyMono
                                 font.pointSize: Theme.sizeMono
                                 elide: Text.ElideRight

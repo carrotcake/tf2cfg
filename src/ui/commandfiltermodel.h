@@ -14,7 +14,7 @@ class CommandFilterModel : public QSortFilterProxyModel {
     /// Plain substring match on the row text, case-insensitive; empty matches all.
     Q_PROPERTY(QString filterText READ filterText WRITE setFilterText NOTIFY filterTextChanged)
     /// -1 = every kind; else a Config Editor filter kind:
-    /// 0 cvars, 1 commands, 2 aliases, 3 not in catalog, 4 binds.
+    /// 0 cvars, 1 commands, 2 aliases, 3 not in catalog, 4 binds, 5 comments.
     Q_PROPERTY(int filterKind READ filterKind WRITE setFilterKind NOTIFY filterKindChanged)
 
 public:

@@ -85,7 +85,10 @@ QVariant CommandListModel::data(const QModelIndex &index, int role) const {
 
     switch (role) {
     case LineRole:
-        return entry.args.join(" "); // parity P38: same text as the widget list
+        // The line as the user sees it: the command tokens plus the row's comment
+        // tail, exactly what an owned save re-renders (docs/DESIGN-config-editor.md §6).
+        return entry.commentTail.isEmpty() ? entry.args.join(" ")
+                                           : entry.args.join(" ") + " " + entry.commentTail;
     case CommandRole:
         return entry.args.value(0);
     case ArgsRole:
@@ -115,6 +118,7 @@ QHash<int, QByteArray> CommandListModel::roleNames() const {
 void CommandListModel::setEntries(const QVector<cmd::Entry> &entries) {
     beginResetModel();
     m_entries = entries;
+    m_nextGroupId = 1; // the parse re-derives every line identity
     endResetModel();
     invalidateDerived();
 }
@@ -122,6 +126,7 @@ void CommandListModel::setEntries(const QVector<cmd::Entry> &entries) {
 void CommandListModel::clearEntries() {
     beginResetModel();
     m_entries.clear();
+    m_nextGroupId = 1;
     endResetModel();
     invalidateDerived();
 }
@@ -373,20 +378,99 @@ bool CommandListModel::clearBind(const QString &key) {
     return true;
 }
 
-bool CommandListModel::setEntryArgs(int row, const QStringList &args, cmd::CmdType type) {
-    if (row < 0 || row >= m_entries.size() || args.isEmpty())
+bool CommandListModel::setRowGroup(int row, const QVector<cmd::Entry> &segments) {
+    if (row < 0 || row >= m_entries.size() || segments.isEmpty())
         return false;
 
-    cmd::Entry &entry = m_entries[row];
-    entry.args = args;
-    entry.type = type;
-    entry.appOwned = true; // the Config Editor owns the line from here on (§9)
+    // The line-group of `row`: parsed rows group by sourceLine, session compound rows
+    // by groupId, everything else stands alone (docs/DESIGN-config-editor.md §5/§6).
+    const int srcLine = m_entries.at(row).sourceLine;
+    const int gid = m_entries.at(row).groupId;
+    int first = row;
+    int last = row;
+    if (srcLine >= 0) {
+        while (first > 0 && m_entries.at(first - 1).sourceLine == srcLine)
+            --first;
+        while (last + 1 < m_entries.size() && m_entries.at(last + 1).sourceLine == srcLine)
+            ++last;
+    } else if (gid > 0) {
+        while (first > 0 && m_entries.at(first - 1).groupId == gid)
+            --first;
+        while (last + 1 < m_entries.size() && m_entries.at(last + 1).groupId == gid)
+            ++last;
+    }
 
-    const QModelIndex idx = index(row);
-    emit dataChanged(idx, idx, {LineRole, CommandRole, ArgsRole, TypeRole, TypeNameRole,
-                                BoundKeyRole});
+    QVector<cmd::Entry> fresh = segments;
+    // Session rows keep their group identity; a lone session row expanded into a
+    // compound gets a fresh groupId so the save renders it as one line.
+    int groupTag = gid;
+    if (srcLine < 0 && fresh.size() > 1 && groupTag == 0)
+        groupTag = m_nextGroupId++;
+    for (cmd::Entry &entry : fresh) {
+        entry.appOwned = true;
+        entry.sourceLine = srcLine;
+        entry.anchorLine = m_entries.at(row).anchorLine;
+        entry.groupId = srcLine < 0 ? groupTag : 0;
+    }
+
+    const int groupSize = last - first + 1;
+    const int overlap = qMin(groupSize, fresh.size());
+    for (int i = 0; i < overlap; ++i)
+        m_entries[first + i] = fresh.at(i);
+
+    if (fresh.size() > groupSize) {
+        // Extra segments join the same line: insert them as group members.
+        beginInsertRows(QModelIndex(), first + groupSize, first + fresh.size() - 1);
+        for (int i = groupSize; i < fresh.size(); ++i)
+            m_entries.insert(first + i, fresh.at(i));
+        endInsertRows();
+    } else if (groupSize > fresh.size()) {
+        // Extra model rows drop; the save drops their line content with them.
+        beginRemoveRows(QModelIndex(), first + fresh.size(), last);
+        for (int r = last; r >= first + fresh.size(); --r)
+            m_entries.remove(r);
+        endRemoveRows();
+    }
+
+    emit dataChanged(index(first), index(first + overlap - 1),
+                     {LineRole, CommandRole, ArgsRole, TypeRole, TypeNameRole, BoundKeyRole});
     invalidateDerived();
     return true;
+}
+
+int CommandListModel::insertLine(int anchorRow, const QVector<cmd::Entry> &segments) {
+    if (segments.isEmpty())
+        return -1;
+
+    // Save position: right after the anchor row's file line, so the new line lands
+    // where the user placed it (docs/DESIGN-config-editor.md §9). An anchor that is
+    // itself a session row chains to that row's anchor; no anchor means end of file.
+    int anchorLine = cmd::ANCHOR_EOF;
+    if (anchorRow >= 0 && anchorRow < m_entries.size()) {
+        const cmd::Entry &src = m_entries.at(anchorRow);
+        anchorLine = src.sourceLine >= 0 ? src.sourceLine
+                   : src.anchorLine >= 0 ? src.anchorLine
+                                         : cmd::ANCHOR_EOF;
+    }
+
+    QVector<cmd::Entry> fresh = segments;
+    const int groupTag = fresh.size() > 1 ? m_nextGroupId++ : 0;
+    for (cmd::Entry &entry : fresh) {
+        entry.appOwned = true;
+        entry.anchorLine = anchorLine;
+        entry.groupId = groupTag;
+    }
+
+    // Display order mirrors the anchor: the line lands directly after the anchor row,
+    // so the list shows it where the save will write it.
+    const int row = (anchorRow >= 0 && anchorRow < m_entries.size()) ? anchorRow + 1
+                                                                     : m_entries.size();
+    beginInsertRows(QModelIndex(), row, row + fresh.size() - 1);
+    for (int i = 0; i < fresh.size(); ++i)
+        m_entries.insert(row + i, fresh.at(i));
+    endInsertRows();
+    invalidateDerived();
+    return row;
 }
 
 bool CommandListModel::deleteEntry(int row) {
@@ -398,38 +482,6 @@ bool CommandListModel::deleteEntry(int row) {
     endRemoveRows();
     invalidateDerived();
     return true;
-}
-
-int CommandListModel::insertEntry(int anchorRow, const QStringList &args, cmd::CmdType type) {
-    if (args.isEmpty())
-        return -1;
-
-    cmd::Entry entry;
-    entry.args = args;
-    entry.type = type;
-    entry.appOwned = true;
-    // Save position: right after the anchor row's file line, so the new row lands
-    // where the user placed it (docs/DESIGN-config-editor.md §9). An anchor that is
-    // itself a session row chains to that row's anchor; no anchor means end of file.
-    if (anchorRow >= 0 && anchorRow < m_entries.size()) {
-        const cmd::Entry &src = m_entries.at(anchorRow);
-        entry.anchorLine = src.sourceLine >= 0 ? src.sourceLine
-                         : src.anchorLine >= 0 ? src.anchorLine
-                                               : cmd::ANCHOR_EOF;
-    } else {
-        entry.anchorLine = cmd::ANCHOR_EOF;
-    }
-
-    // Display order mirrors the anchor: the row lands directly after the anchor row,
-    // so the list shows it where the save will write it. Session rows sharing an
-    // anchor keep their relative order, which this preserves.
-    const int row = (anchorRow >= 0 && anchorRow < m_entries.size()) ? anchorRow + 1
-                                                                     : m_entries.size();
-    beginInsertRows(QModelIndex(), row, row);
-    m_entries.insert(row, entry);
-    endInsertRows();
-    invalidateDerived();
-    return row;
 }
 
 // --- alias API (docs/DESIGN-config-editor.md §5.3) ---
@@ -578,7 +630,11 @@ QVariantMap CommandListModel::rowInfo(int row) const {
 
     const cmd::Entry &entry = m_entries.at(row);
     info.insert(QStringLiteral("row"), row);
-    info.insert(QStringLiteral("line"), entry.args.join(QLatin1Char(' ')));
+    info.insert(QStringLiteral("line"),
+                entry.commentTail.isEmpty()
+                    ? entry.args.join(QLatin1Char(' '))
+                    : entry.args.join(QLatin1Char(' ')) + QLatin1Char(' ')
+                          + entry.commentTail);
     info.insert(QStringLiteral("command"), entry.args.value(0));
     info.insert(QStringLiteral("type"), static_cast<int>(entry.type));
     info.insert(QStringLiteral("typeName"), typeName(entry.type));
@@ -604,6 +660,8 @@ QString CommandListModel::typeName(cmd::CmdType type) {
         return QString(BindSyntax::Bind);
     case cmd::CMD_ALIAS:
         return QStringLiteral("alias");
+    case cmd::CMD_COMMENT:
+        return QStringLiteral("comment");
     case cmd::CMD_UNKWN:
         break;
     }

@@ -91,21 +91,24 @@ public:
     // -- Config Editor (docs/DESIGN-config-editor.md) --------------------------------
 
     /// Tokenize one command line the way the parser would and classify its head.
-    /// { ok, args, typeName, error }: ok is false for an empty/comment-only line.
-    /// The guided editors (§8) reverse-parse custom text through this, so there is
-    /// one tokenizer, not a second one in QML.
+    /// { ok, args, typeName, tail, error }: ok is false for an empty/comment-only
+    /// line; tail is the line's trailing `//` comment (§6). The guided editors (§8)
+    /// reverse-parse custom text through this, so there is one tokenizer, not a
+    /// second one in QML.
     Q_INVOKABLE QVariantMap parseCommandLine(const QString &line) const;
 
-    /// Replace row `row` with the tokenized text (raw edit). False when the text
-    /// parses to nothing.
+    /// Replace row `row` with the tokenized text (raw edit). Multi-segment text
+    /// (`a; b`) replaces the row's whole line-group (§5); a comment row takes its
+    /// raw text verbatim (§6). False when the text parses to nothing.
     Q_INVOKABLE bool setRowText(int row, const QString &text);
 
     /// Remove row `row`; the save drops its line.
     Q_INVOKABLE bool deleteRow(int row);
 
-    /// Insert a new row after `anchorRow` (its file line is the save anchor;
-    /// anchorRow < 0 appends at end of file). Returns the new row index, -1 on
-    /// refusal.
+    /// Insert a new line after `anchorRow` (its file line is the save anchor;
+    /// anchorRow < 0 appends at end of file). `//`-prefixed text inserts a comment
+    /// line (§6); `;`-separated text inserts one compound line (§5). Returns the new
+    /// row index, -1 on refusal.
     Q_INVOKABLE int insertRowAfter(int anchorRow, const QString &text);
 
     // -- aliases + chains (docs/DESIGN-config-editor.md §5) --------------------------

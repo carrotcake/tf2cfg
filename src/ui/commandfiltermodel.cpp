@@ -50,6 +50,9 @@ bool CommandFilterModel::filterAcceptsRow(int sourceRow, const QModelIndex &sour
         case 4: // binds (redirect to Edit Binds)
             match = bound;
             break;
+        case 5: // comments (§6)
+            match = type == cmd::CMD_COMMENT;
+            break;
         default:
             break;
         }
