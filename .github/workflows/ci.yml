@@ -38,12 +38,15 @@ jobs:
           grep -q "FAIL" testlog.txt && { cat testlog.txt; exit 1; }
           grep "Totals" testlog.txt
 
-      - name: qmllint (0 errors; the 28 known unqualified-access warnings are tolerated)
+      - name: qmllint (0 errors; unqualified-access warnings tolerated, see AGENTS.md)
         run: |
           find qml -name '*.qml' | xargs qmllint-qt6 2>lint.txt || true
           if grep -q "Error:" lint.txt; then
             echo "::error::qmllint reported errors"; cat lint.txt; exit 1
           fi
+          # The tolerated unqualified-access count is the context-property `cfg` reads
+          # (AGENTS.md); printed so a drift is visible per run.
+          echo "unqualified-access warnings: $(grep -c 'Warning: unqualified access' lint.txt || true)"
           echo "qmllint: 0 errors"
 
       - name: Contrast gate (W8)
