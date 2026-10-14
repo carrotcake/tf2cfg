@@ -17,9 +17,14 @@ compiled, never launched (no display); the test binary runs headless via
 `QT_QPA_PLATFORM=offscreen`. First Linux compile of this codebase — the CI run is the
 verification.
 
-Nothing Linux has been compiled yet; the test target links only Qt core + testlib plus
-the resource bundle and is expected to work, which is exactly what CI is for. Linux users
-are half the TF2 player base and are currently the first line of compile testing.
+DONE 2026-10-14, same workflow: AppImage packaging. `linuxdeploy` + `linuxdeploy-plugin-qt`
+bundle the built binary with Qt 6.4.2 libs/plugins (QML modules come from the
+`qml6-module-*` runtime packages); the icon is rendered at build time with ImageMagick
+from the repo's TF2 font (`res/icon/tf2cfg.svg` is the mockup, `tf2cfg.desktop` the
+menu entry). The AppImage is smoke-tested headless (offscreen run for 15 s, exit 124 =
+success), uploaded as an artifact on every run, and attached to a GitHub Release when a
+`v*` tag is pushed (`softprops/action-gh-release@v3`). Compatibility note: the AppImage
+targets current distros (glibc 2.39 / Qt 6.4.2 floor) — accepted, per project decision.
 
 ## 2. Accessibility (`docs/accessibility.md` - evaluated, sized, deliberately deferred)
 

@@ -44,6 +44,8 @@ cd build-test && .\release\tf2cfg_test.exe -o testlog.txt,txt
   fix those), do not add new ones. All QML files carry
   `pragma ComponentBehavior: Bound`; new files must too.
 - `pwsh -File deploy.ps1 [-Config debug] [-QtRoot ...]` packages a self-contained `dist/`.
+- Linux packaging is CI's AppImage job (`.github/workflows/ci.yml`): every push produces
+  a `TF2-Config-Manager-x86_64.AppImage` artifact; a `v*` tag publishes it as a release.
 - Running the app for manual checks (from `build/release`, stderr is invisible without
   `QT_FORCE_STDERR_LOGGING`):
   ```pwsh
