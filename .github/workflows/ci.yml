@@ -8,6 +8,9 @@ on:
 jobs:
   linux:
     runs-on: ubuntu-latest
+    # Write is needed only on v* tags (release step); artifact upload works without it.
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -91,7 +94,7 @@ jobs:
 
       - name: Attach to release (v* tags only)
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-ghrelease@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: TF2-Config-Manager-x86_64.AppImage
 
