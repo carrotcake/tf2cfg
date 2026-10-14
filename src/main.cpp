@@ -8,6 +8,7 @@
 #include <QScreen>
 
 #include "ui/configcontroller.h"
+#include "ui/keytable.h"
 
 namespace {
 
@@ -66,9 +67,11 @@ int main(int argc, char *argv[]) {
     /********************************************************************/   // from res.qrc
 
     ConfigController cfg;
+    KeyTable keyTable;
 
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty(QStringLiteral("cfg"), &cfg);
+    engine.rootContext()->setContextProperty(QStringLiteral("keyTable"), &keyTable);
 
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &a,
                      []() { QCoreApplication::exit(-1); }, Qt::QueuedConnection);

@@ -20,7 +20,8 @@ SOURCES += \
     src/ui/commandfiltermodel.cpp \
     src/ui/commandlistmodel.cpp \
     src/ui/consolecommandmodel.cpp \
-    src/ui/configcontroller.cpp
+    src/ui/configcontroller.cpp \
+    src/ui/keytable.cpp
 
 HEADERS += \
     src/gamecfg/convars.h \
@@ -29,7 +30,8 @@ HEADERS += \
     src/ui/commandfiltermodel.h \
     src/ui/commandlistmodel.h \
     src/ui/consolecommandmodel.h \
-    src/ui/configcontroller.h
+    src/ui/configcontroller.h \
+    src/ui/keytable.h
 
 # The previous Qt Widgets UI was retired and deleted once the QML rewrite shipped;
 # git history has it. See docs/legacy/ui-qml-rewrite.md section 11.

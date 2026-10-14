@@ -4,25 +4,27 @@ import QtQuick
 import QtQuick.Controls
 import "../theme"
 
-// One key cap. All data comes from the KeyTable singleton, so adding/removing keys is
-// a data edit, not a UI edit (docs/legacy/ui-qml-rewrite.md section 10).
+// One key cap. All data comes from the keyTable C++ context property, so
+// adding/removing keys is a data edit, not a UI edit (docs/legacy/ui-qml-rewrite.md
+// section 10; the table moved from a QML singleton to C++, deviation D9).
 Rectangle {
     id: cap
 
-    /// Local handle for the context property, so later accesses are qualified and do
-    /// not each add a separate unqualified-access advisory.
+    /// Local handles for the context properties, so later accesses are qualified and
+    /// do not each add a separate unqualified-access advisory.
     readonly property var cfgRef: cfg
+    readonly property var tableRef: keyTable
 
-    /// Key name into KeyTable (e.g. "esc", "bkspc", "kpplus").
+    /// Key name into the key table (e.g. "esc", "bkspc", "kpplus").
     property string keyName: ""
     /// Command shown in the cap's bind overlay for the future "show what this key does"
     /// mode (D16). Now populated for bound caps; empty when unbound.
     property string bindText: cap.bound ? cap.boundCommand : ""
 
-    readonly property var keyInfo: KeyTable.keyData(keyName)
-    readonly property bool bindable: KeyTable.isBindable(keyName)
-    readonly property int keyId: KeyTable.keyId(keyName)
-    readonly property string token: KeyTable.keyToken(keyName)
+    readonly property var keyInfo: tableRef.keyData(keyName)
+    readonly property bool bindable: tableRef.isBindable(keyName)
+    readonly property int keyId: tableRef.keyId(keyName)
+    readonly property string token: tableRef.keyToken(keyName)
     /// Label size override for caps whose strings run long (mouse caps).
     readonly property int labelPointSize: keyInfo !== null && keyInfo.fs !== undefined
                                           ? keyInfo.fs : Theme.sizeUi
@@ -41,8 +43,8 @@ Rectangle {
     /// Emitted with the engine key id (see docs/legacy/ui-qml-rewrite.md section 7).
     signal activated(int keyId)
 
-    implicitWidth: KeyTable.keyWidth(keyName)
-    implicitHeight: KeyTable.keyHeight(keyName)
+    implicitWidth: tableRef.keyWidth(keyName)
+    implicitHeight: tableRef.keyHeight(keyName)
 
     /// W2: bindable caps join the tab chain and activate on Return/Space; the two
     /// non-bindable caps (no token, D16) stay out entirely.
@@ -94,7 +96,7 @@ Rectangle {
         anchors.fill: parent
         anchors.margins: Theme.spacingTight
         anchors.bottomMargin: cap.bindText !== "" ? cap.height * 0.34 : Theme.spacingTight
-        text: KeyTable.keyLabel(cap.keyName)
+        text: tableRef.keyLabel(cap.keyName)
         color: Theme.colorKeyCapText
         font.family: Theme.familyButton
         font.pointSize: cap.labelPointSize
@@ -163,7 +165,7 @@ Rectangle {
     // W4: the cap announces as a button with its key label; the bind line, when any,
     // is the description a screen reader reads after the name.
     Accessible.role: Accessible.Button
-    Accessible.name: KeyTable.keyLabel(cap.keyName)
+    Accessible.name: tableRef.keyLabel(cap.keyName)
     Accessible.description: cap.bound ? cap.tipText : ""
     Accessible.onPressAction: cap.activateIfBindable(null)
 }

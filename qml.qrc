@@ -5,8 +5,6 @@
         <file>qml/theme/qmldir</file>
         <file>qml/theme/Theme.qml</file>
 
-        <file>qml/keyboard/qmldir</file>
-        <file>qml/keyboard/KeyTable.qml</file>
         <file>qml/keyboard/KeyCap.qml</file>
         <file>qml/keyboard/KeyboardPanel.qml</file>
 

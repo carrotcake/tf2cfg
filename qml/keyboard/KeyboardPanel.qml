@@ -6,7 +6,7 @@ import "../theme"
 
 // The keyboard. Four clusters, same arrangement as the widget build
 // (docs/legacy/ui-qml-rewrite.md section 8): function row, main block, middle cluster, numpad.
-// Everything is data-driven from KeyTable.
+// Everything is data-driven from keyTable.
 //
 // Usability additions over the widget build (section 13): the panel scrolls in both
 // directions when the window is too small for it, and the keyboard alone can be
@@ -30,7 +30,7 @@ Item {
     /// Width of the widest main-block row; the other rows are stretched to match.
     readonly property real mainRowWidth: {
         let widest = 0
-        const rows = KeyTable.mainRows
+        const rows = keyTable.mainRows
         for (let i = 0; i < rows.length; ++i) {
             const w = rowWidth(rows[i])
             if (w > widest)
@@ -44,7 +44,7 @@ Item {
     function rowWidth(names) {
         let w = 0
         for (let i = 0; i < names.length; ++i)
-            w += KeyTable.keyWidth(names[i])
+            w += keyTable.keyWidth(names[i])
         if (names.length > 1)
             w += Theme.capGap * (names.length - 1)
         return w
@@ -62,7 +62,7 @@ Item {
     /// cumulative spots; the last (PrtScn/ScrLk/Pause) is centered over the
     /// middle cluster below it, which starts at mainRowWidth + 2 cluster gaps.
     function fnGroupX(index) {
-        const groups = KeyTable.fnRowGroups
+        const groups = keyTable.fnRowGroups
         if (index === groups.length - 1)
             return mainRowWidth + Theme.capClusterGap * 2
         let x = 0
@@ -167,12 +167,12 @@ Item {
             // ScrLk, Pause) can center over the middle cluster below it instead
             // of sitting at its natural cumulative offset.
             Item {
-                width: fnGroupX(KeyTable.fnRowGroups.length - 1)
-                       + rowWidth(KeyTable.fnRowGroups[KeyTable.fnRowGroups.length - 1])
+                width: fnGroupX(keyTable.fnRowGroups.length - 1)
+                       + rowWidth(keyTable.fnRowGroups[keyTable.fnRowGroups.length - 1])
                 height: Theme.capSize
 
                 Repeater {
-                    model: KeyTable.fnRowGroups
+                    model: keyTable.fnRowGroups
                     delegate: Row {
                         id: fnGroup
                         required property int index
@@ -206,7 +206,7 @@ Item {
                     spacing: Theme.capGap
 
                     Repeater {
-                        model: KeyTable.mainRows
+                        model: keyTable.mainRows
                         delegate: Row {
                             id: mainRow
                             required property var modelData
@@ -229,7 +229,7 @@ Item {
                     spacing: Theme.capGap
 
                     Repeater {
-                        model: KeyTable.middleRows
+                        model: keyTable.middleRows
                         delegate: Item {
                             id: midRow
                             required property var modelData
@@ -262,7 +262,7 @@ Item {
                         spacing: Theme.capGap
 
                         Repeater {
-                            model: KeyTable.numpadMain
+                            model: keyTable.numpadMain
                             delegate: Row {
                                 id: numRow
                                 required property var modelData
@@ -285,7 +285,7 @@ Item {
                         spacing: Theme.capGap
 
                         Repeater {
-                            model: KeyTable.numpadRight
+                            model: keyTable.numpadRight
                             delegate: KeyCap {
                                 required property var modelData
                                 keyName: modelData
@@ -317,15 +317,15 @@ Item {
 
                 // Mouse buttons and wheel: same caps and activation path as the
                 // keyboard rows, arranged as a mouse rotated 90° CCW (front edge
-                // = left). Cell geometry comes from KeyTable.mouseCells. The Row
+                // = left). Cell geometry comes from keyTable.mouseCells. The Row
                 // only manages x, so center the shorter block vertically.
                 Item {
-                    width: KeyTable.mouseWidth
-                    height: KeyTable.mouseHeight
-                    y: (parent.height - KeyTable.mouseHeight) / 2
+                    width: keyTable.mouseWidth
+                    height: keyTable.mouseHeight
+                    y: (parent.height - keyTable.mouseHeight) / 2
 
                     Repeater {
-                        model: KeyTable.mouseCells
+                        model: keyTable.mouseCells
                         delegate: KeyCap {
                             required property var modelData
                             keyName: modelData.name
@@ -342,20 +342,20 @@ Item {
 
                 Rectangle {
                     width: 1
-                    height: KeyTable.controllerHeight
+                    height: keyTable.controllerHeight
                     color: Theme.colorBorder
                 }
 
                 Item { width: Theme.capGap * 2; height: 1 }
 
                 // Controller: Xbox 360 style, triggers-up, mirror-symmetric.
-                // Cell geometry comes from KeyTable.controllerCells.
+                // Cell geometry comes from keyTable.controllerCells.
                 Item {
-                    width: KeyTable.controllerWidth
-                    height: KeyTable.controllerHeight
+                    width: keyTable.controllerWidth
+                    height: keyTable.controllerHeight
 
                     Repeater {
-                        model: KeyTable.controllerCells
+                        model: keyTable.controllerCells
                         delegate: KeyCap {
                             required property var modelData
                             keyName: modelData.name

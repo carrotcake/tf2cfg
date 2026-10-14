@@ -9,6 +9,7 @@
 #include "gamecfg/lex/lexers.h"
 #include "ui/commandfiltermodel.h"
 #include "ui/commandlistmodel.h"
+#include "ui/keytable.h"
 #include "ui/configcontroller.h"
 #include "ui/consolecommandmodel.h"
 
@@ -120,7 +121,9 @@ private slots:
     void saveIsIdempotent();
     void saveWritesABakBesideTheFile();
     void failedBackupWriteKeepsTheOldRestorePoint();
-    void saveRefusesAResourcePath();
+
+    // Key table (deviation D9: the QML singleton is now a C++ context property)
+    void keyTableParityInvariants();    void saveRefusesAResourcePath();
     void saveRecreatesAVanishedFile();
     void saveDetectsAnExternallyModifiedFile();
 
@@ -1020,6 +1023,65 @@ void EngineTest::failedBackupWriteKeepsTheOldRestorePoint() {
     restore.close();
     QVERIFY(!QFile::exists(bak + QStringLiteral(".old")));
     QVERIFY(QDir(m_dir.path()).rmdir(QStringLiteral("bakfail.cfg.bak.new")));
+}
+
+// --- KeyTable (deviation D9) ---
+
+void EngineTest::keyTableParityInvariants() {
+    // The parity contract with the retired widget build (keybform.h): ids are
+    // unique (0..132 with -1 for unbindables), unbindable caps have no token, and
+    // every layout/cell name resolves to a real cap.
+    KeyTable table;
+
+    QHash<int, QString> seenIds;
+    const QVariantList groups = table.fnRowGroups() + table.mainRows()
+                                + table.middleRows() + table.numpadMain()
+                                + table.numpadRight();
+    int named = 0;
+    for (const QVariant &g : groups) {
+        if (g.isNull())
+            continue; // the deliberate blank slot above the arrow keys
+        for (const QVariant &name : g.toList()) {
+            ++named;
+            const QVariantMap d = table.keyData(name.toString());
+            QVERIFY2(!d.isEmpty(), qPrintable(name.toString()));
+            const int id = d.value(QStringLiteral("id")).toInt();
+            if (id >= 0)
+                QVERIFY2(!seenIds.contains(id),
+                         qPrintable(QStringLiteral("duplicate id %1").arg(id)));
+            seenIds.insert(id, name.toString());
+            if (!d.value(QStringLiteral("bindable"), true).toBool()) {
+                QCOMPARE(id, -1);
+                QCOMPARE(d.value(QStringLiteral("token")).toString(), QString());
+            } else {
+                QVERIFY(!d.value(QStringLiteral("token")).toString().isEmpty());
+                QCOMPARE(table.nameForToken(d.value(QStringLiteral("token")).toString()),
+                         name.toString());
+            }
+        }
+    }
+    QVERIFY(named > 100); // the full keyboard is present
+
+    // Mouse/controller cells reference real caps and carry sane geometry.
+    for (const QVariantList cells : {table.mouseCells(), table.controllerCells()}) {
+        for (const QVariant &v : cells) {
+            const QVariantMap c = v.toMap();
+            QVERIFY2(!table.keyData(c.value(QStringLiteral("name")).toString()).isEmpty(),
+                     qPrintable(c.value(QStringLiteral("name")).toString()));
+            QVERIFY(c.value(QStringLiteral("w")).toInt() > 0);
+            QVERIFY(c.value(QStringLiteral("h")).toInt() > 0);
+        }
+    }
+    QVERIFY(table.mouseWidth() > 0 && table.controllerWidth() > 0);
+
+    // Spot parity against the retired QML singleton's data.
+    QCOMPARE(table.keyId(QStringLiteral("space")), 71);
+    QCOMPARE(table.keyToken(QStringLiteral("space")), QStringLiteral("space"));
+    QCOMPARE(table.keyToken(QStringLiteral("kp0")), QStringLiteral("kp_ins"));
+    QCOMPARE(table.keyId(QStringLiteral("menu")), -1);
+    QVERIFY(!table.isBindable(QStringLiteral("menu")));
+    QCOMPARE(table.tokenForId(0), QStringLiteral("escape"));
+    QCOMPARE(table.keyLabel(QStringLiteral("kpslsh")), QStringLiteral("KP /"));
 }
 
 void EngineTest::saveRefusesAResourcePath() {

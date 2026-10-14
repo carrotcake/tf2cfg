@@ -18,6 +18,7 @@ SOURCES += \
     ../src/ui/commandlistmodel.cpp \
     ../src/ui/configcontroller.cpp \
     ../src/ui/consolecommandmodel.cpp \
+    ../src/ui/keytable.cpp \
     tst_engine.cpp
 
 QT += concurrent
@@ -28,7 +29,8 @@ HEADERS += \
     ../src/ui/commandfiltermodel.h \
     ../src/ui/commandlistmodel.h \
     ../src/ui/configcontroller.h \
-    ../src/ui/consolecommandmodel.h
+    ../src/ui/consolecommandmodel.h \
+    ../src/ui/keytable.h
 
 # GameCfg reads the command catalog from the resource bundle, so the tests get it
 # from the same place the app does instead of depending on the working directory.
