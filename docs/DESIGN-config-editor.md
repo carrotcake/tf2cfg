@@ -1,7 +1,8 @@
 # Design: Config Editor tab (the placeholder tab, non-bind editing)
 
-Status: design, pending decisions (§11). Decisions marked **[user, 2026-10-14]** were made
-in conversation; everything else is derived from repo facts cited inline.
+Status: implemented (Chunks A-D landed 2026-10-14). Decisions marked **[user, 2026-10-14]** were made
+in conversation; everything else is derived from repo facts cited inline. Chunk D also
+closed the compound-line commit gap from `docs/DESIGN-should-fixes.md` §2.
 
 ## 1. What this tab is
 

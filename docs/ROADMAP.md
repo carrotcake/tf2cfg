@@ -11,8 +11,9 @@ audit (`docs/AUDIT.md`) live in section 6; dismissed items are not listed here a
 
 DONE 2026-10-13: `.github/workflows/ci.yml` — Linux only (`ubuntu-latest`), on push to
 `qml-rewrite`/`master` and on PRs. Jobs: install Qt 6 apt packages, build the app,
-build + run `tf2cfg_test` (offscreen platform), gate `qmllint` at 0 errors (the 28
-known warnings tolerated), run `tools/contrast_check.py`. The app binary is only
+build + run `tf2cfg_test` (offscreen platform), gate `qmllint` at 0 errors and print
+the unqualified-access warning count (the printed count is the bar, AGENTS.md), run
+`tools/contrast_check.py`. The app binary is only
 compiled, never launched (no display); the test binary runs headless via
 `QT_QPA_PLATFORM=offscreen`. First Linux compile of this codebase — the CI run is the
 verification.
@@ -57,10 +58,11 @@ items (W1-W8); the priorities:
 
 - ~~Pragma sweep~~ done 2026-10-13 (`68fa1cc`): all QML files carry
   `pragma ComponentBehavior: Bound`; new files must too (AGENTS.md bar).
-- 28 unqualified-access advisories (counted 2026-10-13): context-property reads
-  (`cfg.loaded`, `cfg.presets`) and same-component function references (`rowWidth`,
-  `fnGroupX`) qmllint cannot prove statically. All resolve at runtime; clearing them
-  needs a structural change, not a pragma. Do not add new ones (AGENTS.md bar).
+- unqualified-access advisories (context-property reads (`cfg.loaded`, `cfg.presets`)
+  and same-component function references (`rowWidth`, `fnGroupX`) qmllint cannot prove
+  statically): the CI lint step prints `unqualified-access warnings: N` every run -
+  the printed count is the authority (0 as of 2026-10-14), never add new ones
+  (AGENTS.md bar). Clearing them needs a structural change, not a pragma.
 
 ## 4. Input ids missing from the Edit Binds model
 
@@ -104,14 +106,8 @@ Where each future feature lands, and what is already in place:
 
 ## 6. Code findings from the 2026-10-13 audit
 
-Details and fix directions in `docs/AUDIT.md`.
-
-Items #1 and #2 from `docs/AUDIT.md` are closed by the 2026-10-13 sweep (audit annotated and scope archived there). Only open items remain:
-
-| # | Severity | Item |
-|---|----------|------|
-Items #3 and #4 closed by the same 2026-10-13 sweep (audit annotated). Only data-edge
-and future-feature items remain:
-
-| 5 | nice | `cmdLex` CSV scan silently tolerates malformed quoting; data-edge note only (catalog verified clean, pinned by `catalogRowsHaveTenFields`) |
-`bindtoggle` modelling (#6) is implemented (audit annotated): `bindingKinds()`, `setBindToggle()` and the dialog/cap support are now first-class.
+Details and fix directions in `docs/AUDIT.md`. All findings are closed or annotated
+there: #1/#2/#3/#4 fixed in the 2026-10-13 sweep, #5 (`cmdLex` CSV malformed quoting)
+is a data-edge note only (catalog verified clean, pinned by
+`catalogRowsHaveTenFields`), #6 (`bindtoggle` modelling) is implemented as
+first-class support. Nothing open.
