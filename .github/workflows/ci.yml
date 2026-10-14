@@ -41,3 +41,57 @@ jobs:
 
       - name: Contrast gate (W8)
         run: python3 tools/contrast_check.py
+
+      # -- AppImage packaging ------------------------------------------------
+      # Builds on ubuntu-latest's Qt 6.4.2 / glibc 2.39; the result targets current
+      # distros by design (docs/ROADMAP.md). Uploaded as an artifact on every run and
+      # attached to a GitHub Release when a v* tag is pushed.
+      - name: Install AppImage tooling
+        run: |
+          sudo apt-get install -y imagemagick
+          # linuxdeployqt invokes `qmake`; apt installs it as `qmake6`.
+          sudo ln -s "$(command -v qmake6)" /usr/local/bin/qmake
+          curl -sL -o linuxdeploy.AppImage \
+              https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+          curl -sL -o linuxdeploy-plugin-qt.AppImage \
+              https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
+          chmod +x linuxdeploy.AppImage linuxdeploy-plugin-qt.AppImage
+
+      - name: Render app icon (ImageMagick, from the repo's TF2 font)
+        run: |
+          mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+          magick -size 256x256 xc:none \
+                 -fill "#141719" -draw "roundrectangle 0,0 255,255 40,40" \
+                 -fill "#f0a30a" -font res/font/tf2build.ttf -pointsize 80 \
+                 -gravity center -annotate +0-10 ".cfg" \
+                 AppDir/usr/share/icons/hicolor/256x256/apps/tf2cfg.png
+
+      - name: Bundle AppImage
+        run: |
+          APPIMAGE_EXTRACT_AND_RUN=1 linuxdeploy-plugin-qt.AppImage --appimage-extract-and-run --version || true
+          install -D -m 755 tf2cfgreal AppDir/usr/bin/tf2cfgreal
+          install -D -m 644 res/icon/tf2cfg.desktop AppDir/tf2cfg.desktop
+          export DISABLE_COPYRIGHT_FILE_DEPLOYMENT=1
+          APPIMAGE_EXTRACT_AND_RUN=1 ./linuxdeploy.AppImage \
+              --appdir AppDir \
+              --plugin qt \
+              --output appimage \
+              --desktop-file res/icon/tf2cfg.desktop
+          mv TF2_Config_Manager-*.AppImage "TF2-Config-Manager-x86_64.AppImage"
+
+      - name: Smoke-test the AppImage (no FUSE on runners, so extract-and-run)
+        run: |
+          APPIMAGE_EXTRACT_AND_RUN=1 ./TF2-Config-Manager-x86_64.AppImage --appimage-extract-and-run \
+              usr/bin/tf2cfgreal -help >/dev/null && echo "AppImage binary runs"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TF2-Config-Manager-AppImage
+          path: TF2-Config-Manager-x86_64.AppImage
+
+      - name: Attach to release (v* tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-ghrelease@v2
+        with:
+          files: TF2-Config-Manager-x86_64.AppImage
+
