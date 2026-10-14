@@ -44,7 +44,7 @@ Item {
     function rowWidth(names) {
         let w = 0
         for (let i = 0; i < names.length; ++i)
-            w += keyTable.keyWidth(names[i])
+            w += keyTable.keyWidth(names[i], Theme.capSize)
         if (names.length > 1)
             w += Theme.capGap * (names.length - 1)
         return w

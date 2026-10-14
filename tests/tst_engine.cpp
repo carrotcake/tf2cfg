@@ -1082,6 +1082,15 @@ void EngineTest::keyTableParityInvariants() {
     QVERIFY(!table.isBindable(QStringLiteral("menu")));
     QCOMPARE(table.tokenForId(0), QStringLiteral("escape"));
     QCOMPARE(table.keyLabel(QStringLiteral("kpslsh")), QStringLiteral("KP /"));
+
+    // Geometry defaults flow through from the caller's theme values: a standard
+    // cap is capSize wide, the wide caps carry their own width, and a two-row cap
+    // spans rows + gap. (Regression: the first C++ port returned 0/row-counts and
+    // every keyboard cap rendered at zero size.)
+    QCOMPARE(table.keyWidth(QStringLiteral("esc"), 64), 64);
+    QCOMPARE(table.keyWidth(QStringLiteral("bkspc"), 64), 128);
+    QCOMPARE(table.keyHeight(QStringLiteral("esc"), 64, 4), 64);
+    QCOMPARE(table.keyHeight(QStringLiteral("kpplus"), 64, 4), 132);
 }
 
 void EngineTest::saveRefusesAResourcePath() {

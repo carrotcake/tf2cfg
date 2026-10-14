@@ -276,16 +276,15 @@ bool KeyTable::isBindable(const QString &name) const {
     return it != m_caps.constEnd() && it->bindable;
 }
 
-qreal KeyTable::keyWidth(const QString &name) const {
+qreal KeyTable::keyWidth(const QString &name, qreal defaultW) const {
     const auto it = m_caps.constFind(name);
-    return it == m_caps.constEnd() || it->w <= 0 ? 0 : it->w; // 0 = QML default
+    return it == m_caps.constEnd() || it->w <= 0 ? defaultW : it->w;
 }
 
-qreal KeyTable::keyHeight(const QString &name) const {
-    // Cap geometry itself stays in QML (Theme.capSize/capGap); this only reports
-    // how many rows the cap spans, so Theme changes need no C++ rebuild parity.
+qreal KeyTable::keyHeight(const QString &name, qreal capSize, qreal capGap) const {
     const auto it = m_caps.constFind(name);
-    return it == m_caps.constEnd() ? 0 : it->rows;
+    const int rows = it == m_caps.constEnd() || it->rows <= 0 ? 1 : it->rows;
+    return rows * capSize + (rows - 1) * capGap;
 }
 
 QString KeyTable::keyLabel(const QString &name) const {

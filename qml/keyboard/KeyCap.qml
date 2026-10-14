@@ -43,8 +43,8 @@ Rectangle {
     /// Emitted with the engine key id (see docs/legacy/ui-qml-rewrite.md section 7).
     signal activated(int keyId)
 
-    implicitWidth: tableRef.keyWidth(keyName)
-    implicitHeight: tableRef.keyHeight(keyName)
+    implicitWidth: tableRef.keyWidth(keyName, Theme.capSize)
+    implicitHeight: tableRef.keyHeight(keyName, Theme.capSize, Theme.capGap)
 
     /// W2: bindable caps join the tab chain and activate on Return/Space; the two
     /// non-bindable caps (no token, D16) stay out entirely.

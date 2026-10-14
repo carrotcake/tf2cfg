@@ -44,10 +44,12 @@ public:
     Q_INVOKABLE QVariantMap keyData(const QString &name) const;
     /// Whether a cap can be bound to an action.
     Q_INVOKABLE bool isBindable(const QString &name) const;
-    /// Cap width in px (default 64 = Theme.capSize).
-    Q_INVOKABLE qreal keyWidth(const QString &name) const;
-    /// Cap height in px, honouring multi-row keys (numpad + and Enter only).
-    Q_INVOKABLE qreal keyHeight(const QString &name) const;
+    /// Cap width in px: the cap's own width, or `defaultW` (the caller's
+    /// Theme.capSize) for standard caps.
+    Q_INVOKABLE qreal keyWidth(const QString &name, qreal defaultW) const;
+    /// Cap height in px, honouring multi-row keys (numpad + and Enter only):
+    /// `rows * capSize + (rows - 1) * capGap` with the caller's Theme values.
+    Q_INVOKABLE qreal keyHeight(const QString &name, qreal capSize, qreal capGap) const;
     /// Display label of a cap (falls back to the name itself).
     Q_INVOKABLE QString keyLabel(const QString &name) const;
     /// TF2 key token, or empty for the un-bindable caps.
