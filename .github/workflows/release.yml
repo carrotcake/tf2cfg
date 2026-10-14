@@ -155,10 +155,20 @@ jobs:
         shell: bash
         run: |
           # Compile AND link with Qt's own bundled MinGW (aqt installs it under
-          # <Qt>/Tools/mingw*/bin), not the runner's preinstalled gcc: Qt's
-          # prebuilt libs are built against that runtime, and a newer system gcc
-          # fails at link with __imp___argc undefined (libQt6EntryPoint.a).
-          export PATH="$(echo "$(qmake -query QT_INSTALL_DIR)/Tools"/mingw*/bin):$PATH"
+          # <Qt root>/Tools/mingw*/bin, a SIBLING of the version dir), not the
+          # runner's preinstalled gcc: Qt's prebuilt libs are built against that
+          # runtime, and a newer system gcc fails at link with __imp___argc
+          # undefined (libQt6EntryPoint.a). Hard-check the glob so a miss fails
+          # here instead of silently building with the wrong gcc.
+          shopt -s nullglob
+          MINGW_BIN=( "$(qmake -query QT_INSTALL_DIR)/../Tools"/mingw*/bin )
+          shopt -u nullglob
+          if [ ${#MINGW_BIN[@]} -eq 0 ]; then
+            echo "::error::Qt's bundled MinGW not found under Tools/" >&2
+            exit 1
+          fi
+          echo "using MinGW: ${MINGW_BIN[0]}"
+          export PATH="${MINGW_BIN[0]}:$PATH"
           qmake -o Makefile tf2cfgreal.pro
           mingw32-make -j8
 
