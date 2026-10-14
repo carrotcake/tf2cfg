@@ -82,6 +82,9 @@ jobs:
           # the scan of the qml/ tree covers the imports (QtQuick, QuickControls2).
           # As a linuxdeploy plugin, linuxdeploy-plugin-qt is configured via env.
           export QML_SOURCES_PATHS="$PWD/qml"
+          # The offscreen platform plugin is needed for the headless CI smoke test;
+          # desktop users get xcb, which is deployed by default.
+          export EXTRA_PLATFORM_PLUGINS=libqoffscreen.so
           APPIMAGE_EXTRACT_AND_RUN=1 ./linuxdeploy.AppImage \
               --appdir AppDir \
               --plugin qt \
