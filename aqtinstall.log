@@ -1,0 +1,54 @@
+2026-10-14 18:51:42,383 - aqt.helper - DEBUG - helper 1304 Attempt to download checksum at https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/tools_mingw904/Updates.xml.sha256
+2026-10-14 18:51:43,237 - aqt.helper - DEBUG - helper 1304 Attempt to download checksum at https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/tools_mingw904/Updates.xml.sha256
+2026-10-14 18:51:44,028 - aqt.helper - DEBUG - helper 1304 Attempt to download checksum at https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/tools_mingw904/Updates.xml.sha256
+2026-10-14 18:51:44,793 - aqt.helper - DEBUG - helper 1304 Attempt to download checksum at https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/tools_mingw904/Updates.xml.sha256
+2026-10-14 18:51:45,632 - aqt.helper - DEBUG - helper 1304 Attempt to download checksum at https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/tools_mingw904/Updates.xml.sha256
+2026-10-14 18:51:46,443 - aqt.main - ERROR - installer 1304 Failed to download checksum for the file 'Updates.xml' from mirrors '['https://download.qt.io']
+==============================Suggested follow-up:==============================
+* Check your internet connection
+* Consider modifying `requests.max_retries_to_retrieve_hash` in settings.ini
+* Consider modifying `mirrors.trusted_mirrors` in settings.ini (see https://aqtinstall.readthedocs.io/en/stable/configuration.html#configuration)
+* Please use 'aqt list-tool windows desktop' to check what tools are available.
+2026-10-14 18:51:50,290 - aqt.helper - DEBUG - helper 5948 Attempt to download checksum at https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/tools_mingw904/Updates.xml.sha256
+2026-10-14 18:51:51,093 - aqt.helper - DEBUG - helper 5948 Attempt to download checksum at https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/tools_mingw904/Updates.xml.sha256
+2026-10-14 18:51:51,888 - aqt.helper - DEBUG - helper 5948 Attempt to download checksum at https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/tools_mingw904/Updates.xml.sha256
+2026-10-14 18:51:52,666 - aqt.helper - DEBUG - helper 5948 Attempt to download checksum at https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/tools_mingw904/Updates.xml.sha256
+2026-10-14 18:51:53,464 - aqt.helper - DEBUG - helper 5948 Attempt to download checksum at https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/tools_mingw904/Updates.xml.sha256
+2026-10-14 18:51:54,248 - aqt.main - ERROR - installer 5948 Failed to download checksum for the file 'Updates.xml' from mirrors '['https://download.qt.io']
+==============================Suggested follow-up:==============================
+* Check your internet connection
+* Consider modifying `requests.max_retries_to_retrieve_hash` in settings.ini
+* Consider modifying `mirrors.trusted_mirrors` in settings.ini (see https://aqtinstall.readthedocs.io/en/stable/configuration.html#configuration)
+* Please use 'aqt list-tool windows desktop' to check what tools are available.
+2026-10-14 18:52:02,747 - aqt.helper - DEBUG - helper 2724 Attempt to download checksum at https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/tools_mingw1310/Updates.xml.sha256
+2026-10-14 18:52:18,141 - aqt.helper - DEBUG - helper 21088 Attempt to download checksum at https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/tools_mingw1310,qt.tools.win64_mingw1310/Updates.xml.sha256
+2026-10-14 18:52:18,923 - aqt.helper - DEBUG - helper 21088 Attempt to download checksum at https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/tools_mingw1310,qt.tools.win64_mingw1310/Updates.xml.sha256
+2026-10-14 18:52:19,713 - aqt.helper - DEBUG - helper 21088 Attempt to download checksum at https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/tools_mingw1310,qt.tools.win64_mingw1310/Updates.xml.sha256
+2026-10-14 18:52:20,537 - aqt.helper - DEBUG - helper 21088 Attempt to download checksum at https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/tools_mingw1310,qt.tools.win64_mingw1310/Updates.xml.sha256
+2026-10-14 18:52:21,328 - aqt.helper - DEBUG - helper 21088 Attempt to download checksum at https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/tools_mingw1310,qt.tools.win64_mingw1310/Updates.xml.sha256
+2026-10-14 18:52:22,090 - aqt.main - ERROR - installer 21088 Failed to download checksum for the file 'Updates.xml' from mirrors '['https://download.qt.io']
+==============================Suggested follow-up:==============================
+* Check your internet connection
+* Consider modifying `requests.max_retries_to_retrieve_hash` in settings.ini
+* Consider modifying `mirrors.trusted_mirrors` in settings.ini (see https://aqtinstall.readthedocs.io/en/stable/configuration.html#configuration)
+* Please use 'aqt list-tool windows desktop' to check what tools are available.
+2026-10-14 18:52:40,082 - aqt.main - INFO - installer 9488 aqtinstall(aqt) v3.3.0 on Python 3.13.5 [CPython MSC v.1943 64 bit (AMD64)]
+2026-10-14 18:52:40,082 - aqt.helper - DEBUG - helper 9488 Attempt to download checksum at https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/tools_mingw1310,qt.tools.win64_mingw1310/Updates.xml.sha256
+2026-10-14 18:52:40,887 - aqt.helper - DEBUG - helper 9488 Attempt to download checksum at https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/tools_mingw1310,qt.tools.win64_mingw1310/Updates.xml.sha256
+2026-10-14 18:52:41,672 - aqt.helper - DEBUG - helper 9488 Attempt to download checksum at https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/tools_mingw1310,qt.tools.win64_mingw1310/Updates.xml.sha256
+2026-10-14 18:52:42,495 - aqt.helper - DEBUG - helper 9488 Attempt to download checksum at https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/tools_mingw1310,qt.tools.win64_mingw1310/Updates.xml.sha256
+2026-10-14 18:52:43,300 - aqt.helper - DEBUG - helper 9488 Attempt to download checksum at https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/tools_mingw1310,qt.tools.win64_mingw1310/Updates.xml.sha256
+2026-10-14 18:52:44,087 - aqt.main - ERROR - installer 9488 Failed to locate XML data for the tool 'tools_mingw1310,qt.tools.win64_mingw1310'.
+==============================Suggested follow-up:==============================
+* Please use 'aqt list-tool windows desktop' to check what tools are available.
+2026-10-14 18:52:48,801 - aqt.main - INFO - installer 10604 aqtinstall(aqt) v3.3.0 on Python 3.13.5 [CPython MSC v.1943 64 bit (AMD64)]
+2026-10-14 18:52:48,801 - aqt.helper - DEBUG - helper 10604 Attempt to download checksum at https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/tools_mingw1310/Updates.xml.sha256
+2026-10-14 18:52:50,457 - aqt.helper - DEBUG - helper 10604 Attempt to download checksum at https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/tools_mingw1310/Updates.xml.sha256
+2026-10-14 18:52:52,522 - aqt.helper - DEBUG - helper 17752 Attempt to download checksum at https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/tools_mingw1310/qt.tools.win64_mingw1310/13.1.0-202407240918mingw1310.7z.sha256
+2026-10-14 18:52:53,310 - aqt.helper - INFO - helper 17752 Downloading qt.tools.win64_mingw1310...
+2026-10-14 18:52:53,311 - aqt.installer - DEBUG - installer 17752 Download URL: https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/tools_mingw1310/qt.tools.win64_mingw1310/13.1.0-202407240918mingw1310.7z
+2026-10-14 18:52:54,144 - aqt.helper - DEBUG - helper 17752 Asked to redirect(302) to: https://qt.mirror.constant.com/online/qtsdkrepository/windows_x86/desktop/tools_mingw1310/qt.tools.win64_mingw1310/13.1.0-202407240918mingw1310.7z
+2026-10-14 18:52:54,144 - aqt.helper - INFO - helper 17752 Redirected: qt.mirror.constant.com
+2026-10-14 18:53:26,082 - aqt.installer - INFO - installer 17752 Finished installation of mingw1310.7z in 33.56230490
+2026-10-14 18:53:26,138 - aqt.main - INFO - installer 10604 Finished installation
+2026-10-14 18:53:26,138 - aqt.main - INFO - installer 10604 Time elapsed: 37.33707450 second

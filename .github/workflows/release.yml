@@ -125,6 +125,12 @@ jobs:
         with:
           arch: win64_mingw
           version: '6.12.*'
+          # The MinGW toolchain matching Qt's prebuilt libraries (GCC 13.1.0,
+          # <Qt root>/Tools/mingw1310_64). The action prepends Tools/**/bin to
+          # PATH, so the build links with this runtime, not the runner's
+          # preinstalled gcc 15.2 - that link dies on libQt6EntryPoint.a
+          # (__imp___argc undefined, Qt's libs are built against this runtime).
+          tools: 'tools_mingw1310'
           # Qt split the Windows desktop package folders per architecture from 6.11
           # on (qt6_6120/qt6_6120_mingw_64/Updates.xml, not qt6_6120/qt6_6120/); the
           # released aqtinstall 3.3.0 - this action's default backend - still asks
@@ -151,37 +157,19 @@ jobs:
                  res/icon/tf2cfg.ico
           rm res/icon/tf2cfg_win.png
 
-      - name: PROBE where aqt put MinGW (remove after diagnosis)
-        shell: bash
-        run: |
-          echo "--- D:/a/tf2cfg/Qt:"; ls "D:/a/tf2cfg/Qt" || true
-          echo "--- find gcc.exe under D:/a/tf2cfg:"; find "D:/a/tf2cfg" -maxdepth 4 -name "gcc.exe" || true
-          echo "--- find ld.exe under D:/a/tf2cfg:"; find "D:/a/tf2cfg" -maxdepth 5 -name "ld.exe" || true
-          echo "--- hostedtoolcache:"; ls "C:/hostedtoolcache/windows" || true
-          echo "--- PATH:"; echo "$PATH" | tr ':' '\n' | grep -i -E "mingw|qt" || true
-
       - name: Build app (qmake + mingw32-make)
         shell: bash
         run: |
-          # Compile AND link with Qt's own bundled MinGW (aqt installs it under
-          # <Qt root>/Tools/mingw*/bin, a SIBLING of the version dir), not the
-          # runner's preinstalled gcc: Qt's prebuilt libs are built against that
-          # runtime, and a newer system gcc fails at link with __imp___argc
-          # undefined (libQt6EntryPoint.a). Hard-check the glob so a miss fails
-          # here instead of silently building with the wrong gcc.
-          shopt -s nullglob
-          # QT_ROOT_DIR is what install-qt-action exports (QT_INSTALL_DIR is
-          # "**Unknown**" in Qt 6.12's qmake -query). aqt puts the toolchain under
-          # the Qt ROOT's Tools/ (dev box: C:\Qt\Tools\mingw1310_64) - two levels
-          # up from QT_ROOT_DIR (which points at <root>/6.12.0/mingw_64).
-          MINGW_BIN=( "$QT_ROOT_DIR/../../Tools"/mingw*/bin )
-          shopt -u nullglob
-          if [ ${#MINGW_BIN[@]} -eq 0 ]; then
-            echo "::error::Qt's bundled MinGW not found under Tools/" >&2
-            exit 1
-          fi
-          echo "using MinGW: ${MINGW_BIN[0]}"
-          export PATH="${MINGW_BIN[0]}:$PATH"
+          # The action put Qt's bundled MinGW (Tools/mingw1310_64/bin) on PATH;
+          # verify the compiler is that GCC 13, not the runner's gcc 15.2 - the
+          # wrong runtime fails at link with __imp___argc undefined
+          # (libQt6EntryPoint.a), so fail here with the version visible.
+          echo "gcc at: $(command -v gcc)"
+          gcc --version | head -1
+          case "$(gcc --version | head -1)" in
+            *" 13."*) ;;
+            *) echo "::error::wrong gcc - Qt's bundled MinGW is not on PATH"; exit 1 ;;
+          esac
           qmake -o Makefile tf2cfgreal.pro
           mingw32-make -j8
 
