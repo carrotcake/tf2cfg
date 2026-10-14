@@ -668,6 +668,8 @@ Dialog {
                 // Reports the bind the selected key carries. The command to apply is
                 // authored in the Custom Command tab, so this field is display only (D16).
                 readOnly: true
+                // W4: name the field by the key it reports on.
+                Accessible.name: "Existing bind for " + dialog.keyToken
             }
         }
 

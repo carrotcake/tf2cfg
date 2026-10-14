@@ -136,12 +136,12 @@ Ordered by value per line. Estimates are for the change itself, not its verifica
 | # | Work | Size | Risk | Notes |
 |---|---|---|---|---|
 | W1 | `Tf2Button` focus ring | DONE 2026-10-13: `activeFocus` case in the background - 2 px accent border. | ~4 lines, fixes A3 for every button at once. Do first. |
-| W2 | `KeyCap`: `activeFocusOnTab` on bindable caps, `Keys.onReturnPressed`/`onSpacePressed` → `activated(keyId)`, focus ring in the existing `Rectangle` | ~30 lines | low | The cap's fill is already a four-way binding; focus is a fifth. Must not fire for the two non-bindable caps, which already carry `enabled: false`. |
+| W2 | `KeyCap`: `activeFocusOnTab` on bindable caps, `Keys.onReturnPressed`/`onSpacePressed` → `activated(keyId)`, focus ring in the existing `Rectangle` | DONE 2026-10-13: tab-reachable bindable caps, Return/Space activate, focus shows the hover highlight, tooltip on focus (W7 folded in). | low | Must not fire for the two non-bindable caps - they stay out of the tab chain. |
 | W3 | `Tf2TabBar`: `activeFocusOnTab`, `Keys.onLeftPressed`/`onRightPressed` move + activate, focus ring on the delegate | ~25 lines | low | Alt+1..3 is a cheaper first cut if arrow semantics are not wanted. |
-| W4 | `Accessible.role`/`name`/`description` on `KeyCap`, the tab delegate, and labels for the two read-only fields | ~15 lines | none | Purely additive; no visual change. |
+| W4 | `Accessible.role`/`name`/`description` on `KeyCap`, the tab delegate, and labels for the two read-only fields | DONE 2026-10-13 for `KeyCap` (button role, label as name, bind line as description) and the two read-only fields (config path, existing bind). Tab delegate remains (W3's scope). | none | Purely additive; no visual change. |
 | W5 | Contrast: `colorRed` → `#cd5b5e`, `colorBorderStrong` → `#59626a`; decide on the two border tokens and the cap opacity | ~6 lines | visual | The two non-negotiable values change the palette; the rest are design calls. |
 | W6 | Keyboard scrolling: `KeyNavigation.left/right/up/down` on the panel, or a `Keys` handler driving `flick.contentX/Y` | ~15 lines | low | Prefer `KeyNavigation` — it handles the boundary for free. |
-| W7 | `KeyCap` tooltip: `visible: hovered \|\| focusWithin` once W2 lands | ~3 lines | none | Depends on W2. |
+| W7 | `KeyCap` tooltip: `visible: hovered \|\| focusWithin` once W2 lands | DONE 2026-10-13 (with W2): tooltip shows on focus too. | none | - |
 | W8 | Move the contrast script into `tools/contrast_check.py` and run it after any palette change | ~60 lines | none | A one-off script, but this one guards a live constraint rather than a finished dataset, which is why it survives the `tools/` cleanup. |
 
 **Skipped deliberately:** a roving arrow-key grid over the 104 caps (W2 plus ~40 more

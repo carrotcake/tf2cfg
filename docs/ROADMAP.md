@@ -31,9 +31,9 @@ items (W1-W8); the priorities:
 | # | Work | Notes |
 |---|------|-------|
 | W1 | `Tf2Button` focus ring | DONE 2026-10-13: 2 px accent border on `activeFocus`. |
-| W2 | `KeyCap` keyboard focus + activation | ~30 lines; must not fire for the two non-bindable caps. |
+| W2 | `KeyCap` keyboard focus + activation | DONE 2026-10-13: tab-reachable bindable caps, Return/Space activate, focus shows the hover highlight; W7's focus tooltip folded in. |
 | W3 | `Tf2TabBar` keyboard path (A2) | Arrow keys or Alt+1..3 first cut. |
-| W4 | `Accessible.*` names/roles on custom items | Purely additive. |
+| W4 | `Accessible.*` names/roles on custom items | DONE 2026-10-13 for KeyCap + the two read-only fields; the tab delegate remains (W3's scope). | Purely additive. |
 | W5 | Contrast fixes | Non-negotiable: `colorRed`, `colorBorderStrong`; the rest are design calls. |
 | W6 | Keyboard panel scrolling via keys | Prefer `KeyNavigation`. |
 | W7 | Cap tooltip on focus | Depends on W2. |

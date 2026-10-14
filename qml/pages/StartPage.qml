@@ -119,9 +119,12 @@ Item {
 
                     Tf2TextField {
                         Layout.fillWidth: true
+                        objectName: "cfgPathField"
                         text: page.cfgPath
                         readOnly: true
                         placeholderText: "< Path To TF2 config.cfg >"
+                        // W4: the field's only visible name is its placeholder.
+                        Accessible.name: "TF2 config.cfg path"
                     }
 
                     Tf2Button {

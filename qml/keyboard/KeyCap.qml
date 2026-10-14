@@ -44,9 +44,25 @@ Rectangle {
     implicitWidth: KeyTable.keyWidth(keyName)
     implicitHeight: KeyTable.keyHeight(keyName)
 
+    /// W2: bindable caps join the tab chain and activate on Return/Space; the two
+    /// non-bindable caps (no token, D16) stay out entirely.
+    activeFocusOnTab: cap.bindable
+    Keys.onReturnPressed: function (event) { cap.activateIfBindable(event) }
+    Keys.onSpacePressed: function (event) { cap.activateIfBindable(event) }
+
+    function activateIfBindable(event) {
+        if (cap.bindable && cap.keyId >= 0) {
+            cap.activated(cap.keyId)
+            event.accepted = true
+        }
+    }
+
     /// Hover and press are the cap's own affordance: a cap that cannot be clicked never
     /// shows them, even when the config does have something bound to it.
-    readonly property bool highlighted: cap.bindable && mouse.containsMouse
+    /// Hover and press are the cap's own affordance: a cap that cannot be clicked never
+    /// shows them, even when the config does have something bound to it. Keyboard focus
+    /// gets the same highlight as hover (W2).
+    readonly property bool highlighted: cap.bindable && (mouse.containsMouse || cap.activeFocus)
     readonly property bool pressed: cap.bindable && mouse.pressed
 
     /// Cap fill for the hover/press states, split by bound and unbound so the colour
@@ -136,7 +152,15 @@ Rectangle {
         }
         return ""
     }
-    ToolTip.visible: mouse.containsMouse && cap.tipText !== ""
+    // W7 companion of W2: the tooltip is also the focus cue for what the cap does.
+    ToolTip.visible: (mouse.containsMouse || cap.activeFocus) && cap.tipText !== ""
     ToolTip.text: cap.tipText
     ToolTip.delay: 400
+
+    // W4: the cap announces as a button with its key label; the bind line, when any,
+    // is the description a screen reader reads after the name.
+    Accessible.role: Accessible.Button
+    Accessible.name: KeyTable.keyLabel(cap.keyName)
+    Accessible.description: cap.bound ? cap.tipText : ""
+    Accessible.onPressAction: cap.activateIfBindable(null)
 }
