@@ -63,7 +63,8 @@ jobs:
       - name: Render app icon (ImageMagick, from the repo's TF2 font)
         run: |
           mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
-          magick -size 256x256 xc:none \
+          # IM 6 on ubuntu-latest: the binary is `convert` (IM 7 renamed it `magick`).
+          convert -size 256x256 xc:none \
                  -fill "#141719" -draw "roundrectangle 0,0 255,255 40,40" \
                  -fill "#f0a30a" -font res/font/tf2build.ttf -pointsize 80 \
                  -gravity center -annotate +0-10 ".cfg" \
