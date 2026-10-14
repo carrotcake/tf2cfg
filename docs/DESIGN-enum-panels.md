@@ -12,19 +12,23 @@ waves.
 |---|---|---|---|---|
 | `jointeam` | `[str]` | `red`, `blue`, `auto`, `spectate` | game usage string in allcmds.csv | high |
 | `joinclass`, `join_class` | `[str]` | `scout`, `soldier`, `pyro`, `demoman`, `heavyweapons`, `engineer`, `medic`, `sniper`, `spy`, `random`, `auto` | game usage string + class list | high |
-| `build`, `destroy` | `[int] <int>` | 0 Dispenser, 1 Teleporter entrance, 2 Sentry gun, 3 Teleporter exit; optional `<mode>` stays out of the panel | community scripts | medium - verify |
+| `build`, `destroy` | `[int] <int>` | **verified 2026-10-13**: `<building> <mode>` with 0 Dispenser, 1 Teleporter (mode 0 entrance, 1 exit), 2 Sentry gun; mode exists only for teleporter | in-game, repo owner | highest |
 | `eureka_teleport` | `[int]` | 0 home, 1 teleporter exit | game help text | high |
 | `coach_command` | `[int]` | 0 attack, 1 defend, 2 look, 3 go | game help text | high |
 | `next_map_vote` | `[int]` | 0, 1, 2 (map option) | game help text | high |
 | `loot_response` | `[str]` | `common`, `rare`, `ultra_rare` | game help text | high |
 | `load_itempreset` | `[int]` | 0..3, labeled **A / B / C / D** (the in-game preset names are hardcoded) | verified in-game by repo owner | high |
-| `pda_click` | `[int] <int>` | argument semantics unknown | - | deferred, see §7 |
+| `disguise` | `[int] <int>` | **verified 2026-10-13**: `disguise <class> <team>` (class first); class 1 scout 2 sniper 3 soldier 4 demoman 5 medic 6 heavy 7 pyro 8 spy 9 engineer; team -2 friendly, -1 enemy, 1 blu, 2 red. Shipped as the bespoke `DisguisePanel`. | in-game, repo owner | highest |
+| `pda_click` | - | **resolved 2026-10-13**: takes no arguments in game (or any args are no-ops); catalog row is now `none`, stays on generic editors | in-game, repo owner | highest |
 | `voicemenu` | `[int] [int]` | bespoke panel already shipped | - | done |
 
 User decisions (2026-10-13): panel **all** enumerable commands; `build`/`destroy` get
 a **rebuild compound** (`destroy N; build N` in one bind); `load_itempreset` included
 with the A/B/C/D labels; string values are emitted as **bare tokens**
-(`jointeam red`), matching wiki-script style.
+(`jointeam red`), matching wiki-script style. Verified facts (same day, in-game):
+`build`/`destroy` use the two-argument modern convention (§1), `jointeam` emits `blu`
+(the console accepts `blue` too), `pda_click` is a no-argument command, and `disguise`
+is class-first two-argument - shipped as its own panel.
 
 ## 2. `EnumChoicePanel.qml` (new, generic)
 
@@ -36,23 +40,30 @@ per-command data supplied by the registry:
   component can serve `build` and `destroy`.
 - `property string valueType` - `"int"` or `"str"`; only affects prefill matching.
 - `property var options` - `[{ value, label }]`, ordered as authored.
-- `property string rebuildPartner` - optional; when set (only on `build`), the panel
-  shows a "Rebuild (destroy + build)" checkbox and authors
-  `destroy N; build N` instead of the single command.
+- `property string compoundTemplate` - optional; `"destroy {v}; build {v}"` shows a
+  Rebuild checkbox (each `{v}` is filled with the selected value) and authors the
+  template instead of the single command. The word in front of `{v}` is the partner
+  command name the compound prefill looks for.
 
 Behavior:
 
 - **UI**: one `Tf2Button` per option (checkable, selected = accent, like the voicemenu
   panel), in a Flow. No "open menu" concept - there is exactly one authored form.
 - **Authoring**: clicking an option emits `authored(text)` where `text` is
-  `commandName + " " + valueToken` (bare token, no quotes) or, with the rebuild box
-  checked, `destroy N; build N` (`rebuildPartner` first, then the command).
-- **prefill(parts)**: tokens after the command name, with a trailing `;` stripped:
-  - plain `[value]` or `[value, ignored]`: select the option whose value matches
-    (numeric for int, case-insensitive for str); unknown values keep the state and
-    emit nothing (voicemenu's safety rule).
-  - compound `partner N; command N` (4 tokens): selects the option and checks the
-    rebuild box, so a key already bound to `destroy 2; build 2` re-opens correctly.
+  `commandName + " " + value` (bare token(s), no quotes) or, with the rebuild box
+  checked, the filled compound template (`destroy 1 1; build 1 1` for the teleporter
+  exit).
+- **prefill(parts)**: tokens after the command name, with a trailing `;` stripped.
+  Values may be multi-token (`build 1 1` arrives as `["1","1"]`), so matching joins
+  the token stream:
+  - plain: the joined tokens select the option whose value matches (case-insensitive
+    for str, numeric for int); unknown values keep the state and emit nothing
+    (voicemenu's safety rule).
+  - compound: the partner command name is located inside the token stream; the tokens
+    before and after it must match the same option, e.g. a bound
+    `destroy 1 1; build 1 1` reached the build/destroy panel as
+    `["1","1","build","1","1"]` - selects the option and checks the rebuild box, so
+    the compound re-opens correctly.
 - The dialog extension to the panel contract: on load it also sets `commandName` and
   the registry entry's data fields. `VoiceMenuPanel` ignores the extra properties.
 
@@ -65,16 +76,25 @@ Registry entries grow from `Component` to a small object; the dialog unwraps it:
         "jointeam":   { component: enumPanel, valueType: "str", options: [...] },
         "joinclass":  { component: enumPanel, valueType: "str", options: classOptions },
         "join_class": { component: enumPanel, valueType: "str", options: classOptions },
-        "build":      { component: enumPanel, valueType: "int", options: buildingOptions,
-                        rebuildPartner: "destroy" },
-        "destroy":    { component: enumPanel, valueType: "int", options: buildingOptions },
+        "build":      { component: enumPanel, valueType: "str", options: buildingOptions,
+                        compoundTemplate: "destroy {v}; build {v}" },
+        "destroy":    { component: enumPanel, valueType: "str", options: buildingOptions,
+                        compoundTemplate: "destroy {v}; build {v}" },
         "eureka_teleport":  { component: enumPanel, valueType: "int", options: [...] },
         "coach_command":    { component: enumPanel, valueType: "int", options: [...] },
         "next_map_vote":    { component: enumPanel, valueType: "int", options: [...] },
         "loot_response":    { component: enumPanel, valueType: "str", options: [...] },
         "load_itempreset":  { component: enumPanel, valueType: "int",
                               options: [{value:0,label:"Preset A"}, ...] },
+        "disguise":   { component: disguisePanel },   // bespoke two-row panel
     })
+
+`buildingOptions` carries two-token values in the verified convention:
+`{value:"0 0",label:"Dispenser"}, {value:"1 0",label:"Teleporter entrance"},
+{value:"1 1",label:"Teleporter exit"}, {value:"2 0",label:"Sentry gun"}`. The
+`disguise` panel is bespoke (`DisguisePanel.qml`): a class row (ids 1..9) and a team
+row (-2 friendly, -1 enemy, 1 blu, 2 red), emitting `disguise <class> <team>`; it
+defaults to enemy Scout and follows the voicemenu safety rule for malformed bindings.
 
 Adding a future enumerated command is one object literal. The dialog code that
 instantiates the panel sets `commandName`/`valueType`/`options`/`rebuildPartner`
@@ -83,9 +103,12 @@ before `initialArgs` so prefill can match immediately.
 ## 4. Label data (generic, per D-b of the first design)
 
 - Classes: display names capitalized; values lowercase `heavyweapons` for Heavy.
-- Teams: `RED`, `BLU`, `Auto-assign`, `Spectate`; values as the usage string spells
-  them (`red`, `blue`, `auto`, `spectate`).
-- Buildings: `Dispenser`, `Teleporter entrance`, `Sentry gun`, `Teleporter exit`.
+- Teams: `RED`, `BLU`, `Auto-assign`, `Spectate`; values `red`, `blu`, `auto`,
+  `spectate` - `blu` verified in-game (the console also accepts `blue`, we emit `blu`).
+- Buildings: values in the verified two-argument convention (see §3); labels
+  `Dispenser`, `Teleporter entrance`, `Teleporter exit`, `Sentry gun`.
+- `disguise`: class labels Scout..Engineer, team labels
+  `Friendly`/`Enemy`/`BLU`/`RED` with the verified ids in the panel file header.
 - `next_map_vote`: `Option 1/2/3` - the actual maps are server-dependent.
 - `load_itempreset`: `Preset A/B/C/D`.
 
@@ -106,22 +129,24 @@ verification per AGENTS.md:
 
 - Each new command shows its option grid with the right labels/counts.
 - A key bound to `joinclass heavyweapons` re-opens with Heavy selected.
-- A key bound to `destroy 2; build 2` re-opens with Sentry + rebuild checked, and
-  re-saving keeps the compound.
+- A key bound to `destroy 1 1; build 1 1` re-opens with Teleporter exit + rebuild
+  checked, and re-saving keeps the compound.
 - Unknown bound values (e.g. a future class name) keep the Custom Command text and
   do not silently rewrite it.
 
-## 7. Open questions (needs in-game verification)
+## 7. Open questions → settled (2026-10-13, in-game by repo owner)
 
-- `build`/`destroy` building order 0..3 (community mapping) and what the optional
-  `<mode>` argument does - until verified, the panel omits it.
-- `jointeam`: does the console accept `blu`/`red` spellings other than the usage
-  string's (`blue`)? The panel emits the usage-string spellings.
-- `pda_click [int] <int>`: what the two arguments mean; deferred until known - it
-  stays on the generic editors (now with no bounds, free-form).
-- `disguise` (spy): usage says `none`, but the console may take team/class arguments.
-  If verified, it is a natural next enum panel (team + class two-level, like
-  voicemenu's structure).
+- `build`/`destroy`: the "modern" convention is `build <building> <mode>`; 0 dispenser,
+  1 teleporter (mode 0 = entrance, 1 = exit), 2 sentry. The older community mapping
+  (0..3, exit = 3) is wrong and was replaced. Panel options now carry two-token values.
+- `jointeam`: the console accepts both `blue` and `blu`; owned lines and UI emit `blu`.
+- `pda_click`: accepts no args in game (or args are no-ops). Catalog row is `none`;
+  no panel, stays on the generic (now argument-less) path.
+- `disguise`: takes `<class> <team>` (class first, ids in §1); shipped as
+  `DisguisePanel.qml`. Bare `disguise` (no args) semantics remain unverified and are
+  not authored by the panel.
+
+Details and the bounds rows: `docs/argbounds-verification.md` (Applied/Resolved).
 
 ## 8. Rollout
 
