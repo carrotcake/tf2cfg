@@ -102,15 +102,26 @@ Computed for every pair in use; 16 of 25 pass, several with large margins (`colo
 
 | Foreground | Background | Ratio | Needs | What it is | Nearest fix |
 |---|---|---|---|---|---|
-| `colorTextDisabled` | `colorSurface` | 2.82 | 4.5 | disabled label in a Panel | `#828b93` → 4.68 |
-| `colorTextDisabled` | `colorBg` | 3.13 | 4.5 | disabled button label | `#778189` → 4.53 |
-| `colorRed` | `colorSurface` | 2.83 | 4.5 | error text in a Panel | `#d16769` → 4.52 |
-| `colorRed` | `colorBg` | 3.14 | 4.5 | load error text | `#cd5b5e` → 4.50 |
-| `colorBorderStrong` | `colorSurfaceSunken` | 2.48 | 3.0 | field border **and the combo focus ring** | `#59626a` → 3.03 |
-| `colorKeyCapBoundBorder` | `colorKeyCapBound` | 2.26 | 3.0 | border of a bound key | `#b76b2d` → 3.01 |
-| `colorKeyCapBorder` | `colorKeyCap` | 1.51 | 3.0 | cap boundary | `#707d88` → 3.12, or accept as decoration |
-| `colorBorder` | `colorSurface` | 1.54 | 3.0 | panel border | `#626c74` → 3.02, or accept as decoration |
-| `colorKeyCapText` @ `opacity 0.55` | `colorKeyCapDisabled` | 4.48 | 4.5 | `PrtScn` / `Menu` cap label | raise the opacity to 0.65 → 5.66 |
+| `colorTextDisabled` | `colorSurface` | 2.82 | 4.5 | disabled label in a Panel | **accepted as decoration** (2026-10-13) |
+| `colorTextDisabled` | `colorBg` | 3.13 | 4.5 | disabled button label | **accepted as decoration** (2026-10-13) |
+| `colorRed` | `colorSurface` | ~~2.83~~ 5.45 | 4.5 | error text in a Panel | fixed → `#da7a7d` |
+| `colorRed` | `colorBg` | ~~3.14~~ 6.05 | 4.5 | load error text | fixed → `#da7a7d` |
+| `colorBorderStrong` | `colorSurfaceSunken` | ~~2.48~~ 3.03 | 3.0 | field border **and the combo focus ring** | fixed → `#59626a` |
+| `colorKeyCapBoundBorder` | `colorKeyCapBound` | ~~2.26~~ 3.01 | 3.0 | border of a bound key | fixed → `#b76b2d` |
+| `colorKeyCapBorder` | `colorKeyCap` | ~~1.51~~ 3.12 | 3.0 | cap boundary | fixed → `#707d88` |
+| `colorBorder` | `colorSurface` | ~~1.54~~ 3.02 | 3.0 | panel border | fixed → `#626c74` |
+| cap label on `colorKeyCapDisabled` | | ~~4.48~~ ~5.4 | 4.5 | `PrtScn` / `Menu` cap label | fixed: label token → `colorKeyCapText`, cap opacity 0.55 → 0.65 |
+
+Post-fix note (2026-10-13): the audit's 4.48 for the disabled cap label measured
+`colorKeyCapText`, but the code used `colorTextDisabled`, which cannot reach 4.5 on
+`colorKeyCapDisabled` at any opacity (max 2.73). The fix therefore gives the label the
+light token it was assumed to have, and the whole-cap opacity is 0.65.
+
+`colorRed` sits on three backgrounds in real use (bg, surface, and the toast's raised
+surface); the doc's original two fix values only clear 4.5 on one or two of them, so the
+token went to `#da7a7d`, which passes on all three.
+
+The live guard is `tools/contrast_check.py` (W8): re-run after any `Theme.qml` change.
 
 Two caveats, so these numbers are not read as gospel:
 
@@ -139,10 +150,10 @@ Ordered by value per line. Estimates are for the change itself, not its verifica
 | W2 | `KeyCap`: `activeFocusOnTab` on bindable caps, `Keys.onReturnPressed`/`onSpacePressed` → `activated(keyId)`, focus ring in the existing `Rectangle` | DONE 2026-10-13: tab-reachable bindable caps, Return/Space activate, focus shows the hover highlight, tooltip on focus (W7 folded in). | low | Must not fire for the two non-bindable caps - they stay out of the tab chain. |
 | W3 | `Tf2TabBar`: `activeFocusOnTab`, `Keys.onLeftPressed`/`onRightPressed` move + activate, focus ring on the delegate | DONE 2026-10-13: strip is tab-reachable, Left/Right wrap and activate, focused tab shows the 2 px accent ring, `Accessible.PageTab` on each tab (W4's tab part). | low | Alt+1..3 is a cheaper first cut if arrow semantics are not wanted. |
 | W4 | `Accessible.role`/`name`/`description` on `KeyCap`, the tab delegate, and labels for the two read-only fields | DONE 2026-10-13 for `KeyCap` (button role, label as name, bind line as description) and the two read-only fields (config path, existing bind). Tab delegate remains (W3's scope). | none | Purely additive; no visual change. |
-| W5 | Contrast: `colorRed` → `#cd5b5e`, `colorBorderStrong` → `#59626a`; decide on the two border tokens and the cap opacity | ~6 lines | visual | The two non-negotiable values change the palette; the rest are design calls. |
+| W5 | Contrast: `colorRed` → `#da7a7d`, `colorBorderStrong` → `#59626a` | DONE 2026-10-13: `colorRed` #da7a7d (passes on all three error surfaces), `colorBorderStrong` #59626a, cap/panel borders fixed (#707d88 / #b76b2d / #626c74), disabled-cap label → `colorKeyCapText` @ 0.65 opacity. `colorTextDisabled` accepted as decoration. | visual | The two non-negotiable values change the palette; the rest are design calls. |
 | W6 | Keyboard scrolling: `KeyNavigation.left/right/up/down` on the panel, or a `Keys` handler driving `flick.contentX/Y` | DONE 2026-10-13: `Keys.onPressed` on the panel drives `flick.contentX/Y` (clamped, 60 px per press). | low | Prefer `KeyNavigation` - it handles the boundary for free. |
 | W7 | `KeyCap` tooltip: `visible: hovered \|\| focusWithin` once W2 lands | DONE 2026-10-13 (with W2): tooltip shows on focus too. | none | - |
-| W8 | Move the contrast script into `tools/contrast_check.py` and run it after any palette change | ~60 lines | none | A one-off script, but this one guards a live constraint rather than a finished dataset, which is why it survives the `tools/` cleanup. |
+| W8 | Move the contrast script into `tools/contrast_check.py` and run it after any palette change | DONE 2026-10-13: `tools/contrast_check.py` (20 checked pairs + 2 accepted-decorational, exits nonzero on failure). | none | A one-off script, but this one guards a live constraint rather than a finished dataset, which is why it survives the `tools/` cleanup. |
 
 **Skipped deliberately:** a roving arrow-key grid over the 104 caps (W2 plus ~40 more
 lines, and arrow semantics across four differently-shaped clusters is a real design

@@ -84,7 +84,10 @@ Rectangle {
     color: bound ? cap.fillWhenBound
          : bindable ? cap.fillWhenUnbound
          : Theme.colorKeyCapDisabled
-    opacity: bindable ? 1.0 : 0.55
+    // The two non-bindable caps are dimmed as a whole (fill, border, label) - PrtScn
+    // and Menu carry no token (D16). 0.65 keeps the label over the disabled fill at
+    // ~5.4:1 (W5); at 0.55 it was ~2:1 with the real label token.
+    opacity: bindable ? 1.0 : 0.65
 
     Text {
         id: capLabel
@@ -92,7 +95,7 @@ Rectangle {
         anchors.margins: Theme.spacingTight
         anchors.bottomMargin: cap.bindText !== "" ? cap.height * 0.34 : Theme.spacingTight
         text: KeyTable.keyLabel(cap.keyName)
-        color: cap.bindable ? Theme.colorKeyCapText : Theme.colorTextDisabled
+        color: Theme.colorKeyCapText
         font.family: Theme.familyButton
         font.pointSize: cap.labelPointSize
         horizontalAlignment: Text.AlignHCenter

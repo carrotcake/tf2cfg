@@ -34,10 +34,10 @@ items (W1-W8); the priorities:
 | W2 | `KeyCap` keyboard focus + activation | DONE 2026-10-13: tab-reachable bindable caps, Return/Space activate, focus shows the hover highlight; W7's focus tooltip folded in. |
 | W3 | `Tf2TabBar` keyboard path (A2) | DONE 2026-10-13: Left/Right wrap + activate, focus ring on the focused tab. |
 | W4 | `Accessible.*` names/roles on custom items | DONE 2026-10-13 for KeyCap + the two read-only fields; the tab delegate remains (W3's scope). | Purely additive. |
-| W5 | Contrast fixes | Non-negotiable: `colorRed`, `colorBorderStrong`; the rest are design calls. |
+| W5 | Contrast fixes | DONE 2026-10-13: `colorRed` #da7a7d, `colorBorderStrong` #59626a, cap/panel borders fixed, disabled-cap label @ 0.65; `colorTextDisabled` kept as decoration. |
 | W6 | Keyboard panel scrolling via keys | DONE 2026-10-13: arrow keys scroll the Flickable (clamped, 60 px/press). |
-| W7 | Cap tooltip on focus | Depends on W2. |
-| W8 | Contrast script in `tools/` | Guards a live constraint; re-run after any palette change. |
+| W7 | Cap tooltip on focus | DONE 2026-10-13 (with W2). |
+| W8 | Contrast script in `tools/` | DONE 2026-10-13: `tools/contrast_check.py`, run after any `Theme.qml` change. |
 
 - Related finding: the three empty menus (`Edit`/`View`/`Help`, A8) - removing the stubs
   or filling them is a deviation decision (see D20 in `docs/ARCHITECTURE.md`), not a bug
