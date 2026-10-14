@@ -71,7 +71,7 @@ screen reader).
 
 ## 4. Input ids missing from the Edit Binds model
 
-Confirmed bindable but not in `KeyTable.qml` (evidence and caveats in
+Confirmed bindable but not in the key table (evidence and caveats in
 `docs/legacy/missing-input-ids.md`):
 
 - `joy11` .. `joy32` - generic joystick/gamepad buttons beyond the ten of the Xbox 360
@@ -87,8 +87,6 @@ doc.
 
 Where each future feature lands, and what is already in place:
 
-- **Key table owned by C++** - move `KeyTable.qml` data into a `KeyTable` QObject
-  injected as a context property (per deviation D9).
 - **Optional, low value**: surface the newer catalog columns (input type, platform,
   context, flags) in `CommandOverviewTab` - the one unchecked item in the
   `allcmds`-v5 migration checklist (`docs/legacy/allcmds-v5-migration.md`).
