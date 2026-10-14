@@ -1240,7 +1240,6 @@ Dialog {
                 }
             }
         }
-        }
 
         RowLayout {
             Layout.fillWidth: true

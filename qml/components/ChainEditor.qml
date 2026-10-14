@@ -3,7 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import "theme"
+import "../theme"
 
 // A ';'-joined command chain, one text field per segment, with add/remove/reorder
 // (docs/DESIGN-config-editor.md §5). Shared by the Config Editor (compound lines and
