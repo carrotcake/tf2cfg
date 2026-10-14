@@ -192,6 +192,48 @@ Dialog {
         return parts
     }
 
+    /// Old one-argument build/destroy binds (community mapping, exit = 3) migrate to
+    /// the verified two-argument convention when the dialog opens: the field shows
+    /// the modernized form, OK commits it, Cancel keeps the bound command untouched
+    /// (docs/DESIGN-enum-panels.md §7). Quote-aware: a semicolon or a "build N" inside
+    /// a quoted string is never rewritten.
+    function modernizedCommand(text) {
+        const map = { "0": "0 0", "1": "1 0", "2": "2 0", "3": "1 1" }
+        let out = ""
+        let plain = ""
+        let inQuotes = false
+        const flush = function () {
+            out += plain.replace(/(build|destroy)\s+([0-3])(?=\s*(;|$))/gi,
+                                 function (_m, verb, n) {
+                                     return verb.toLowerCase() + " " + map[n]
+                                 })
+            plain = ""
+        }
+        for (let i = 0; i < text.length; i++) {
+            const c = text.charAt(i)
+            if (inQuotes) {
+                if (c === '"') {
+                    if (i + 1 < text.length && text.charAt(i + 1) === '"') {
+                        out += '""'
+                        i++
+                    } else {
+                        inQuotes = false
+                        out += '"'
+                        flush()
+                    }
+                } else
+                    out += c
+            } else if (c === '"') {
+                flush()
+                inQuotes = true
+                out += '"'
+            } else
+                plain += c
+        }
+        flush()
+        return out
+    }
+
     function prefillFromCommand() {
         const text = customCommand.text.trim()
         if (text === "")
@@ -513,7 +555,9 @@ Dialog {
 
     onOpened: {
         existingBindField.text = dialog.originalBind
-        customCommand.text = dialog.boundCommand
+        // Old one-argument build/destroy forms migrate here; OK commits the
+        // modernized text, Cancel keeps the bound command untouched.
+        customCommand.text = modernizedCommand(dialog.boundCommand)
         // Pre-select the verb from the binding the key carries today.
         bindToggleCheck.checked = dialog.boundCommand !== ""
                                  && cfg.bindingKind(dialog.keyToken.toLowerCase()) === "bindtoggle"
