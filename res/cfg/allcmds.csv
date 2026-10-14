@@ -702,7 +702,7 @@ devshots_nextmap,cmd,,,,,Used by the devshots system to go to the next map in th
 devshots_screenshot,cmd,,,,norecord,"Used by the -makedevshots system to take a screenshot. For taking your own screenshots, use the 'screenshot' command instead.",none,universal,engine
 differences,cmd,,,,,Show all convars which are not at their default values.,none,universal,engine
 disconnect,cmd,,,,,Disconnect game from server.,none,universal,engine
-disguise,cmd,,,,client,Disguises the spy.,none,universal,engine
+disguise,cmd,,,,client,Disguises the spy. Usage: disguise <class> <team>.,[int] <int>,universal,client controls
 disp_dynamic,,0,,,,Enable dynamic displacement rendering.,bool,universal,client settings
 dispcoll_drawplane,,0,,,game,Draw displacement collision planes.,bool,universal,server settings
 displaysoundlist,,0,,,game,Print the list of loaded sounds.,bool,universal,server settings
@@ -1804,7 +1804,7 @@ particle_test_stop,cmd,,,,game cheat,Stops all particle systems on the selected 
 password,,0,,,archive norecord svcannotquery,Current server access password,str,universal,client settings
 path,cmd,,,,,Show the engine filesystem path.,none,universal,engine
 pause,cmd,,,,,Toggle the server pause state.,none,universal,engine
-pda_click,ncmd,,,,game,Play the PDA attack/click animation if holding a PDA (only visible to other players).,[int] <int>,universal,client controls
+pda_click,ncmd,,,,game,Play the PDA attack/click animation if holding a PDA (only visible to other players).,none,universal,client controls
 perfui,cmd,,,,cheat,Show/hide the level performance tools UI.,none,universal,engine
 perfvisualbenchmark,cmd,,,,client,Run a performance visual benchmark.,none,universal,engine
 perfvisualbenchmark_abort,cmd,,,,client,Abort the running performance benchmark.,none,universal,engine
