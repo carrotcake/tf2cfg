@@ -1,6 +1,8 @@
 # Design: Custom Command Panels (Build-A-Bind)
 
-Status: design, pending review. Feature: `voicemenu` gets its own authoring panel;
+Status: **implemented** (`4bc47be`, custom command panels + the voicemenu panel;
+extended by `89772a2`'s DisguisePanel and enum panels). Feature: `voicemenu` gets its
+own authoring panel;
 the mechanism generalizes to future commands with particular argument semantics.
 
 ## 1. Problem

@@ -30,12 +30,14 @@ contrast and skips entirely on docs-only pushes (`paths-ignore: ["docs/**", "**.
 plus `workflow_dispatch` for manual runs). Compatibility note: the AppImage
 targets current distros (glibc 2.39 / Qt 6.4.2 floor) — accepted, per project decision.
 
-## 2. Accessibility (`docs/accessibility.md` - evaluated, sized, deliberately deferred)
+## 2. Accessibility (`docs/accessibility.md`)
 
-The gap is real: the app is keyboard-usable up to the keyboard panel, then stops - the
+The gap was real: the app is keyboard-usable up to the keyboard panel, then stops - the
 104 key caps and the three editor tabs are `MouseArea`-only, and nothing carries
 `Accessible.*`. `docs/accessibility.md` holds the findings (A1-A8) and the sized work
-items (W1-W8); the priorities:
+items (W1-W8). W1-W8 are done (2026-10-13); still open: the A8 empty-menus decision
+(D20 in `docs/ARCHITECTURE.md`) and the screen-reader pass (section 4, needs a real
+screen reader).
 
 | # | Work | Notes |
 |---|------|-------|
@@ -85,13 +87,8 @@ doc.
 
 Where each future feature lands, and what is already in place:
 
-- **Type-aware argument editors** - `BindEditorDialog` "Arguments" switches on
-  `TypeRole`, using `IntVar::getMinVal()`/`getMaxVal()`. The cvar metadata is parsed and
-  carried by `ConsoleCommandModel` (`DefaultRole`/`MinRole`/`MaxRole`) but unused by the
-  UI.
-- **Alias chains** - bind a key to an alias chain; `CMD_ALIAS` detection already exists
-  in `GameCfg` and `TypeNameRole` already reports `alias`.
-- **Command categories** - group the `Command:` combo by a field instead of a flat list.
+- **Command categories** - group the `Command:` combo by a field instead of a flat list
+  (the dialog's category combo filters the list; it does not group the picker).
 - **Key table owned by C++** - move `KeyTable.qml` data into a `KeyTable` QObject
   injected as a context property (per deviation D9).
 - **Optional, low value**: surface the newer catalog columns (input type, platform,

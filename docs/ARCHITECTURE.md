@@ -77,7 +77,10 @@ wholesale model write would destroy user content. Therefore:
      render everything.
   3. mtime + size recorded at load are compared; a mismatch triggers the QML confirm
      dialog with both timestamps (sync-tool overwrite guard).
-  4. `<name>.bak` is written beside the target before every write.
+  4. `<name>.bak` is written beside the target before every write, through the
+     two-temp-file swap (`docs/DESIGN-save-backup.md`): the copy lands at
+     `<name>.bak.new`, then `.bak` -> `.bak.old` -> `.bak` renames swap it in - a
+     failed copy or swap never destroys the previous restore point.
   5. Source bytes are split preserving line terminators (no `QIODevice::Text`) - CRLF
      stays CRLF, a missing final newline survives.
   6. Walk the lines: app-owned rows re-emit as `args.join(" ")` (what the Overview shows

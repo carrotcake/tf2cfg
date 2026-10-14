@@ -1,6 +1,8 @@
 # Design: Enumerated-Choice Panels (second wave of custom panels)
 
-Status: design, pending review. Extends `docs/DESIGN-custom-panels.md`: after
+Status: **implemented** (`5985ecf`, generic `EnumChoicePanel.qml` driven by per-command
+data; `89772a2` added the DisguisePanel wave). Extends `docs/DESIGN-custom-panels.md`:
+after
 `voicemenu`, a census of the catalog shows a family of commands whose single argument
 is a small named enumeration. They all fit one generic panel component driven by
 per-command data, which is the cheapest way to add them and the template for future

@@ -1,6 +1,8 @@
 # Design: Per-Argument Bounds for Console Commands
 
-Status: design, not yet implemented. Records every change needed to make argument
+Status: **implemented** (`7ee71cd`: per-argument bounds from `argbounds.csv` and the
+one-sided cvar change; the bounds flow through the Config Editor's guided pane and the
+Build-A-Bind panels). Records every change needed to make argument
 bounds correct for commands that take one or more numeric parameters.
 
 ## 1. Problem
