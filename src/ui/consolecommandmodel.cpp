@@ -78,6 +78,8 @@ static QString commandSortKey(const QString &name) {
     return key;
 }
 
+
+
 ConsoleCommandModel::ConsoleCommandModel(QObject *parent)
     : QAbstractListModel(parent) {}
 
@@ -195,7 +197,9 @@ void ConsoleCommandModel::rebuild() {
                 continue;
             if (!m_showCheats && cmd->isCheat())
                 continue;
-            keyed.append({commandSortKey(cmd->get_name()), i});
+            keyed.append({cmd->get_context() + QLatin1Char('\x1f')
+                          + commandSortKey(cmd->get_name()),
+                      i});
         }
         std::sort(keyed.begin(), keyed.end(),
                   [this](const QPair<QString, int> &a, const QPair<QString, int> &b) {

@@ -804,6 +804,9 @@ Dialog {
                         placeholderText: "< choose or type a command >"
                         textRole: "name"
                         model: cfg.consoleModel
+                        // Grouped popup: headers per catalog context, matching the
+                        // model's context-then-name sort order.
+                        sectionRole: "context"
 
                         // Editable command field. The contentItem override is per
                         // instance on purpose: the shared Tf2ComboBox stays read-only

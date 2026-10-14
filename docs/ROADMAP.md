@@ -87,8 +87,6 @@ doc.
 
 Where each future feature lands, and what is already in place:
 
-- **Command categories** - group the `Command:` combo by a field instead of a flat list
-  (the dialog's category combo filters the list; it does not group the picker).
 - **Key table owned by C++** - move `KeyTable.qml` data into a `KeyTable` QObject
   injected as a context property (per deviation D9).
 - **Optional, low value**: surface the newer catalog columns (input type, platform,

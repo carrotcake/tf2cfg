@@ -102,7 +102,7 @@ private slots:
     void setBindToggleWritesToggleRow();
 
     // ConsoleCommandModel - the Build-A-Bind browse list
-    void catalogSortsByAlphanumericName();
+    void catalogSortsByContextThenName();
     void contextAndPlatformFiltersNarrowRows();
     void cheatRowsAreHiddenUnlessAsked();
     void filtersSurviveBeingSwitchedBackAndForth();
@@ -674,17 +674,19 @@ void EngineTest::setBindToggleWritesToggleRow() {
 
 // --- ConsoleCommandModel ---
 
-void EngineTest::catalogSortsByAlphanumericName() {
+void EngineTest::catalogSortsByContextThenName() {
     CatalogFixture fixture;
     ConsoleCommandModel model;
     model.setCommands(fixture.make());
 
-    // Sort key drops `+`/`_` and folds case, so these read attack, bind, fov, jump,
-    // sensitivity, zapper - not the raw names.
+    // Primary key is the context (the picker's section grouping needs contiguous
+    // groups), the old alphanumeric name key breaks ties within a group: attack,
+    // jump | zapper | fov, sensitivity | bind.
     QStringList names;
     for (int row = 0; row < model.rowCount(); ++row)
         names << model.data(model.index(row, 0), ConsoleCommandModel::NameRole).toString();
-    QCOMPARE(names, QStringList({ "+attack", "bind", "_fov", "+jump", "sensitivity", "zapper" }));
+    QCOMPARE(names, QStringList({ "+attack", "+jump", "zapper", "_fov", "sensitivity",
+                                  "bind" }));
 }
 
 void EngineTest::contextAndPlatformFiltersNarrowRows() {
@@ -810,8 +812,20 @@ void EngineTest::commandAtCarriesTheArgumentMetadata() {
     ConsoleCommandModel model;
     model.setCommands(fixture.make());
 
-    const QVariantMap flt = model.commandAt(4); // sensitivity, sorted order
-    QCOMPARE(flt.value(QStringLiteral("name")).toString(), QStringLiteral("sensitivity"));
+    // Rows are located by name: the sort order is its own test (rowsSortByContextThenName).
+    int sensRowIdx = -1;
+    int bindRowIdx = -1;
+    for (int r = 0; r < model.rowCount(); ++r) {
+        const QString name = model.commandAt(r).value(QStringLiteral("name")).toString();
+        if (name == QStringLiteral("sensitivity"))
+            sensRowIdx = r;
+        if (name == QStringLiteral("bind"))
+            bindRowIdx = r;
+    }
+    QVERIFY(sensRowIdx >= 0);
+    QVERIFY(bindRowIdx >= 0);
+
+    const QVariantMap flt = model.commandAt(sensRowIdx);
     QCOMPARE(flt.value(QStringLiteral("def")).toString(), QStringLiteral("3"));
     // Whole numbers stay whole: QString::number's default format would give "1e+07" here,
     // which is what the argument editor's spin box would then show.
@@ -820,8 +834,7 @@ void EngineTest::commandAtCarriesTheArgumentMetadata() {
     QVERIFY(flt.value(QStringLiteral("isCvar")).toBool());
 
     // A command with a signature is not a cvar, so the pane shows no argument editors.
-    const QVariantMap cmd = model.commandAt(1); // bind
-    QCOMPARE(cmd.value(QStringLiteral("name")).toString(), QStringLiteral("bind"));
+    const QVariantMap cmd = model.commandAt(bindRowIdx);
     QCOMPARE(cmd.value(QStringLiteral("input")).toString(), QStringLiteral("[str] [str]"));
     QVERIFY(!cmd.value(QStringLiteral("isCvar")).toBool());
 

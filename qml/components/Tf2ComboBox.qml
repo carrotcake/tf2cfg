@@ -97,6 +97,11 @@ ComboBox {
         }
     }
 
+    // Opt-in popup grouping: when set to a role name of the model, the popup lists
+    // rows under section headers for that role (the model must sort by it, e.g. the
+    // command picker's context-then-name order). Empty = flat list, as everywhere.
+    property string sectionRole: ""
+
     popup: Popup {
         y: control.height
         width: control.width
@@ -109,6 +114,35 @@ ComboBox {
             model: control.popup.visible ? control.delegateModel : null
             currentIndex: control.highlightedIndex
             ScrollIndicator.vertical: ScrollIndicator {}
+            section.property: control.sectionRole
+            section.delegate: ItemDelegate {
+                visible: control.sectionRole !== "" && section !== ""
+                height: visible ? implicitHeight : 0
+                text: section
+                highlighted: false
+                hoverEnabled: false
+                font.family: Theme.familyUi
+                font.pointSize: Theme.sizeUi
+                font.capitalization: Font.SmallCaps
+                // Header, not a row: muted text on the sunken surface, inset border.
+                leftPadding: Theme.spacing
+                background: Rectangle {
+                    color: Theme.colorSurfaceSunken
+                    Rectangle {
+                        anchors.fill: parent
+                        color: Theme.colorTextMuted
+                        opacity: 0.15
+                        height: 1
+                        anchors.bottom: parent.bottom
+                    }
+                }
+                contentItem: Text {
+                    text: parent.text
+                    font: parent.font
+                    color: Theme.colorTextMuted
+                    verticalAlignment: Text.AlignVCenter
+                }
+            }
         }
 
         background: Rectangle {
