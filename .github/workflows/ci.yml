@@ -56,7 +56,10 @@ jobs:
           sudo ln -s "$(command -v qmake6)" /usr/local/bin/qmake
           curl -sL -o linuxdeploy.AppImage \
               https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
-          chmod +x linuxdeploy.AppImage
+          # The qt plugin is discovered by filename next to linuxdeploy.
+          curl -sL -o linuxdeploy-plugin-qt-x86_64.AppImage \
+              https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
+          chmod +x linuxdeploy.AppImage linuxdeploy-plugin-qt-x86_64.AppImage
 
       - name: Render app icon (ImageMagick, from the repo's TF2 font)
         run: |
@@ -70,7 +73,6 @@ jobs:
 
       - name: Bundle AppImage
         run: |
-          APPIMAGE_EXTRACT_AND_RUN=1 linuxdeploy-plugin-qt.AppImage --appimage-extract-and-run --version || true
           install -D -m 755 tf2cfgreal AppDir/usr/bin/tf2cfgreal
           install -D -m 644 res/icon/tf2cfg.desktop AppDir/tf2cfg.desktop
           export DISABLE_COPYRIGHT_FILE_DEPLOYMENT=1
