@@ -162,9 +162,10 @@ jobs:
           # here instead of silently building with the wrong gcc.
           shopt -s nullglob
           # QT_ROOT_DIR is what install-qt-action exports (QT_INSTALL_DIR is
-          # "**Unknown**" in Qt 6.12's qmake -query); Tools is a sibling of the
-          # version dir.
-          MINGW_BIN=( "$QT_ROOT_DIR/../Tools"/mingw*/bin )
+          # "**Unknown**" in Qt 6.12's qmake -query). aqt puts the toolchain under
+          # the Qt ROOT's Tools/ (dev box: C:\Qt\Tools\mingw1310_64) - two levels
+          # up from QT_ROOT_DIR (which points at <root>/6.12.0/mingw_64).
+          MINGW_BIN=( "$QT_ROOT_DIR/../../Tools"/mingw*/bin )
           shopt -u nullglob
           if [ ${#MINGW_BIN[@]} -eq 0 ]; then
             echo "::error::Qt's bundled MinGW not found under Tools/" >&2
