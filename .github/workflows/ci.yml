@@ -83,22 +83,28 @@ jobs:
           APPIMAGE_EXTRACT_AND_RUN=1 ./linuxdeploy.AppImage \
               --appdir AppDir \
               --plugin qt \
-              --qmldir qml \
               --output appimage \
               --desktop-file res/icon/tf2cfg.desktop
           mv TF2_Config_Manager-*.AppImage "TF2-Config-Manager-x86_64.AppImage"
           ls -l TF2-Config-Manager-x86_64.AppImage
 
-      - name: Smoke-test the AppImage (no FUSE on runners, so extract-and-run)
+      - name: Smoke-test the AppImage (headless run)
         run: |
-          # The binary links fine and Qt loads its plugins (the bundling test); the
-          # app itself cannot open a display here, so a plain launch is not possible.
-          ./TF2-Config-Manager-x86_64.AppImage --appimage-extract-and-run \
-              QT_QPA_PLATFORM=offscreen 2>/dev/null || true
-          APPIMAGE_EXTRACT_AND_RUN=1 ./TF2-Config-Manager-x86_64.AppImage \
-              --appimage-extract-and-run true 2>&1 |
-              grep -q "xcb" && { echo "::error::AppImage failed to bundle Qt plugins"; exit 1; }
-          echo "AppImage extracts and its Qt plugin set loads"
+          # Proves extraction, Qt plugin initialization and QML engine load in one
+          # shot: the app runs its event loop headless (offscreen platform) until
+          # timeout kills it (exit 124). Any other nonzero exit is a real failure -
+          # e.g. a missing bundled plugin fails before the app shows anything.
+          set +e
+          QT_QPA_PLATFORM=offscreen timeout 15s \
+              ./TF2-Config-Manager-x86_64.AppImage --appimage-extract-and-run > smoke.log 2>&1
+          rc=$?
+          set -e
+          if [ "$rc" != 124 ] && [ "$rc" != 0 ]; then
+            cat smoke.log
+            echo "::error::AppImage smoke test failed (exit $rc)"
+            exit 1
+          fi
+          echo "AppImage extracts and runs headless (exit $rc)"
 
       - uses: actions/upload-artifact@v4
         with:
