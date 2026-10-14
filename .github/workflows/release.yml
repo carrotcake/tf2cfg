@@ -151,6 +151,18 @@ jobs:
                  res/icon/tf2cfg.ico
           rm res/icon/tf2cfg_win.png
 
+      - name: PROBE where aqt put MinGW (remove after diagnosis)
+        shell: bash
+        run: |
+          echo "QT_ROOT_DIR=$QT_ROOT_DIR"
+          ls "$QT_ROOT_DIR" 2>/dev/null | head -20
+          ls "$QT_ROOT_DIR/.." 2>/dev/null | head -20
+          ls "$QT_ROOT_DIR/../Tools" 2>/dev/null | head -20
+          ls "$QT_ROOT_DIR/../../Tools" 2>/dev/null | head -20
+          ls "C:/mingw64/bin/gcc.exe" "D:/a/tf2cfg/Qt" 2>/dev/null
+          find "D:/a/tf2cfg/Qt" -maxdepth 3 -name "gcc.exe" 2>/dev/null | head -5
+          true
+
       - name: Build app (qmake + mingw32-make)
         shell: bash
         run: |
