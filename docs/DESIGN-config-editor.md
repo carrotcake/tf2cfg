@@ -197,7 +197,15 @@ land at end of file. Binds keep their current anchoring unchanged.
 Chunk A landed 2026-10-14 (`0d9360c`), Chunk B landed 2026-10-14 (guided pane + the
 `findCommand` full-record extension; field mapping is QML-side, so its engine gate is
 the `findCommandCarriesTheFullRecord` record test and the same-correctness of
-`parseCommandLine`).
+`parseCommandLine`). Chunk C landed 2026-10-14 (`ChainEditor` component, §5): the
+Config Editor edits compound lines and alias bodies as segment lists; BindEditorDialog
+gained the "Alias" tab (name + body chain, OK writes the definition row via `setAlias`
+AND the bind); `setAlias` rewrites the latest definition in place, drops earlier
+duplicates, anchors new definitions after the last alias line (end of file when none -
+the presets define aliases after their binds, and TF2 resolves alias names on keypress,
+not at parse), and an empty body removes the definition. Segment splitting and token
+quoting run through the controller (`splitSegments`/`quoteToken`/`unquoteToken`), so
+the lexers stay the only quote authority.
 
 Each chunk commits separately; `qml` additions carry
 `pragma ComponentBehavior: Bound` (AGENTS.md bar) and no new qmllint advisories.

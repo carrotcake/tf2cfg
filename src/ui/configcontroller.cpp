@@ -565,6 +565,65 @@ int ConfigController::insertRowAfter(int anchorRow, const QString &text) {
         static_cast<cmd::CmdType>(parsed.value(QStringLiteral("type")).toInt()));
 }
 
+bool ConfigController::setAlias(const QString &name, const QString &body) {
+    // A removed definition drops its file line on the next save without leaving an
+    // app-owned row behind, so it counts as a pending deletion for dirty (isDirty).
+    const bool existed = m_commands.aliasInfo(name)
+                             .value(QStringLiteral("found")).toBool();
+    const bool ok = m_commands.setAlias(name, body);
+    if (ok && existed && body.trimmed().isEmpty())
+        ++m_droppedParsedLines;
+    return ok;
+}
+
+QStringList ConfigController::aliasNames() const {
+    return m_commands.aliasNames();
+}
+
+QVariantMap ConfigController::aliasInfo(const QString &name) const {
+    return m_commands.aliasInfo(name);
+}
+
+QStringList ConfigController::splitSegments(const QString &line) const {
+    // Quote- and escape-aware on the lexer's terms: `;` separates only outside
+    // quotes, and inside quotes a backslash escapes the next character (so `\"`
+    // never opens or closes a quote). The pieces stay raw text - the segment
+    // editors show exactly what the user wrote.
+    QStringList out;
+    QString current;
+    bool quoted = false;
+    bool escaped = false;
+    for (const QChar c : line) {
+        if (escaped) {
+            current += c;
+            escaped = false;
+        } else if (quoted && c == QLatin1Char('\\')) {
+            current += c;
+            escaped = true;
+        } else if (c == QLatin1Char('"')) {
+            quoted = !quoted;
+            current += c;
+        } else if (c == QLatin1Char(';') && !quoted) {
+            out << current.trimmed();
+            current.clear();
+        } else {
+            current += c;
+        }
+    }
+    out << current.trimmed();
+    // Stray separators leave empty pieces; they carry nothing and drop everywhere.
+    out.removeAll(QString());
+    return out;
+}
+
+QString ConfigController::quoteToken(const QString &raw) const {
+    return CommandListModel::quoted(raw);
+}
+
+QString ConfigController::unquoteToken(const QString &token) const {
+    return CommandListModel::unquoted(token);
+}
+
 bool ConfigController::setBind(const QString &key, const QString &command) {
     return m_commands.setBind(key, command);
 }

@@ -132,6 +132,14 @@ private slots:
     void warningsFlagDeadBindsAndOverriddenCvars();
     void filterModelKindsAndText();
 
+    // Aliases + chains (docs/DESIGN-config-editor.md §5, chunk C)
+    void setAliasCreatesARoundTrippingRow();
+    void setAliasEditsInPlaceAndDropsDuplicates();
+    void setAliasEmptyBodyRemoves();
+    void setAliasAnchorsAfterTheLastAliasLine();
+    void splitSegmentsIsQuoteAware();
+    void quoteUnquoteRoundTrips();
+
 private:
     QTemporaryDir m_dir;
     int m_fileCount = 0;
@@ -1241,6 +1249,127 @@ void EngineTest::filterModelKindsAndText() {
     // RowRole passes through unrenumbered, so the editor can edit by source row.
     proxy.setFilterText(QStringLiteral("bind"));
     QCOMPARE(proxy.data(proxy.index(0, 0), CommandListModel::RowRole).toInt(), 1);
+}
+
+// --- Aliases + chains (docs/DESIGN-config-editor.md §5, chunk C) ---
+
+void EngineTest::setAliasCreatesARoundTrippingRow() {
+    const QString path = writeFile(QStringLiteral("aliasnew.cfg"),
+                                   QStringLiteral("bind \"a\" \"+moveleft\"\nsv_cheats 1\n"));
+
+    ConfigController controller;
+    LOAD_CONFIG(controller, path);
+    QVERIFY(controller.setAlias(QStringLiteral("quickswitch"), QStringLiteral("slot3; slot1")));
+    QVERIFY(controller.isDirty());
+    QVERIFY(controller.saveCfg());
+
+    // No alias lines existed, so the definition lands at end of file (the presets
+    // define aliases after their binds).
+    QFile saved(path);
+    QVERIFY(saved.open(QIODevice::ReadOnly | QIODevice::Text));
+    const QStringList lines = QString::fromUtf8(saved.readAll()).split(QLatin1Char('\n'));
+    saved.close();
+    QCOMPARE(lines.at(2), QStringLiteral("alias \"quickswitch\" \"slot3; slot1\""));
+
+    // The saved row re-parses to the same body, so the model and the file agree.
+    const QVariantMap info = controller.aliasInfo(QStringLiteral("QUICKSWITCH"));
+    QCOMPARE(info.value(QStringLiteral("found")).toBool(), true);
+    QCOMPARE(info.value(QStringLiteral("body")).toString(), QStringLiteral("slot3; slot1"));
+    QVERIFY(controller.aliasNames().contains(QLatin1String("quickswitch")));
+}
+
+void EngineTest::setAliasEditsInPlaceAndDropsDuplicates() {
+    const QString path = writeFile(QStringLiteral("aliasedit.cfg"),
+                                   QStringLiteral("alias \"x\" \"one\"\n"
+                                                  "bind \"a\" \"+moveleft\"\n"
+                                                  "alias \"x\" \"two\"\n"));
+
+    ConfigController controller;
+    LOAD_CONFIG(controller, path);
+    QVERIFY(controller.setAlias(QStringLiteral("X"), QStringLiteral("three")));
+    QVERIFY(controller.saveCfg());
+
+    // The latest definition is rewritten where it stood; the earlier duplicate (dead
+    // weight under TF2's replay) is dropped, its line gone.
+    QFile saved(path);
+    QVERIFY(saved.open(QIODevice::ReadOnly | QIODevice::Text));
+    const QString text = QString::fromUtf8(saved.readAll());
+    saved.close();
+    QVERIFY(!text.contains(QLatin1String("\"one\"")));
+    QVERIFY(!text.contains(QLatin1String("\"two\"")));
+    QCOMPARE(text, QStringLiteral("bind \"a\" \"+moveleft\"\nalias \"x\" \"three\"\n"));
+
+    // A body with quotes survives the quote-escape round trip (D19).
+    QVERIFY(controller.setAlias(QStringLiteral("t"), QStringLiteral("say \"hi\"")));
+    QVERIFY(controller.saveCfg());
+    QFile quoted(path);
+    QVERIFY(quoted.open(QIODevice::ReadOnly | QIODevice::Text));
+    const QString quotedText = QString::fromUtf8(quoted.readAll());
+    quoted.close();
+    QVERIFY(quotedText.contains(QLatin1String("alias \"t\" \"say \\\"hi\\\"\"")));
+    QCOMPARE(controller.aliasInfo(QStringLiteral("t")).value(QStringLiteral("body")).toString(),
+             QStringLiteral("say \"hi\""));
+}
+
+void EngineTest::setAliasEmptyBodyRemoves() {
+    const QString path = writeFile(QStringLiteral("aliasrm.cfg"),
+                                   QStringLiteral("alias \"x\" \"one\"\nsv_cheats 1\n"));
+
+    ConfigController controller;
+    LOAD_CONFIG(controller, path);
+    QVERIFY(controller.setAlias(QStringLiteral("x"), QString()));
+    QVERIFY(controller.isDirty());
+    QVERIFY(controller.saveCfg());
+
+    QFile saved(path);
+    QVERIFY(saved.open(QIODevice::ReadOnly | QIODevice::Text));
+    const QString text = QString::fromUtf8(saved.readAll());
+    saved.close();
+    QCOMPARE(text, QStringLiteral("sv_cheats 1\n"));
+    QVERIFY(!controller.setAlias(QStringLiteral("x"), QString())); // nothing left to remove
+}
+
+void EngineTest::setAliasAnchorsAfterTheLastAliasLine() {
+    const QString path = writeFile(QStringLiteral("aliasanchor.cfg"),
+                                   QStringLiteral("bind \"a\" \"+moveleft\"\n"
+                                                  "alias \"x\" \"one\"\n"
+                                                  "sv_cheats 1\n"));
+
+    ConfigController controller;
+    LOAD_CONFIG(controller, path);
+    QVERIFY(controller.setAlias(QStringLiteral("y"), QStringLiteral("two")));
+    QVERIFY(controller.saveCfg());
+
+    QFile saved(path);
+    QVERIFY(saved.open(QIODevice::ReadOnly | QIODevice::Text));
+    const QStringList lines = QString::fromUtf8(saved.readAll()).split(QLatin1Char('\n'));
+    saved.close();
+    // The new definition lands with the other aliases, not scattered to the end.
+    QCOMPARE(lines.at(1), QStringLiteral("alias \"x\" \"one\""));
+    QCOMPARE(lines.at(2), QStringLiteral("alias \"y\" \"two\""));
+    QCOMPARE(lines.at(3), QStringLiteral("sv_cheats 1"));
+}
+
+void EngineTest::splitSegmentsIsQuoteAware() {
+    ConfigController controller;
+    // A ';' inside a quoted token does not split.
+    QCOMPARE(controller.splitSegments(QStringLiteral("bind \"a\" \"x; y\"; volume 0.5")),
+             QStringList({ QStringLiteral("bind \"a\" \"x; y\""),
+                           QStringLiteral("volume 0.5") }));
+    QCOMPARE(controller.splitSegments(QStringLiteral("echo hi")),
+             QStringList({ QStringLiteral("echo hi") }));
+    // Empty pieces from stray separators drop; an escaped quote stays inside.
+    QCOMPARE(controller.splitSegments(QStringLiteral("a ; ; b")),
+             QStringList({ QStringLiteral("a"), QStringLiteral("b") }));
+    QVERIFY(controller.splitSegments(QStringLiteral("")).isEmpty());
+}
+
+void EngineTest::quoteUnquoteRoundTrips() {
+    ConfigController controller;
+    // The D19 pair: quoteToken writes what unquoteToken reads back identically.
+    const QString raw = QStringLiteral("say \"hi\" \\ path");
+    QCOMPARE(controller.unquoteToken(controller.quoteToken(raw)), raw);
+    QCOMPARE(controller.unquoteToken(QStringLiteral("\"slot3\"")), QStringLiteral("slot3"));
 }
 
 QTEST_MAIN(EngineTest)

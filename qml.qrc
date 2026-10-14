@@ -10,6 +10,7 @@
         <file>qml/keyboard/KeyCap.qml</file>
         <file>qml/keyboard/KeyboardPanel.qml</file>
 
+        <file>qml/components/ChainEditor.qml</file>
         <file>qml/components/Panel.qml</file>
         <file>qml/components/Tf2Button.qml</file>
         <file>qml/components/Tf2Label.qml</file>

@@ -26,6 +26,11 @@ Panel {
     property var guidedRec: null
     /// The cvar's current value token (raw token, quotes included), one field.
     property string cvarValue: ""
+    /// Chain editor state (Chunk C, §5): true when the selection is a compound line
+    /// or an alias definition. chainName is the alias's name in body mode, "" when
+    /// editing a plain compound line.
+    property bool chainActive: false
+    property string chainName: ""
 
     /// Requested by the redirect dialog: open this key's bind in Edit Binds.
     signal bindActivated(string keyToken)
@@ -35,6 +40,7 @@ Panel {
         // Imperative, not a binding: the user's typing would break a text binding.
         lineEdit.text = addMode ? "" : (selectedInfo === null ? "" : selectedInfo.line)
         rebuildGuided()
+        rebuildChain()
     }
 
     // -- guided pane (Chunk B, docs/DESIGN-config-editor.md §4) -------------------
@@ -133,6 +139,51 @@ Panel {
             }
         }
         lineEdit.text = parts.join(" ")
+    }
+
+    // -- chain editor (Chunk C, §5) -----------------------------------------------
+    // Compound lines (`a; b`) and alias definitions (`alias name "a; b"`) are edited
+    // as a segment list; the joined text lands in the raw field and Apply commits it.
+
+    function rebuildChain(text) {
+        chainActive = false
+        chainName = ""
+        if (addMode || selectedInfo === null || selectedInfo.boundKey !== "")
+            return
+        const src = text !== undefined ? text : selectedInfo.line
+        const parsed = cfgRef.parseCommandLine(src)
+        if (!parsed.ok)
+            return
+        const parts = parsed.args
+        if (parts[0].toLowerCase() === "alias") {
+            // Body mode: the body is one quoted token whose text splits into segments.
+            if (parts.length < 2)
+                return
+            chainName = cfgRef.unquoteToken(parts[1])
+            const body = parts.length >= 3 ? cfgRef.unquoteToken(parts[2]) : ""
+            chainActive = true
+            chainEditor.setSegments(cfgRef.splitSegments(body))
+            return
+        }
+        const segs = cfgRef.splitSegments(src)
+        if (segs.length > 1) {
+            chainActive = true
+            chainEditor.setSegments(segs)
+        }
+    }
+
+    function regenChain() {
+        if (!chainActive)
+            return
+        const segs = chainEditor.segmentList()
+        if (chainName !== "") {
+            // Re-quoted canonically (D19): name and body always quoted, escapes kept
+            // lexer-correct by quoteToken.
+            lineEdit.text = cfgRef.quoteToken(chainName) + " "
+                            + cfgRef.quoteToken(segs.join("; "))
+        } else {
+            lineEdit.text = segs.join("; ")
+        }
     }
 
     onSelectedRowChanged: {
@@ -406,6 +457,7 @@ Panel {
                     ColumnLayout {
                         Layout.fillWidth: true
                         visible: tab.guidedRec !== null && !tab.addMode
+                                 && !tab.chainActive
                         spacing: Theme.spacingTight
 
                         Tf2Label {
@@ -601,6 +653,30 @@ Panel {
                         }
                     }
 
+                    // -- chain editor (§5): compound lines and alias bodies --
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        visible: tab.chainActive && !tab.addMode
+                        spacing: Theme.spacingTight
+
+                        Tf2Label {
+                            Layout.fillWidth: true
+                            text: tab.chainName !== ""
+                                  ? 'Alias "' + tab.chainName + '" - commands run in order:'
+                                  : "Compound line - commands run in order:"
+                            color: Theme.colorText
+                            font.pointSize: Theme.sizeUi
+                            font.bold: true
+                            wrapMode: Text.WordWrap
+                        }
+
+                        ChainEditor {
+                            id: chainEditor
+                            Layout.fillWidth: true
+                            onChanged: tab.regenChain()
+                        }
+                    }
+
                     // Raw text editor (§4.2); guided fields are Chunk B. The text is
                     // set imperatively by refreshSelection/Apply, never bound.
                     TextArea {
@@ -630,7 +706,10 @@ Panel {
                         Accessible.role: Accessible.EditableText
                         // §8 reverse-parse: committing raw text re-fills the guided
                         // fields from the same text, so both paths stay one truth.
-                        onEditingFinished: tab.rebuildGuided(lineEdit.text)
+                        onEditingFinished: {
+                            tab.rebuildGuided(lineEdit.text)
+                            tab.rebuildChain(lineEdit.text)
+                        }
                     }
 
                     Item { Layout.fillHeight: true }

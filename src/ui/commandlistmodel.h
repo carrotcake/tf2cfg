@@ -53,6 +53,13 @@ public:
     /// The save uses it to find the line new binds are inserted after.
     static bool isBindCommand(const QString &head);
 
+    /// The lexer hands tokens back with their quotes still on, so `bind "0" "slot10"`
+    /// parses as three arguments. unquoted() reads the escapes (`\"`, `\\`) a quoted
+    /// token carries; quoted() writes a token the parser reads back identically (D19).
+    /// Public: the Config Editor's chain editor and the alias API re-quote bodies.
+    static QString unquoted(const QString &arg);
+    static QString quoted(const QString &arg);
+
     /**
      * Active binds: lowercase, unquoted key token -> command string.
      *
@@ -95,6 +102,24 @@ public:
     /// (Config Editor insert-after-selected, §9). anchorRow < 0 appends at end of file.
     /// Returns the new row index, -1 on refusal (empty args).
     int insertEntry(int anchorRow, const QStringList &args, cmd::CmdType type);
+
+    /// Define or update an alias (docs/DESIGN-config-editor.md §5.3, BindEditorDialog
+    /// "Alias" tab). `body` is raw command text (`slot3; slot1`), stored quoted. The
+    /// latest `alias <name>` row is rewritten in place and earlier definitions of the
+    /// same name are dropped (a later definition wins in TF2's replay, so the others
+    /// are dead weight - the same competing-row rule setBind applies). No definition
+    /// yet: a session row anchored after the last alias line, else end of file (the
+    /// bundled presets define aliases after their binds, so that is where they belong).
+    /// An empty body removes the definition instead. False when the name is empty or
+    /// the body is unchanged.
+    bool setAlias(const QString &name, const QString &body);
+
+    /// Names defined by `alias` rows, first-seen order, deduplicated (case-insensitive).
+    QStringList aliasNames() const;
+
+    /// { found, name, body } for the latest definition of `name` (case-insensitive);
+    /// body is the raw unquoted text, "" for a bare `alias <name>` row.
+    QVariantMap aliasInfo(const QString &name) const;
 
     /// One row as a QVariantMap { row, line, command, type, typeName, boundKey, warning }
     /// for the Config Editor's editor pane (it sits outside the list delegate, so it

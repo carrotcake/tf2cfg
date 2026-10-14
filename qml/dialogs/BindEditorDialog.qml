@@ -532,6 +532,25 @@ Dialog {
         dialog.open()
     }
 
+    /// Load the body of the named alias into the chain editor, when it is defined
+    /// in the loaded config (docs/DESIGN-config-editor.md §5.3).
+    function loadAliasBody(name) {
+        const info = dialog.cfgRef.aliasInfo(name)
+        if (info.found)
+            aliasChain.setSegments(dialog.cfgRef.splitSegments(info.body))
+    }
+
+    /// A key bound to an alias this config defines opens on the Alias tab, name and
+    /// body loaded; anything else stays on the tab the user left it on.
+    function loadAliasBodyWhenBound() {
+        const info = dialog.cfgRef.aliasInfo(dialog.boundCommand)
+        if (!info.found)
+            return
+        dialogTabs.currentIndex = 2
+        aliasNameField.text = info.name
+        aliasChain.setSegments(dialog.cfgRef.splitSegments(info.body))
+    }
+
     title: "Dialog"          // parity P30: the widget's dialog title really is "Dialog"
     modal: true              // parity P36: widget used exec()
     // Size grows and shrinks with the content (the voicemenu panel is taller than
@@ -569,6 +588,13 @@ Dialog {
         suggestionPopup.close()
         // Reflect the bound command in Build-A-Bind when possible.
         prefillFromCommand()
+        // Alias tab (§5.3): start empty, then prefill when the key is bound to an
+        // alias this config defines - that key's edit belongs on the Alias tab.
+        aliasNameField.text = ""
+        aliasChain.setSegments([])
+        aliasPick.model = dialog.cfgRef.aliasNames()
+        if (dialog.boundCommand !== "")
+            dialog.loadAliasBodyWhenBound()
         // Center on the window each time it opens (a plain Dialog sits at 0,0).
         if (dialog.parent) {
             dialog.x = Math.max(0, Math.round((dialog.parent.width - dialog.width) / 2))
@@ -581,6 +607,20 @@ Dialog {
     // Either way the cap repaints, because cfg.binds notifies. Nothing is written to the
     // .cfg file - the app has no save yet (docs/legacy/ui-qml-rewrite.md section 10).
     onAccepted: {
+        // Alias tab (§5.3): OK commits the definition (when the chain has segments)
+        // AND the bind to the alias name. An empty name leaves the key unbound.
+        if (dialogTabs.currentIndex === 2) {
+            const name = aliasNameField.text.trim()
+            if (name === "") {
+                cfg.clearBind(dialog.keyToken)
+                return
+            }
+            const segments = aliasChain.segmentList()
+            if (segments.length > 0)
+                cfg.setAlias(name, segments.join("; "))
+            cfg.setBind(dialog.keyToken, name)
+            return
+        }
         const command = customCommand.text.trim()
         if (command === "")
             cfg.clearBind(dialog.keyToken)
@@ -673,11 +713,11 @@ Dialog {
             }
         }
 
-        // -- the two tabs (P32) --------------------------------------------------
+        // -- the three tabs (P32 + the Alias tab, docs/DESIGN-config-editor.md §5.3) ---
         Tf2TabBar {
             id: dialogTabs
             Layout.fillWidth: true
-            model: ["Build-A-Bind", "Custom Command"]
+            model: ["Build-A-Bind", "Custom Command", "Alias"]
             onActivated: function (index) { dialogTabs.currentIndex = index }
         }
 
@@ -1139,6 +1179,67 @@ Dialog {
                     }
                 }
             }
+
+            // Alias: a name plus the body chain (docs/DESIGN-config-editor.md §5.3).
+            // OK writes BOTH rows: the `alias "name" "body"` definition in the config
+            // and the `bind "<key>" "<name>"` for this key.
+            ColumnLayout {
+                spacing: Theme.spacing
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Theme.spacing
+
+                    Label {
+                        text: "Alias name:"
+                        color: Theme.colorText
+                        font.family: Theme.familyUi
+                        font.pointSize: Theme.sizeUi
+                    }
+
+                    Tf2TextField {
+                        id: aliasNameField
+                        Layout.fillWidth: true
+                        placeholderText: "< alias name >"
+                        Accessible.name: "Alias name"
+                    }
+
+                    Tf2ComboBox {
+                        id: aliasPick
+                        placeholderText: "< existing aliases >"
+                        // Refreshed on every open: aliasNames() reads the parsed rows.
+                        model: []
+                        onActivated: function (index) {
+                            aliasNameField.text = aliasPick.currentText
+                            dialog.loadAliasBody(aliasPick.currentText)
+                        }
+                    }
+                }
+
+                Label {
+                    text: "Commands (run in order):"
+                    color: Theme.colorText
+                    font.family: Theme.familyUi
+                    font.pointSize: Theme.sizeUi
+                }
+
+                ChainEditor {
+                    id: aliasChain
+                    Layout.fillWidth: true
+                }
+
+                Tf2Label {
+                    Layout.fillWidth: true
+                    text: "OK binds this key to the alias and keeps the definition in "
+                          + "the config. An empty name leaves the key unbound; an "
+                          + "empty command list binds the key to the alias without "
+                          + "touching its definition."
+                    color: Theme.colorTextMuted
+                    wrapMode: Text.WordWrap
+                    font.pointSize: Theme.sizeSmall
+                }
+            }
+        }
         }
 
         RowLayout {

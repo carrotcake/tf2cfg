@@ -18,41 +18,10 @@ QHash<int, QByteArray> makeRoleNames() {
 }
 
 /// The config lexer hands arguments back with their quotes still on, so `bind "0" "slot10"`
-/// parses as three arguments: `bind`, `"0"` and `"slot10"`. Both directions are needed:
-/// read a key/command out of a parsed row, and write a row the parser would reparse the
-/// same way. See docs/legacy/ui-qml-rewrite.md D16.
-///
-/// The lexer keeps the backslashes a quoted token carries, so this is the one place that
-/// reads them - which is why a row setBind() wrote and the same row read back from a file
-/// both come out as one identical command.
-QString unquoted(const QString &arg) {
-    QString body = arg;
-    if (body.size() >= 2 && body.startsWith(QLatin1Char('"')) && body.endsWith(QLatin1Char('"')))
-        body = body.mid(1, body.size() - 2);
-
-    QString out;
-    for (int i = 0; i < body.size(); ++i) {
-        QChar c = body.at(i);
-        // \" and \\ stand for one character; a backslash in front of anything else is
-        // ordinary text and is kept.
-        if (c == QLatin1Char('\\') && i + 1 < body.size()
-            && (body.at(i + 1) == QLatin1Char('"') || body.at(i + 1) == QLatin1Char('\\')))
-            c = body.at(++i);
-        out.append(c);
-    }
-    return out;
-}
-
-QString quoted(const QString &arg) {
-    QString out;
-    for (const QChar c : arg) {
-        if (c == QLatin1Char('"') || c == QLatin1Char('\\'))
-            out.append(QLatin1Char('\\'));
-        out.append(c);
-    }
-    return QLatin1Char('"') + out + QLatin1Char('"');
-}
-
+/// parses as three arguments: `bind`, `"0"` and `"slot10"`. Both directions live as
+/// public statics on CommandListModel (the Config Editor's chain editor and the alias
+/// API re-quote bodies through them): read a key/command out of a parsed row, and write
+/// a row the parser would reparse the same way. See docs/legacy/ui-qml-rewrite.md D19.
 /// The console commands that drive key binds. scanBinds() reads them and setBind()
 /// writes one, so a typo in a copy would produce a row nothing ever reads back.
 /// All lowercase: the engine folds every config line to lower case (allcmds.csv
@@ -71,6 +40,34 @@ constexpr auto UnbindAll = QLatin1StringView("unbindall");
 /// model because the surgical save needs the same test to place new bind rows.
 bool CommandListModel::isBindCommand(const QString &head) {
     return head == BindSyntax::Bind || head == BindSyntax::BindToggle;
+}
+
+QString CommandListModel::unquoted(const QString &arg) {
+    QString body = arg;
+    if (body.size() >= 2 && body.startsWith(QLatin1Char('"')) && body.endsWith(QLatin1Char('"')))
+        body = body.mid(1, body.size() - 2);
+
+    QString out;
+    for (int i = 0; i < body.size(); ++i) {
+        QChar c = body.at(i);
+        // \" and \\ stand for one character; a backslash in front of anything else is
+        // ordinary text and is kept.
+        if (c == QLatin1Char('\\') && i + 1 < body.size()
+            && (body.at(i + 1) == QLatin1Char('"') || body.at(i + 1) == QLatin1Char('\\')))
+            c = body.at(++i);
+        out.append(c);
+    }
+    return out;
+}
+
+QString CommandListModel::quoted(const QString &arg) {
+    QString out;
+    for (const QChar c : arg) {
+        if (c == QLatin1Char('"') || c == QLatin1Char('\\'))
+            out.append(QLatin1Char('\\'));
+        out.append(c);
+    }
+    return QLatin1Char('"') + out + QLatin1Char('"');
 }
 
 CommandListModel::CommandListModel(QObject *parent)
@@ -433,6 +430,145 @@ int CommandListModel::insertEntry(int anchorRow, const QStringList &args, cmd::C
     endInsertRows();
     invalidateDerived();
     return row;
+}
+
+// --- alias API (docs/DESIGN-config-editor.md §5.3) ---
+
+namespace {
+/// A row that DEFINES an alias (`alias <name> ...`). Rows merely referencing an
+/// alias name parse as CMD_ALIAS and never match this test.
+bool isAliasDefinition(const cmd::Entry &entry) {
+    return !entry.args.isEmpty()
+           && CommandListModel::unquoted(entry.args.at(0)).toLower()
+                  == QLatin1String("alias");
+}
+
+/// The raw body text of an alias definition row: the tokens after the name,
+/// unquoted and re-joined. Empty for a bare `alias <name>` row.
+QString aliasBodyOf(const cmd::Entry &entry) {
+    if (entry.args.size() < 3)
+        return QString();
+    QStringList parts;
+    for (int i = 2; i < entry.args.size(); ++i)
+        parts << CommandListModel::unquoted(entry.args.at(i));
+    return parts.join(QLatin1Char(' '));
+}
+} // namespace
+
+bool CommandListModel::setAlias(const QString &name, const QString &body) {
+    const QString cleanName = unquoted(name);
+    if (cleanName.isEmpty())
+        return false;
+    const QString cleanBody = body.trimmed();
+
+    QVector<int> rows;
+    for (int row = 0; row < m_entries.size(); ++row) {
+        const cmd::Entry &entry = m_entries.at(row);
+        if (isAliasDefinition(entry)
+            && unquoted(entry.args.value(1)).toLower() == cleanName.toLower())
+            rows.append(row);
+    }
+
+    // An empty body removes the definition - the symmetric counterpart of clearBind.
+    if (cleanBody.isEmpty()) {
+        if (rows.isEmpty())
+            return false;
+        for (int i = rows.size() - 1; i >= 0; --i) {
+            beginRemoveRows(QModelIndex(), rows.at(i), rows.at(i));
+            m_entries.remove(rows.at(i));
+            endRemoveRows();
+        }
+        invalidateDerived();
+        return true;
+    }
+
+    // Idempotent: the latest definition already carries exactly this body.
+    if (!rows.isEmpty()) {
+        const cmd::Entry &latest = m_entries.at(rows.last());
+        if (latest.args.size() >= 2 && aliasBodyOf(latest) == cleanBody)
+            return false;
+    }
+
+    const QStringList args = { QStringLiteral("alias"), quoted(cleanName),
+                               quoted(cleanBody) };
+
+    // Update the latest definition in place, dropping earlier same-name rows (a later
+    // definition wins in TF2's replay, so the others are dead weight).
+    if (!rows.isEmpty()) {
+        const int dropCount = rows.size() - 1;
+        for (int i = rows.size() - 2; i >= 0; --i) {
+            beginRemoveRows(QModelIndex(), rows.at(i), rows.at(i));
+            m_entries.remove(rows.at(i));
+            endRemoveRows();
+        }
+        const int row = rows.last() - dropCount;
+        cmd::Entry &entry = m_entries[row];
+        entry.appOwned = true;
+        // The existing definition's name spelling stays (the file's spelling wins on
+        // an edit; setAlias's name argument only selects the row).
+        const QVariant oldName = entry.args.value(1);
+        entry.args = { QStringLiteral("alias"), oldName.toString(),
+                       quoted(cleanBody) };
+        entry.type = cmd::CMD_CMD; // what the parser gives an identical file line
+        emit dataChanged(index(row), index(row),
+                         {LineRole, CommandRole, ArgsRole, TypeRole, TypeNameRole,
+                          BoundKeyRole});
+        invalidateDerived();
+        return true;
+    }
+
+    // New definition: a session row anchored after the last alias line so definitions
+    // stay together, else end of file (the bundled presets define aliases after their
+    // binds - binds resolve alias names when pressed, not when parsed).
+    cmd::Entry entry;
+    entry.appOwned = true;
+    entry.args = args;
+    entry.type = cmd::CMD_CMD;
+    entry.anchorLine = cmd::ANCHOR_EOF;
+    int lastAliasLine = -1;
+    for (const cmd::Entry &e : m_entries) {
+        if (isAliasDefinition(e) && e.sourceLine >= 0)
+            lastAliasLine = qMax(lastAliasLine, e.sourceLine);
+    }
+    if (lastAliasLine >= 0)
+        entry.anchorLine = lastAliasLine;
+
+    const int row = m_entries.size();
+    beginInsertRows(QModelIndex(), row, row);
+    m_entries.push_back(entry);
+    endInsertRows();
+    invalidateDerived();
+    return true;
+}
+
+QStringList CommandListModel::aliasNames() const {
+    QStringList out;
+    for (const cmd::Entry &entry : m_entries) {
+        if (!isAliasDefinition(entry) || entry.args.size() < 2)
+            continue;
+        const QString name = unquoted(entry.args.at(1));
+        if (!out.contains(name, Qt::CaseInsensitive))
+            out << name;
+    }
+    return out;
+}
+
+QVariantMap CommandListModel::aliasInfo(const QString &name) const {
+    QVariantMap info;
+    info.insert(QStringLiteral("found"), false);
+    const QString wanted = unquoted(name).toLower();
+    for (int row = m_entries.size() - 1; row >= 0; --row) {
+        const cmd::Entry &entry = m_entries.at(row);
+        if (!isAliasDefinition(entry) || entry.args.size() < 2)
+            continue;
+        if (unquoted(entry.args.at(1)).toLower() != wanted)
+            continue;
+        info.insert(QStringLiteral("found"), true);
+        info.insert(QStringLiteral("name"), unquoted(entry.args.at(1)));
+        info.insert(QStringLiteral("body"), aliasBodyOf(entry));
+        return info;
+    }
+    return info;
 }
 
 QVariantMap CommandListModel::rowInfo(int row) const {

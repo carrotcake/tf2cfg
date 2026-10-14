@@ -108,6 +108,28 @@ public:
     /// refusal.
     Q_INVOKABLE int insertRowAfter(int anchorRow, const QString &text);
 
+    // -- aliases + chains (docs/DESIGN-config-editor.md §5) --------------------------
+
+    /// Define/update/remove an alias (empty body removes). Writes the `alias` row
+    /// the next save regenerates.
+    Q_INVOKABLE bool setAlias(const QString &name, const QString &body);
+
+    /// Names defined by `alias` rows in the loaded config.
+    Q_INVOKABLE QStringList aliasNames() const;
+
+    /// { found, name, body } of the latest `alias <name>` definition.
+    Q_INVOKABLE QVariantMap aliasInfo(const QString &name) const;
+
+    /// Split a command line on unquoted `;` (quote- and escape-aware, the lexer's
+    /// rules), trimmed; the chain editor's segments (§5). Single-segment lines come
+    /// back as a one-element list.
+    Q_INVOKABLE QStringList splitSegments(const QString &line) const;
+
+    /// Token round-trips (D19): quoteToken escapes and wraps raw text; unquoteToken
+    /// reads a parsed token back to raw text.
+    Q_INVOKABLE QString quoteToken(const QString &raw) const;
+    Q_INVOKABLE QString unquoteToken(const QString &token) const;
+
     /**
      * Surgical save (docs/legacy/ui-qml-rewrite.md 10.1): rewrite only the lines the
      * app owns, copy every other line byte-for-byte. Writes `<name>.bak` beside the

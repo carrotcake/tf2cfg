@@ -92,17 +92,17 @@ Where each future feature lands, and what is already in place:
 - **Optional, low value**: surface the newer catalog columns (input type, platform,
   context, flags) in `CommandOverviewTab` - the one unchecked item in the
   `allcmds`-v5 migration checklist (`docs/legacy/allcmds-v5-migration.md`).
-- **Config Editor tab** (`docs/DESIGN-config-editor.md`) - Chunks A and B landed
+- **Config Editor tab** (`docs/DESIGN-config-editor.md`) - Chunks A-C landed
   2026-10-14: the placeholder tab is now a master-detail editor (raw text
   edit/delete/insert with save anchors, search + type filter, bind-redirect dialog,
-  replay-order warnings) plus the `parseCommandLine` reverse-parse API, and the guided
-  pane: cvar value editors typed by the catalog (bool checkbox, int/flt clamped to
-  min/max, str token) and per-token argument editors with per-arg bounds, filled in
-  both directions through `parseCommandLine`/`findCommand` (full record). Chunk A also
-  surfaced a latent engine bug: `GameCfg::resetParsed()` wiped the catalog
-  classification, so every loaded row typed CMD_UNKWN - alias tags now live in their
-  own per-parse map. Chunks C (chain/alias editor + bind-dialog "Alias" tab) and D
-  (comment rows) are pending.
+  replay-order warnings), the guided pane (cvar value editors typed by the catalog,
+  per-token argument editors with per-arg bounds, filled both directions through
+  `parseCommandLine`/`findCommand`), and the chain editor (compound lines and alias
+  bodies as segment lists; BindEditorDialog gained the "Alias" tab writing both the
+  `setAlias` definition and the bind). Chunk A also surfaced a latent engine bug:
+  `GameCfg::resetParsed()` wiped the catalog classification, so every loaded row typed
+  CMD_UNKWN - alias tags now live in their own per-parse map. Chunk D (comment rows)
+  is pending.
 
 ## 6. Code findings from the 2026-10-13 audit
 
