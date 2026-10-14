@@ -92,25 +92,29 @@ Item {
     }
 
     /// Adopt parsed arguments (without the command name). Unknown values keep the
-    /// state and emit nothing.
+    /// state and emit nothing. Values may be multi-token ("0 0" = dispenser and
+    /// mode), so matching joins the token stream; the compound form is detected by
+    /// finding the partner command name inside it.
     function applyTokens(tokens) {
-        // Compound: "value partner value" after the command name, e.g. the bind
-        // "destroy 2; build 2" reached the build/destroy panel as ["2","build","2"].
-        if (tokens.length === 3 && compoundTemplate !== "") {
-            const a = matchIndex(tokens[0])
-            const partner = tokens[1].toLowerCase()
-            const b = matchIndex(tokens[2])
-            if (a >= 0 && b >= 0 && a === b
-                    && partner !== commandName.toLowerCase()
-                    && partner === partnerName().toLowerCase()) {
-                selectedIndex = a
-                rebuild = true
-                emitAuthored()
-                return
+        if (compoundTemplate !== "") {
+            const at = tokens.findIndex(
+                          t => t.toLowerCase() === partnerName().toLowerCase())
+            if (at > 0) {
+                const before = tokens.slice(0, at).join(" ")
+                const after = tokens.slice(at + 1).join(" ")
+                const a = matchIndex(before)
+                const b = matchIndex(after)
+                if (a >= 0 && b >= 0 && a === b
+                        && commandName.toLowerCase() !== partnerName().toLowerCase()) {
+                    selectedIndex = a
+                    rebuild = true
+                    emitAuthored()
+                    return
+                }
             }
         }
         if (tokens.length >= 1) {
-            const idx = matchIndex(tokens[0])
+            const idx = matchIndex(tokens.join(" "))
             if (idx >= 0) {
                 selectedIndex = idx
                 rebuild = false

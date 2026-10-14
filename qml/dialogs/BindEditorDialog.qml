@@ -75,25 +75,25 @@ Dialog {
         { value: "auto", label: "Auto" }
     ]
     property var buildingOptions: [
-        { value: 0, label: "Dispenser" },
-        { value: 1, label: "Teleporter entrance" },
-        { value: 2, label: "Sentry gun" },
-        { value: 3, label: "Teleporter exit" }
+        { value: "0 0", label: "Dispenser" },
+        { value: "1 0", label: "Teleporter entrance" },
+        { value: "1 1", label: "Teleporter exit" },
+        { value: "2 0", label: "Sentry gun" }
     ]
 
     property var customPanels: ({
         "voicemenu": { component: voicemenuPanel },
         "jointeam": { component: enumPanel, valueType: "str", options: [
             { value: "red", label: "RED" },
-            { value: "blue", label: "BLU" },
+            { value: "blu", label: "BLU" },
             { value: "auto", label: "Auto-assign" },
             { value: "spectate", label: "Spectate" }
         ] },
         "joinclass": { component: enumPanel, valueType: "str", options: classOptions },
         "join_class": { component: enumPanel, valueType: "str", options: classOptions },
-        "build": { component: enumPanel, valueType: "int", options: buildingOptions,
+        "build": { component: enumPanel, valueType: "str", options: buildingOptions,
                    compoundTemplate: "destroy {v}; build {v}" },
-        "destroy": { component: enumPanel, valueType: "int", options: buildingOptions,
+        "destroy": { component: enumPanel, valueType: "str", options: buildingOptions,
                      compoundTemplate: "destroy {v}; build {v}" },
         "eureka_teleport": { component: enumPanel, valueType: "int", options: [
             { value: 0, label: "Teleport home" },
@@ -120,12 +120,18 @@ Dialog {
             { value: 1, label: "Preset B" },
             { value: 2, label: "Preset C" },
             { value: 3, label: "Preset D" }
-        ] }
+        ] },
+        "disguise": { component: disguisePanel }
     })
 
     Component {
         id: voicemenuPanel
         VoiceMenuPanel {}
+    }
+
+    Component {
+        id: disguisePanel
+        DisguisePanel {}
     }
 
     Component {
