@@ -1,5 +1,8 @@
 # Design: Save Backup Rollback
 
+Status: **implemented** (`1201dff`, 2026-10-13); the failure path is pinned by the
+engine test `failedBackupWriteKeepsTheOldRestorePoint`.
+
 ## Goal
 Keep the old `.bak` restore point when a new backup cannot be written, while preserving the existing save behavior when it succeeds.
 

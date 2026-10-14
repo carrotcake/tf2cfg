@@ -119,6 +119,7 @@ private slots:
     void saveAppendsSessionBindsAfterTheOwnedBlock();
     void saveIsIdempotent();
     void saveWritesABakBesideTheFile();
+    void failedBackupWriteKeepsTheOldRestorePoint();
     void saveRefusesAResourcePath();
     void saveRecreatesAVanishedFile();
     void saveDetectsAnExternallyModifiedFile();
@@ -977,6 +978,35 @@ void EngineTest::saveWritesABakBesideTheFile() {
     backup.close();
     // The .bak holds what was on disk before this save: the untouched original.
     QCOMPARE(text, QStringLiteral("bind \"a\" \"+moveleft\"\n"));
+}
+
+void EngineTest::failedBackupWriteKeepsTheOldRestorePoint() {
+    // DESIGN-save-backup.md failure semantics: a failed backup copy changes nothing -
+    // the old .bak survives and the main file is untouched (the pre-1201dff code
+    // removed .bak before copying, destroying the only restore point).
+    const QString path = writeFile(QStringLiteral("bakfail.cfg"),
+                                   QStringLiteral("volume 0.5\n"));
+    const QString bak = path + QStringLiteral(".bak");
+    QVERIFY(QFile::copy(path, bak)); // seed a previous restore point
+    // Sabotage the copy: a directory at the `.bak.new` path makes QFile::copy fail.
+    QVERIFY(QDir(m_dir.path()).mkdir(QStringLiteral("bakfail.cfg.bak.new")));
+
+    ConfigController controller;
+    LOAD_CONFIG(controller, path);
+    QVERIFY(controller.setBind(QStringLiteral("a"), QStringLiteral("+duck")));
+    QVERIFY(!controller.saveCfg());
+    QVERIFY(controller.lastError().contains(QStringLiteral("backup")));
+
+    QFile main(path);
+    QVERIFY(main.open(QIODevice::ReadOnly | QIODevice::Text));
+    QCOMPARE(QString::fromUtf8(main.readAll()), QStringLiteral("volume 0.5\n"));
+    main.close();
+    QFile restore(bak);
+    QVERIFY2(restore.open(QIODevice::ReadOnly | QIODevice::Text), qPrintable(bak));
+    QCOMPARE(QString::fromUtf8(restore.readAll()), QStringLiteral("volume 0.5\n"));
+    restore.close();
+    QVERIFY(!QFile::exists(bak + QStringLiteral(".old")));
+    QVERIFY(QDir(m_dir.path()).rmdir(QStringLiteral("bakfail.cfg.bak.new")));
 }
 
 void EngineTest::saveRefusesAResourcePath() {
