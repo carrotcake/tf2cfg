@@ -957,6 +957,9 @@ Dialog {
 
                 Tf2Label {
                     Layout.fillWidth: true
+                    // Wrapping text would otherwise donate its unwrapped natural width
+                    // (1000+ px) to the layout's implicit size and blow the dialog wide.
+                    Layout.preferredWidth: 0
                     text: commandInfo ? commandInfo.docs : ""
                     color: Theme.colorTextMuted
                     font.pointSize: Theme.sizeSmall
@@ -1230,6 +1233,8 @@ Dialog {
 
                 Tf2Label {
                     Layout.fillWidth: true
+                    // Same wrapping-label trap as the docs label above.
+                    Layout.preferredWidth: 0
                     text: "OK binds this key to the alias and keeps the definition in "
                           + "the config. An empty name leaves the key unbound; an "
                           + "empty command list binds the key to the alias without "
@@ -1266,6 +1271,8 @@ Dialog {
         // "leave it empty to remove" is not something a user can guess (D16).
         Tf2Label {
             Layout.fillWidth: true
+            // Same wrapping-label trap as the docs label above.
+            Layout.preferredWidth: 0
             text: dialog.keyToken === "" ? ""
                                         : qsTr('Binds this command to "%1". Clear the field to remove the bind.')
                                               .arg(dialog.keyToken)
