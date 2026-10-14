@@ -1,16 +1,20 @@
 name: CI
 
+# Docs-only pushes skip the whole workflow (paths-ignore); any commit in the push
+# touching code, QML, tests or this workflow runs it. Tag releases live in
+# release.yml - paths filters are unreliable on tag pushes, so packaging is split
+# out and tag pushes bypass this gate entirely.
 on:
   push:
     branches: [qml-rewrite, master]
+    paths-ignore: ["docs/**", "**.md"]
   pull_request:
+    paths-ignore: ["docs/**", "**.md"]
+  workflow_dispatch: # manual re-run (gh workflow run) when a docs-only push needs CI
 
 jobs:
   linux:
     runs-on: ubuntu-latest
-    # Write is needed only on v* tags (release step); artifact upload works without it.
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -51,81 +55,4 @@ jobs:
 
       - name: Contrast gate (W8)
         run: python3 tools/contrast_check.py
-
-      # -- AppImage packaging ------------------------------------------------
-      # Builds on ubuntu-latest's Qt 6.4.2 / glibc 2.39; the result targets current
-      # distros by design (docs/ROADMAP.md). Uploaded as an artifact on every run and
-      # attached to a GitHub Release when a v* tag is pushed.
-      - name: Install AppImage tooling
-        run: |
-          sudo apt-get install -y imagemagick
-          # linuxdeployqt invokes `qmake`; apt installs it as `qmake6`.
-          sudo ln -s "$(command -v qmake6)" /usr/local/bin/qmake
-          curl -sL -o linuxdeploy.AppImage \
-              https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
-          # The qt plugin is discovered by filename next to linuxdeploy.
-          curl -sL -o linuxdeploy-plugin-qt-x86_64.AppImage \
-              https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
-          chmod +x linuxdeploy.AppImage linuxdeploy-plugin-qt-x86_64.AppImage
-
-      - name: Render app icon (ImageMagick, from the repo's TF2 font)
-        run: |
-          mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
-          # IM 6 on ubuntu-latest: the binary is `convert` (IM 7 renamed it `magick`).
-          convert -size 256x256 xc:none \
-                 -fill "#141719" -draw "roundrectangle 0,0 255,255 40,40" \
-                 -fill "#f0a30a" -font res/font/tf2build.ttf -pointsize 80 \
-                 -gravity center -annotate +0-10 ".cfg" \
-                 AppDir/usr/share/icons/hicolor/256x256/apps/tf2cfg.png
-
-      - name: Bundle AppImage
-        run: |
-          install -D -m 755 tf2cfgreal AppDir/usr/bin/tf2cfgreal
-          install -D -m 644 res/icon/tf2cfg.desktop AppDir/tf2cfg.desktop
-          export DISABLE_COPYRIGHT_FILE_DEPLOYMENT=1
-          # QML import scanning (this is what decides whether the QuickControls2
-          # style plugins get bundled - without them the app cannot start, since
-          # QQuickStyle "Basic" is set in main.cpp). All app QML is qrc-embedded;
-          # the scan of the qml/ tree covers the imports (QtQuick, QuickControls2).
-          # As a linuxdeploy plugin, linuxdeploy-plugin-qt is configured via env.
-          export QML_SOURCES_PATHS="$PWD/qml"
-          # The offscreen platform plugin is needed for the headless CI smoke test;
-          # desktop users get xcb, which is deployed by default.
-          export EXTRA_PLATFORM_PLUGINS=libqoffscreen.so
-          APPIMAGE_EXTRACT_AND_RUN=1 ./linuxdeploy.AppImage \
-              --appdir AppDir \
-              --plugin qt \
-              --output appimage \
-              --desktop-file res/icon/tf2cfg.desktop
-          mv TF2_Config_Manager-*.AppImage "TF2-Config-Manager-x86_64.AppImage"
-          ls -l TF2-Config-Manager-x86_64.AppImage
-
-      - name: Smoke-test the AppImage (headless run)
-        run: |
-          # Proves extraction, Qt plugin initialization and QML engine load in one
-          # shot: the app runs its event loop headless (offscreen platform) until
-          # timeout kills it (exit 124). Any other nonzero exit is a real failure -
-          # e.g. a missing bundled plugin fails before the app shows anything.
-          set +e
-          QT_QPA_PLATFORM=offscreen timeout 15s \
-              ./TF2-Config-Manager-x86_64.AppImage --appimage-extract-and-run > smoke.log 2>&1
-          rc=$?
-          set -e
-          if [ "$rc" != 124 ] && [ "$rc" != 0 ]; then
-            cat smoke.log
-            echo "::error::AppImage smoke test failed (exit $rc)"
-            exit 1
-          fi
-          echo "AppImage extracts and runs headless (exit $rc)"
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: TF2-Config-Manager-AppImage
-          path: TF2-Config-Manager-x86_64.AppImage
-
-      - name: Attach to release (v* tags only)
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v3
-        with:
-          files: TF2-Config-Manager-x86_64.AppImage
 

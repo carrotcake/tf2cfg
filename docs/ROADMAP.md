@@ -23,8 +23,11 @@ bundle the built binary with Qt 6.4.2 libs/plugins (QML modules come from the
 `qml6-module-*` runtime packages); the icon is rendered at build time with ImageMagick
 from the repo's TF2 font (`res/icon/tf2cfg.svg` is the mockup, `tf2cfg.desktop` the
 menu entry). The AppImage is smoke-tested headless (offscreen run for 15 s, exit 124 =
-success), uploaded as an artifact on every run, and attached to a GitHub Release when a
-`v*` tag is pushed (`softprops/action-gh-release@v3`). Compatibility note: the AppImage
+success). 2026-10-14, later: packaging moved to `release.yml` (tag-only `v*` trigger,
+attaches the AppImage to a GitHub Release via `softprops/action-gh-release@v3`) because
+`paths` filters are unreliable on tag pushes; ci.yml keeps build + tests + lint +
+contrast and skips entirely on docs-only pushes (`paths-ignore: ["docs/**", "**.md"]`,
+plus `workflow_dispatch` for manual runs). Compatibility note: the AppImage
 targets current distros (glibc 2.39 / Qt 6.4.2 floor) — accepted, per project decision.
 
 ## 2. Accessibility (`docs/accessibility.md` - evaluated, sized, deliberately deferred)
