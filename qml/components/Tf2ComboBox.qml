@@ -52,8 +52,12 @@ ComboBox {
     background: Rectangle {
         color: Theme.colorSurfaceSunken
         radius: Theme.radius
-        border.width: Theme.borderWidth
-        border.color: control.hovered || control.activeFocus ? Theme.colorBorderStrong : Theme.colorBorder
+        // Hover is a subtle line; keyboard focus gets the app-wide 2 px accent ring
+        // (W1/W3 consistency). Hover must not masquerade as focus.
+        border.width: control.activeFocus ? 2 : Theme.borderWidth
+        border.color: control.activeFocus ? Theme.colorAccent
+                                          : control.hovered ? Theme.colorBorderStrong
+                                          : Theme.colorBorder
     }
 
     delegate: ItemDelegate {

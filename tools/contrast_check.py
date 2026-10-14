@@ -56,7 +56,7 @@ CHECKED = [
     ("colorKeyCapText", "colorKeyCapHover", 4.5, "hovered cap label"),
     ("colorKeyCapText", "colorKeyCapBound", 4.5, "bound cap label"),
     # control boundaries (WCAG 1.4.11)
-    ("colorAccent", "colorSurfaceSunken", 3.0, "field focus ring"),
+    ("colorAccent", "colorSurfaceSunken", 3.0, "field/combo focus ring"),
     ("colorAccent", "colorSurfaceRaised", 3.0, "button/tab focus ring"),
     ("colorBorderStrong", "colorSurfaceSunken", 3.0, "field border"),
     ("colorBorder", "colorSurface", 3.0, "panel border"),

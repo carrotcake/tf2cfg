@@ -106,7 +106,8 @@ Computed for every pair in use; 16 of 25 pass, several with large margins (`colo
 | `colorTextDisabled` | `colorBg` | 3.13 | 4.5 | disabled button label | **accepted as decoration** (2026-10-13) |
 | `colorRed` | `colorSurface` | ~~2.83~~ 5.45 | 4.5 | error text in a Panel | fixed → `#da7a7d` |
 | `colorRed` | `colorBg` | ~~3.14~~ 6.05 | 4.5 | load error text | fixed → `#da7a7d` |
-| `colorBorderStrong` | `colorSurfaceSunken` | ~~2.48~~ 3.03 | 3.0 | field border **and the combo focus ring** | fixed → `#59626a` |
+| `colorBorderStrong` | `colorSurfaceSunken` | ~~2.48~~ 3.03 | 3.0 | field border | fixed → `#59626a` |
+| combo focus ring | `colorSurfaceSunken` | ~~2.48~~ 8.91 | 3.0 | the combo's only focus cue | fixed: accent ring like W1/W3 (was hover-colored, so focus had no distinct cue) |
 | `colorKeyCapBoundBorder` | `colorKeyCapBound` | ~~2.26~~ 3.01 | 3.0 | border of a bound key | fixed → `#b76b2d` |
 | `colorKeyCapBorder` | `colorKeyCap` | ~~1.51~~ 3.12 | 3.0 | cap boundary | fixed → `#707d88` |
 | `colorBorder` | `colorSurface` | ~~1.54~~ 3.02 | 3.0 | panel border | fixed → `#626c74` |
