@@ -154,14 +154,11 @@ jobs:
       - name: PROBE where aqt put MinGW (remove after diagnosis)
         shell: bash
         run: |
-          echo "QT_ROOT_DIR=$QT_ROOT_DIR"
-          ls "$QT_ROOT_DIR" 2>/dev/null | head -20
-          ls "$QT_ROOT_DIR/.." 2>/dev/null | head -20
-          ls "$QT_ROOT_DIR/../Tools" 2>/dev/null | head -20
-          ls "$QT_ROOT_DIR/../../Tools" 2>/dev/null | head -20
-          ls "C:/mingw64/bin/gcc.exe" "D:/a/tf2cfg/Qt" 2>/dev/null
-          find "D:/a/tf2cfg/Qt" -maxdepth 3 -name "gcc.exe" 2>/dev/null | head -5
-          true
+          echo "--- D:/a/tf2cfg/Qt:"; ls "D:/a/tf2cfg/Qt" || true
+          echo "--- find gcc.exe under D:/a/tf2cfg:"; find "D:/a/tf2cfg" -maxdepth 4 -name "gcc.exe" || true
+          echo "--- find ld.exe under D:/a/tf2cfg:"; find "D:/a/tf2cfg" -maxdepth 5 -name "ld.exe" || true
+          echo "--- hostedtoolcache:"; ls "C:/hostedtoolcache/windows" || true
+          echo "--- PATH:"; echo "$PATH" | tr ':' '\n' | grep -i -E "mingw|qt" || true
 
       - name: Build app (qmake + mingw32-make)
         shell: bash
