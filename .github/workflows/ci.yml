@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [qml-rewrite, master]
+  pull_request:
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Qt 6
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qt6-base-dev qt6-declarative-dev libgl1-mesa-dev \
+                                  qt6-quickcontrols2-dev qmake6 qt6-tools-dev-tools
+
+      - name: Build app (qmake + make)
+        run: |
+          qmake6 -o Makefile tf2cfgreal.pro
+          make -j"$(nproc)"
+
+      - name: Build and run engine tests
+        run: |
+          mkdir build-test && cd build-test
+          qmake6 -o Makefile ../tests/tests.pro
+          make -j"$(nproc)"
+          QT_QPA_PLATFORM=offscreen ./tf2cfg_test -o testlog.txt,txt
+          grep -q "FAIL" testlog.txt && { cat testlog.txt; exit 1; }
+          grep "Totals" testlog.txt
+
+      - name: qmllint (0 errors; the 28 known unqualified-access warnings are tolerated)
+        run: |
+          find qml -name '*.qml' | xargs qmllint-qt6 2>lint.txt || true
+          if grep -q "Error:" lint.txt; then
+            echo "::error::qmllint reported errors"; cat lint.txt; exit 1
+          fi
+          echo "qmllint: 0 errors"
+
+      - name: Contrast gate (W8)
+        run: python3 tools/contrast_check.py

@@ -9,13 +9,13 @@ audit (`docs/AUDIT.md`) live in section 6; dismissed items are not listed here a
 
 ## 1. CI workflow (the 2026-10-12 audit's only open finding, legacy #22)
 
-No CI exists. Add a minimal GitHub Actions workflow:
-
-- `ubuntu-latest`, install `qt6-base-dev`, `qmake`, `make`.
-- Build the app (`tf2cfgreal.pro`) and the test target (`tests/tests.pro`), run
-  `tf2cfg_test`.
-- Run `qmllint` as a gate that tolerates the existing 28 unqualified-access warnings
-  but fails on errors (0 errors is the current bar).
+DONE 2026-10-13: `.github/workflows/ci.yml` — Linux only (`ubuntu-latest`), on push to
+`qml-rewrite`/`master` and on PRs. Jobs: install Qt 6 apt packages, build the app,
+build + run `tf2cfg_test` (offscreen platform), gate `qmllint` at 0 errors (the 28
+known warnings tolerated), run `tools/contrast_check.py`. The app binary is only
+compiled, never launched (no display); the test binary runs headless via
+`QT_QPA_PLATFORM=offscreen`. First Linux compile of this codebase — the CI run is the
+verification.
 
 Nothing Linux has been compiled yet; the test target links only Qt core + testlib plus
 the resource bundle and is expected to work, which is exactly what CI is for. Linux users

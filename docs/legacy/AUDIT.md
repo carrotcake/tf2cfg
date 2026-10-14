@@ -74,11 +74,12 @@ the reason recorded — these are not a to-do list and should not be re-raised),
 
 21. ~~**Widget UI in `src/legacy/widgets/` is dead code not built**~~ **FIXED** — deleted (`git rm -r`, 13 files), history preserved. The parity contract in `docs/legacy/ui-qml-rewrite.md` section 3 cites those files as evidence, so that document now says how to pull one back out of git. ~3000 lines.
 
-22. **No Linux build verification in CI** — the only open finding here.
-    - **What this is:** The `.pro` uses MinGW paths; Linux build assumes Qt 6 in standard paths. No GitHub Actions / GitLab CI to confirm it compiles on Ubuntu/Arch.
-    - **Fix:** Add a minimal workflow: `ubuntu-latest`, install `qt6-base-dev`, `qmake`, `make`, run `qmllint`.
-    - **Note added since:** `qmllint` is clean of errors today but reports 27 `ComponentBehavior`/unqualified-access advisories, so a gate has to tolerate warnings rather than fail on them. The test target should be fine on Linux - it links only Qt core + testlib and the same resource bundle - but nothing has run there yet, which is the point of this finding.
-    - **If we skip it:** Linux users (half the TF2 player base) may hit compile errors on first try.
+22. ~~**No Linux build verification in CI**~~ **DONE 2026-10-13** — `.github/workflows/ci.yml`:
+    Linux only (`ubuntu-latest`), push/PR trigger. Builds the app, builds + runs
+    `tf2cfg_test` headless (`QT_QPA_PLATFORM=offscreen`), gates `qmllint` at 0 errors
+    (the known unqualified-access warnings tolerated), runs `tools/contrast_check.py`.
+    The app binary is compiled, never launched (no display). The workflow run is the
+    verification this finding asked for.
 
 23. ~~**`windeployqt` command is not scripted**~~ **FIXED** — `deploy.ps1`: copies `build/<config>/tf2cfgreal.exe` into a clean `dist/`, runs `windeployqt --<config> --compiler-runtime --qmldir qml`, and fails loudly when the build or the Qt kit is missing. Verified: the deployed folder runs with no Qt directory on `PATH`. `-QtRoot`/`-Output`/`-Config` are parameters, not edits.
 
@@ -89,8 +90,8 @@ the reason recorded — these are not a to-do list and should not be re-raised),
 **Healthy core, safety net in place.** The engine and UI are functionally complete. All nine "Must fix" items are resolved, `tests/tst_engine.cpp` guards the parser, the bind logic, the command catalog and the save path, and the dead code is gone. `docs/CODE_REVIEW.md` has no open findings left.
 
 **Next up, in order:**
-1. CI (#22) - run `tf2cfg_test` and build the app on `ubuntu-latest` so half the player base is not the first to find a compile error. The **only** open finding in this document.
-2. Accessibility (`docs/accessibility.md`) - evaluated and sized, put off deliberately. The work items are ordered there; the two that matter are a focus ring on `Tf2Button` and making the 104 key caps reachable by keyboard.
+1. ~~CI (#22)~~ DONE 2026-10-13 (`.github/workflows/ci.yml`) - run `tf2cfg_test` and build the app on `ubuntu-latest`. No open findings remain in this document.
+2. ~~Accessibility (`docs/accessibility.md`)~~ DONE 2026-10-13: W1-W8 all shipped; the manual pass steps in that doc's section 4 remain the user's side.
 
 Closed by decision and not to be re-raised: #11, #12, #13, #17, #18, #20 — each with its reason inline.
 
