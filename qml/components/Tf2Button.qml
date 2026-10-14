@@ -30,8 +30,9 @@ Button {
                                 : control.pressed ? (control.flat ? Theme.colorSurfaceRaised : Theme.colorAccentPressed)
                                 : control.hovered ? (control.flat ? Theme.colorSurfaceRaised : Theme.colorAccentHover)
                                 : (control.flat ? "transparent" : Theme.colorAccent)
-        border.width: Theme.borderWidth
+        border.width: control.activeFocus ? 2 : Theme.borderWidth
         border.color: !control.enabled ? Theme.colorBorder
+                                       : control.activeFocus ? Theme.colorAccent
                                        : control.flat ? Theme.colorBorderStrong
                                        : Theme.colorAccentHover
     }

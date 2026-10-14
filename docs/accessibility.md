@@ -135,7 +135,7 @@ Ordered by value per line. Estimates are for the change itself, not its verifica
 
 | # | Work | Size | Risk | Notes |
 |---|---|---|---|---|
-| W1 | `Tf2Button`: add an `activeFocus` case to the background (accent border or a 2 px accent ring, as a `Theme` token) | ~4 lines | none | Fixes A3 for every button at once. Do this first. |
+| W1 | `Tf2Button` focus ring | DONE 2026-10-13: `activeFocus` case in the background - 2 px accent border. | ~4 lines, fixes A3 for every button at once. Do first. |
 | W2 | `KeyCap`: `activeFocusOnTab` on bindable caps, `Keys.onReturnPressed`/`onSpacePressed` → `activated(keyId)`, focus ring in the existing `Rectangle` | ~30 lines | low | The cap's fill is already a four-way binding; focus is a fifth. Must not fire for the two non-bindable caps, which already carry `enabled: false`. |
 | W3 | `Tf2TabBar`: `activeFocusOnTab`, `Keys.onLeftPressed`/`onRightPressed` move + activate, focus ring on the delegate | ~25 lines | low | Alt+1..3 is a cheaper first cut if arrow semantics are not wanted. |
 | W4 | `Accessible.role`/`name`/`description` on `KeyCap`, the tab delegate, and labels for the two read-only fields | ~15 lines | none | Purely additive; no visual change. |

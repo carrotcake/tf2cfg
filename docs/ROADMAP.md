@@ -30,7 +30,7 @@ items (W1-W8); the priorities:
 
 | # | Work | Notes |
 |---|------|-------|
-| W1 | `Tf2Button` focus ring | ~4 lines, fixes A3 for every button at once. Do first. |
+| W1 | `Tf2Button` focus ring | DONE 2026-10-13: 2 px accent border on `activeFocus`. |
 | W2 | `KeyCap` keyboard focus + activation | ~30 lines; must not fire for the two non-bindable caps. |
 | W3 | `Tf2TabBar` keyboard path (A2) | Arrow keys or Alt+1..3 first cut. |
 | W4 | `Accessible.*` names/roles on custom items | Purely additive. |
