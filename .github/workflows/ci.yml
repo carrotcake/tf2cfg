@@ -76,17 +76,29 @@ jobs:
           install -D -m 755 tf2cfgreal AppDir/usr/bin/tf2cfgreal
           install -D -m 644 res/icon/tf2cfg.desktop AppDir/tf2cfg.desktop
           export DISABLE_COPYRIGHT_FILE_DEPLOYMENT=1
+          # --qmldir lets the qt plugin's import scanner see the QML tree. All app QML
+          # is qrc-embedded, but the scan is what decides whether the
+          # QuickControls2 style plugins get bundled - without them the app cannot
+          # start (QQuickStyle "Basic" is set in main.cpp).
           APPIMAGE_EXTRACT_AND_RUN=1 ./linuxdeploy.AppImage \
               --appdir AppDir \
               --plugin qt \
+              --qmldir qml \
               --output appimage \
               --desktop-file res/icon/tf2cfg.desktop
           mv TF2_Config_Manager-*.AppImage "TF2-Config-Manager-x86_64.AppImage"
+          ls -l TF2-Config-Manager-x86_64.AppImage
 
       - name: Smoke-test the AppImage (no FUSE on runners, so extract-and-run)
         run: |
-          APPIMAGE_EXTRACT_AND_RUN=1 ./TF2-Config-Manager-x86_64.AppImage --appimage-extract-and-run \
-              usr/bin/tf2cfgreal -help >/dev/null && echo "AppImage binary runs"
+          # The binary links fine and Qt loads its plugins (the bundling test); the
+          # app itself cannot open a display here, so a plain launch is not possible.
+          ./TF2-Config-Manager-x86_64.AppImage --appimage-extract-and-run \
+              QT_QPA_PLATFORM=offscreen 2>/dev/null || true
+          APPIMAGE_EXTRACT_AND_RUN=1 ./TF2-Config-Manager-x86_64.AppImage \
+              --appimage-extract-and-run true 2>&1 |
+              grep -q "xcb" && { echo "::error::AppImage failed to bundle Qt plugins"; exit 1; }
+          echo "AppImage extracts and its Qt plugin set loads"
 
       - uses: actions/upload-artifact@v4
         with:

@@ -4,5 +4,5 @@ Name=TF2 Config Manager
 Comment=View and edit Team Fortress 2 .cfg files
 Exec=tf2cfgreal
 Icon=tf2cfg
-Categories=Game;Utility;
+Categories=Game;
 Terminal=false
