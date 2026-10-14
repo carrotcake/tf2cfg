@@ -139,6 +139,10 @@ verification per AGENTS.md:
 - `build`/`destroy`: the "modern" convention is `build <building> <mode>`; 0 dispenser,
   1 teleporter (mode 0 = entrance, 1 = exit), 2 sentry. The older community mapping
   (0..3, exit = 3) is wrong and was replaced. Panel options now carry two-token values.
+  Old one-argument binds migrate on dialog open: `modernizedCommand()` in
+  `BindEditorDialog` rewrites `build|destroy 0..3` (quote-aware, per `;` part) to the
+  modern form in the Custom Command field before the user edits; OK commits the
+  modernized text, Cancel keeps the key's bound command untouched.
 - `jointeam`: the console accepts both `blue` and `blu`; owned lines and UI emit `blu`.
 - `pda_click`: accepts no args in game (or args are no-ops). Catalog row is `none`;
   no panel, stays on the generic (now argument-less) path.
