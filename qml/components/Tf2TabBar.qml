@@ -18,6 +18,19 @@ Item {
 
     signal activated(int index)
 
+    // W3: the strip joins the tab chain; Left/Right move and activate, and the
+    // focused tab shows a ring (a11y step 2 of the manual pass).
+    activeFocusOnTab: tabCount > 0
+    Keys.onLeftPressed: function (event) { control.moveCurrent(event, -1) }
+    Keys.onRightPressed: function (event) { control.moveCurrent(event, 1) }
+
+    function moveCurrent(event, delta) {
+        if (tabCount === 0)
+            return
+        event.accepted = true
+        activated((currentIndex + delta + tabCount) % tabCount)
+    }
+
     implicitHeight: Theme.tabHeight
     implicitWidth: tabRow.implicitWidth
 
@@ -41,11 +54,22 @@ Item {
                 required property var modelData
 
                 readonly property bool isCurrent: control.currentIndex === index
+                /// True when the tab strip holds keyboard focus and this tab would
+                /// activate with Return/Space - the focus ring's condition.
+                readonly property bool isFocus: control.activeFocus
+                                                && control.currentIndex === index
 
                 implicitWidth: Math.max(Theme.tabMinWidth, tabLabel.implicitWidth + Theme.spacingSection)
                 implicitHeight: Theme.tabHeight
                 width: implicitWidth
                 height: implicitHeight
+
+                // W3 + W4: each tab announces as a page tab; Left/Right switch, and
+                // Return activates the focused one.
+                Accessible.role: Accessible.PageTab
+                Accessible.name: tabItem.modelData
+                Accessible.selected: tabItem.isCurrent
+                Accessible.onPressAction: control.activated(tabItem.index)
 
                 Rectangle {
                     anchors.fill: parent
@@ -53,6 +77,9 @@ Item {
                     color: tabItem.isCurrent ? Theme.colorSurface
                                              : hover.hovered ? Theme.colorSurfaceRaised
                                              : "transparent"
+                    // Focus ring: 2 px accent border, same cue as Tf2Button (W1).
+                    border.width: tabItem.isFocus ? 2 : Theme.borderWidth
+                    border.color: tabItem.isFocus ? Theme.colorAccent : "transparent"
 
                     Text {
                         id: tabLabel

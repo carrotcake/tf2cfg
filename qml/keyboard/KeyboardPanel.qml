@@ -103,6 +103,31 @@ Item {
         setZoom(1.0)
     }
 
+    // W6: arrow keys scroll the keyboard panel to the outer caps. The focus scope
+    // forwards arrows here only when nothing else consumed them; KeyNavigation on the
+    // caps would fight the strip's own arrow handling, so scrolling is global to the
+    // panel instead of per-cap.
+    Keys.onPressed: function (event) {
+        const step = 60
+        switch (event.key) {
+        case Qt.Key_Left:
+            flick.contentX = Math.max(0, flick.contentX - step)
+            break
+        case Qt.Key_Right:
+            flick.contentX = Math.min(flick.contentX + step, flick.contentWidth - flick.width)
+            break
+        case Qt.Key_Up:
+            flick.contentY = Math.max(0, flick.contentY - step)
+            break
+        case Qt.Key_Down:
+            flick.contentY = Math.min(flick.contentY + step, flick.contentHeight - flick.height)
+            break
+        default:
+            return
+        }
+        event.accepted = true
+    }
+
     Flickable {
         id: flick
         anchors.fill: parent
