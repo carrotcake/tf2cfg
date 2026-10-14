@@ -154,8 +154,13 @@ jobs:
       - name: Build app (qmake + mingw32-make)
         shell: bash
         run: |
+          # Compile AND link with Qt's own bundled MinGW (aqt installs it under
+          # <Qt>/Tools/mingw*/bin), not the runner's preinstalled gcc: Qt's
+          # prebuilt libs are built against that runtime, and a newer system gcc
+          # fails at link with __imp___argc undefined (libQt6EntryPoint.a).
+          export PATH="$(echo "$(qmake -query QT_INSTALL_DIR)/Tools"/mingw*/bin):$PATH"
           qmake -o Makefile tf2cfgreal.pro
-          mingw32-make -j"$(nproc 2>/dev/null || echo 8)"
+          mingw32-make -j8
 
       - name: Deploy the runtime beside the exe (windeployqt)
         shell: cmd
