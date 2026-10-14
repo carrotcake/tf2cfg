@@ -7,6 +7,7 @@
 
 #include "gamecfg/gameconfig.h"
 #include "gamecfg/lex/lexers.h"
+#include "ui/commandfiltermodel.h"
 #include "ui/commandlistmodel.h"
 #include "ui/configcontroller.h"
 #include "ui/consolecommandmodel.h"
@@ -120,6 +121,15 @@ private slots:
     void saveRefusesAResourcePath();
     void saveRecreatesAVanishedFile();
     void saveDetectsAnExternallyModifiedFile();
+
+    // Config Editor (docs/DESIGN-config-editor.md, chunk A)
+    void parseCommandLineTokenizesLikeTheLexer();
+    void setRowTextReclassifiesAndOwnsTheRow();
+    void deleteRowDropsItsLineOnSave();
+    void insertRowAfterLandsAfterTheAnchorLine();
+    void insertRowAfterChainsSessionAnchors();
+    void warningsFlagDeadBindsAndOverriddenCvars();
+    void filterModelKindsAndText();
 
 private:
     QTemporaryDir m_dir;
@@ -1022,6 +1032,191 @@ void EngineTest::saveDetectsAnExternallyModifiedFile() {
 
     // And after the save the stamp is re-recorded, so the next save is silent again.
     QVERIFY(!controller.needsConfirm());
+}
+
+// --- Config Editor (docs/DESIGN-config-editor.md, chunk A) ---
+
+void EngineTest::parseCommandLineTokenizesLikeTheLexer() {
+    // The reverse-parse runs the same lexer as the file parser, so custom text and
+    // parsed rows are one tokenizer apart (§8) - quotes stay on, exactly like cfgLex.
+    ConfigController controller;
+    const QVariantMap parsed = controller.parseCommandLine(
+        QStringLiteral("bind \"a\" \"+moveleft\""));
+    QCOMPARE(parsed.value(QStringLiteral("ok")).toBool(), true);
+    QCOMPARE(parsed.value(QStringLiteral("typeName")).toString(), QStringLiteral("command"));
+    QCOMPARE(parsed.value(QStringLiteral("args")).toList().size(), 3);
+    QCOMPARE(parsed.value(QStringLiteral("args")).toList().at(2).toString(),
+             QStringLiteral("\"+moveleft\""));
+
+    // An empty line and a comment-only line are refused: there is nothing to edit.
+    QVERIFY(controller.parseCommandLine(QString()).value(QStringLiteral("ok")).toBool() == false);
+    QVERIFY(controller.parseCommandLine(QStringLiteral("// note"))
+                .value(QStringLiteral("ok")).toBool() == false);
+
+    // A head the catalog does not know stays unknown (§3: it may be an alias defined
+    // in another cfg the game executes at runtime).
+    QCOMPARE(controller.parseCommandLine(QStringLiteral("zzz_not_a_cmd 1"))
+                 .value(QStringLiteral("typeName")).toString(), QStringLiteral("unknown"));
+}
+
+void EngineTest::setRowTextReclassifiesAndOwnsTheRow() {
+    const QString path = writeFile(QStringLiteral("setrow.cfg"),
+                                   QStringLiteral("// comment\nvolume \"0.7\"\nbind \"a\" \"+moveleft\"\n"));
+
+    ConfigController controller;
+    LOAD_CONFIG(controller, path);
+    // Rows: 0 volume, 1 bind (the comment is not a row).
+    QVERIFY(controller.setRowText(0, QStringLiteral("volume 0.9")));
+    QVERIFY(controller.isDirty());
+
+    const QVariantMap info = controller.rowInfo(0);
+    QCOMPARE(info.value(QStringLiteral("line")).toString(), QStringLiteral("volume 0.9"));
+    QCOMPARE(info.value(QStringLiteral("typeName")).toString(), QStringLiteral("float"));
+    QVERIFY(info.value(QStringLiteral("warning")).toString().isEmpty());
+
+    QVERIFY(controller.saveCfg());
+    QFile saved(path);
+    QVERIFY(saved.open(QIODevice::ReadOnly | QIODevice::Text));
+    const QStringList lines = QString::fromUtf8(saved.readAll()).split(QLatin1Char('\n'));
+    saved.close();
+    // The edited line is re-rendered in place; everything else survives byte-for-byte.
+    QCOMPARE(lines.at(0), QStringLiteral("// comment"));
+    QCOMPARE(lines.at(1), QStringLiteral("volume 0.9"));
+    QCOMPARE(lines.at(2), QStringLiteral("bind \"a\" \"+moveleft\""));
+
+    // An empty or comment-only replacement is refused and changes nothing.
+    QVERIFY(!controller.setRowText(0, QString()));
+    QVERIFY(!controller.setRowText(0, QStringLiteral("// only a comment")));
+    QCOMPARE(controller.rowInfo(0).value(QStringLiteral("line")).toString(),
+             QStringLiteral("volume 0.9"));
+}
+
+void EngineTest::deleteRowDropsItsLineOnSave() {
+    const QString path = writeFile(QStringLiteral("delrow.cfg"),
+                                   QStringLiteral("sv_cheats 1\nvolume 0.5\n"));
+
+    ConfigController controller;
+    LOAD_CONFIG(controller, path);
+    QVERIFY(controller.deleteRow(0));
+    QVERIFY(controller.isDirty());
+    QVERIFY(controller.saveCfg());
+
+    QFile saved(path);
+    QVERIFY(saved.open(QIODevice::ReadOnly | QIODevice::Text));
+    const QString text = QString::fromUtf8(saved.readAll());
+    saved.close();
+    QVERIFY(!text.contains(QLatin1String("sv_cheats")));
+    QCOMPARE(text, QStringLiteral("volume 0.5\n"));
+}
+
+void EngineTest::insertRowAfterLandsAfterTheAnchorLine() {
+    const QString path = writeFile(QStringLiteral("insrow.cfg"),
+                                   QStringLiteral("volume 0.5\nsv_cheats 1\n"));
+
+    ConfigController controller;
+    LOAD_CONFIG(controller, path);
+    // Insert after the selected parsed row: the new line lands right below it.
+    QCOMPARE(controller.insertRowAfter(0, QStringLiteral("echo hi")), 1);
+    // No anchor: end of file.
+    QCOMPARE(controller.insertRowAfter(-1, QStringLiteral("echo eof")), 3);
+    QVERIFY(controller.isDirty());
+    QVERIFY(controller.saveCfg());
+
+    QFile saved(path);
+    QVERIFY(saved.open(QIODevice::ReadOnly | QIODevice::Text));
+    const QStringList lines = QString::fromUtf8(saved.readAll()).split(QLatin1Char('\n'));
+    saved.close();
+    QCOMPARE(lines.at(0), QStringLiteral("volume 0.5"));
+    QCOMPARE(lines.at(1), QStringLiteral("echo hi"));
+    QCOMPARE(lines.at(2), QStringLiteral("sv_cheats 1"));
+    QCOMPARE(lines.at(3), QStringLiteral("echo eof"));
+}
+
+void EngineTest::insertRowAfterChainsSessionAnchors() {
+    // Inserting "after" a row that is itself a session insert keeps stacking below it,
+    // so a run of added lines stays in the order the user built them (§9).
+    const QString path = writeFile(QStringLiteral("chainrow.cfg"),
+                                   QStringLiteral("volume 0.5\nsv_cheats 1\n"));
+
+    ConfigController controller;
+    LOAD_CONFIG(controller, path);
+    QCOMPARE(controller.insertRowAfter(0, QStringLiteral("echo a")), 1);
+    QCOMPARE(controller.insertRowAfter(1, QStringLiteral("echo b")), 2);
+    QVERIFY(controller.saveCfg());
+
+    QFile saved(path);
+    QVERIFY(saved.open(QIODevice::ReadOnly | QIODevice::Text));
+    const QStringList lines = QString::fromUtf8(saved.readAll()).split(QLatin1Char('\n'));
+    saved.close();
+    QCOMPARE(lines.at(1), QStringLiteral("echo a"));
+    QCOMPARE(lines.at(2), QStringLiteral("echo b"));
+    QCOMPARE(lines.at(3), QStringLiteral("sv_cheats 1"));
+}
+
+void EngineTest::warningsFlagDeadBindsAndOverriddenCvars() {
+    // §7: an unbind (or unbindall) after a bind kills it; a cvar set again leaves the
+    // earlier set dead. The warning sits on the row that never takes effect.
+    CommandListModel model;
+    model.setEntries(parse(QStringLiteral(
+        "bind \"a\" \"+moveleft\"\n"
+        "bind \"b\" \"+jump\"\n"
+        "unbind \"a\"\n"
+        "sensitivity 2.5\n"
+        "sensitivity 3\n")));
+    QCOMPARE(model.rowCount(), 5);
+    QVERIFY(model.data(model.index(0, 0), CommandListModel::WarningRole)
+                .toString().contains(QLatin1String("unbind")));
+    QVERIFY(model.data(model.index(1, 0), CommandListModel::WarningRole).toString().isEmpty());
+    QVERIFY(model.data(model.index(2, 0), CommandListModel::WarningRole).toString().isEmpty());
+    QVERIFY(model.data(model.index(3, 0), CommandListModel::WarningRole)
+                .toString().contains(QLatin1String("overridden")));
+    QVERIFY(model.data(model.index(4, 0), CommandListModel::WarningRole).toString().isEmpty());
+
+    // An earlier bind row plus a trailing unbindall: the bind is flagged, and a bind
+    // re-added after the unbindall is not.
+    CommandListModel afterAll;
+    afterAll.setEntries(parse(QStringLiteral(
+        "bind \"a\" \"+moveleft\"\nunbindall\nbind \"c\" \"+jump\"\n")));
+    QVERIFY(afterAll.data(afterAll.index(0, 0), CommandListModel::WarningRole)
+                .toString().contains(QLatin1String("unbindall")));
+    QVERIFY(afterAll.data(afterAll.index(2, 0), CommandListModel::WarningRole)
+                .toString().isEmpty());
+}
+
+void EngineTest::filterModelKindsAndText() {
+    CommandListModel model;
+    model.setEntries(parse(QStringLiteral(
+        "volume 0.5\n"
+        "bind \"a\" \"+moveleft\"\n"
+        "alias \"quick\" \"slot3; slot1\"\n"
+        "zzz_unknown 1\n")));
+    CommandFilterModel proxy;
+    proxy.setSourceModel(&model);
+
+    QCOMPARE(proxy.rowCount(), 4);
+
+    proxy.setFilterKind(0); // cvars
+    QCOMPARE(proxy.rowCount(), 1);
+    proxy.setFilterKind(1); // commands (binds have their own kind)
+    QCOMPARE(proxy.rowCount(), 1); // the alias definition row parses as a command
+    proxy.setFilterKind(2); // aliases (definition or reference)
+    QCOMPARE(proxy.rowCount(), 1);
+    proxy.setFilterKind(3); // not in catalog
+    QCOMPARE(proxy.rowCount(), 1);
+    proxy.setFilterKind(4); // binds (redirect targets)
+    QCOMPARE(proxy.rowCount(), 1);
+    proxy.setFilterKind(-1);
+
+    proxy.setFilterText(QStringLiteral("VOL")); // case-insensitive on the row text
+    QCOMPARE(proxy.rowCount(), 1);
+    proxy.setFilterText(QStringLiteral("nosuchtext"));
+    QCOMPARE(proxy.rowCount(), 0);
+    proxy.setFilterText(QString());
+    QCOMPARE(proxy.rowCount(), 4);
+
+    // RowRole passes through unrenumbered, so the editor can edit by source row.
+    proxy.setFilterText(QStringLiteral("bind"));
+    QCOMPARE(proxy.data(proxy.index(0, 0), CommandListModel::RowRole).toInt(), 1);
 }
 
 QTEST_MAIN(EngineTest)

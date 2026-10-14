@@ -29,7 +29,7 @@ Item {
             Layout.leftMargin: Theme.spacing
             Layout.rightMargin: Theme.spacing
             Layout.topMargin: Theme.spacing
-            model: ["Command Overview", "Placeholder", "Edit Binds"]
+            model: ["Command Overview", "Config Editor", "Edit Binds"]
             onActivated: function (index) { tabBar.currentIndex = index }
         }
 
@@ -41,7 +41,14 @@ Item {
             currentIndex: tabBar.currentIndex
 
             CommandOverviewTab {}
-            PlaceholderTab {}
+            ConfigEditorTab {
+                // §1: bind rows redirect to Edit Binds - switch tabs, then open the
+                // key's dialog (P29 parity).
+                onBindActivated: function (keyToken) {
+                    tabBar.currentIndex = 2
+                    bindDialog.openForKey(keyToken)
+                }
+            }
             BindEditorTab {
                 onKeyActivated: function (keyId, token) {
                     // Parity P29: the widget build printed the key token, then opened

@@ -37,7 +37,9 @@ bool GameCfg::appendCfg(const QString &filename) {
             cmd.type = cmdToType(tok.string());
         }
         if (cmd.args.size() == 1 && !cmd.args.front().compare("alias")) {
-            cmd_types[tok.string().toLower()] = cmd::CMD_ALIAS;
+            // The alias NAME is what later rows look up; tagged in the per-parse map
+            // (see alias_types in gameconfig.h).
+            alias_types[tok.string().toLower()] = cmd::CMD_ALIAS;
         }
         if (tok.isEndToken()) {
             if (!cmd.args.empty()) {
@@ -53,7 +55,7 @@ bool GameCfg::appendCfg(const QString &filename) {
 
 void GameCfg::resetParsed() {
     cmd_list.clear();
-    cmd_types.clear();
+    alias_types.clear();
 }
 
 inline cmd::CmdType
@@ -61,6 +63,12 @@ GameCfg::cmdToType(const QString &cmd) const {
     // Case-insensitive: cfgLex folds the command name, but a config may still spell it
     // `Bind`, and everything after a `;` on one line keeps its own case.
     const QString key = cmd.toLower();
+    // An alias name the current parse defined wins: a later `bind "k" "myalias"` row
+    // must type as alias even when the name shadows a catalog entry. Catalog types
+    // survive every resetParsed() - only alias_types is per-parse.
+    auto alias = alias_types.constFind(key);
+    if (alias != alias_types.cend())
+        return alias.value();
     auto it = cmd_types.constFind(key);
     return it == cmd_types.cend() ? cmd::CMD_UNKWN : it.value();
 }

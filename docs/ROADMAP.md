@@ -92,6 +92,14 @@ Where each future feature lands, and what is already in place:
 - **Optional, low value**: surface the newer catalog columns (input type, platform,
   context, flags) in `CommandOverviewTab` - the one unchecked item in the
   `allcmds`-v5 migration checklist (`docs/legacy/allcmds-v5-migration.md`).
+- **Config Editor tab** (`docs/DESIGN-config-editor.md`) - Chunk A landed 2026-10-14:
+  the placeholder tab is now a master-detail editor (raw text edit/delete/insert with
+  save anchors, search + type filter, bind-redirect dialog, replay-order warnings) plus
+  the `parseCommandLine` reverse-parse API. It also surfaced a latent engine bug:
+  `GameCfg::resetParsed()` wiped the catalog classification, so every loaded row typed
+  CMD_UNKWN - alias tags now live in their own per-parse map. Chunks B (guided
+  editors), C (chain/alias editor + bind-dialog "Alias" tab) and D (comment rows) are
+  pending.
 
 ## 6. Code findings from the 2026-10-13 audit
 

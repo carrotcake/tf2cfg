@@ -36,11 +36,29 @@ public:
 
     QVector<cmd::Entry> const &getCmdList() const;
 
+    /// Catalog + parsed-alias classification for a command head (docs/DESIGN-config-editor.md
+    /// §8). cmd_types holds every allcmds.csv name; alias_types the names the last
+    /// parse defined. A head defined only by another cfg (executed at runtime) is
+    /// CMD_UNKWN.
+    cmd::CmdType lookupType(const QString &head) const {
+        const QString key = head.toLower();
+        auto alias = alias_types.constFind(key);
+        if (alias != alias_types.cend())
+            return alias.value();
+        return cmd_types.value(key, cmd::CMD_UNKWN);
+    }
+
     /// Every allcmds.csv entry, with its input type, platform and context metadata.
     const QVector<cmd::ConVar *> &allCmds() const { return known_cmds; }
 
 private:
     QHash<QString, cmd::CmdType> cmd_types;
+    /// Alias names the current parse has defined (appendCfg). Kept apart from
+    /// cmd_types so resetParsed() can drop them per-parse without touching the
+    /// catalog classification - previously the catalog types were wiped on every
+    /// load and every row typed CMD_UNKWN (found by the Config Editor's tests,
+    /// docs/DESIGN-config-editor.md chunk A).
+    QHash<QString, cmd::CmdType> alias_types;
     QHash<QString, unsigned> cmd_map;
     QVector<cmd::ConVar *> known_cmds; ///< owning; freed in dtor
     QVector<cmd::Entry> cmd_list;

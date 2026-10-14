@@ -36,9 +36,16 @@ struct Entry {
     /// false even when they are binds: the file remains their source of truth until
     /// the user edits them.
     bool appOwned = false;
+    /// Save anchor for a session row (sourceLine < 0): insert after this file line.
+    /// -1 keeps the legacy bind rule (after the last bind line), AnchorEof appends at
+    /// end of file (docs/DESIGN-config-editor.md §9).
+    int anchorLine = -1;
     Entry()
         : type(CMD_UNKWN){};
 };
+
+/// Sentinel anchorLine: the session row is appended at end of file.
+constexpr int ANCHOR_EOF = 2147483647;
 
 /**
  * One entry of allcmds.csv (res/cfg/schema.md). The metadata members (flags,

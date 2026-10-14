@@ -30,6 +30,9 @@ public:
         TypeRole,                    ///< cmd::CmdType as int
         TypeNameRole,                ///< human-readable type
         BoundKeyRole,                ///< lowercase key token a bind applies to, else ""
+        WarningRole,                 ///< replay-order warning text (§7), else ""
+        RowRole,                     ///< source-model row; a filter proxy hides rows but
+                                     ///< never renumbers (the Config Editor edits by row)
     };
     Q_ENUM(Role)
 
@@ -79,6 +82,25 @@ public:
     /// binds(). Empty when the key is unbound.
     QVariantMap bindingKinds() const;
 
+    /// Replace a row's parsed args and re-classify its type (Config Editor raw edit,
+    /// docs/DESIGN-config-editor.md §4.2). Keeps the row's sourceLine, marks it
+    /// app-owned. False when the row is out of range or args is empty.
+    bool setEntryArgs(int row, const QStringList &args, cmd::CmdType type);
+
+    /// Remove a row (Config Editor delete). The surgical save then drops its line.
+    /// False when the row is out of range.
+    bool deleteEntry(int row);
+
+    /// Insert a session row whose save position is anchored to `anchorRow`'s file line
+    /// (Config Editor insert-after-selected, §9). anchorRow < 0 appends at end of file.
+    /// Returns the new row index, -1 on refusal (empty args).
+    int insertEntry(int anchorRow, const QStringList &args, cmd::CmdType type);
+
+    /// One row as a QVariantMap { row, line, command, type, typeName, boundKey, warning }
+    /// for the Config Editor's editor pane (it sits outside the list delegate, so it
+    /// cannot read roles). Empty map when the row is out of range.
+    Q_INVOKABLE QVariantMap rowInfo(int row) const;
+
     static QString typeName(cmd::CmdType type);
 
 signals:
@@ -93,14 +115,29 @@ private:
         QVariantMap binds;
         QVariantMap bindingKinds;
         QHash<QString, QVector<int>> rowsByKey;
+        /// Replay-order warnings (docs/DESIGN-config-editor.md §7): source row -> text.
+        QHash<int, QString> warnings;
     };
     BindScanResult scanBinds() const;
+
+    /// Lowercase key token a bind/bindtoggle row applies to, else "" (BoundKeyRole logic).
+    QString boundKeyOf(const cmd::Entry &entry) const;
+
+    /// Run scanBinds and refresh all three caches (binds, kinds, warnings).
+    void ensureScan() const;
+
+    /// Reset the derived caches and repaint the warning column. Every row mutation
+    /// goes through this, so the keyboard, the Config Editor badges and `dirty` all
+    /// stay in step.
+    void invalidateDerived();
 
     QVector<cmd::Entry> m_entries;
     mutable QVariantMap m_bindsCache;
     mutable bool m_bindsCacheValid = false;
     mutable QVariantMap m_bindingKindsCache;
     mutable bool m_bindingKindsCacheValid = false;
+    mutable QHash<int, QString> m_warningsCache;
+    mutable bool m_warningsCacheValid = false;
 };
 
 #endif // COMMANDLISTMODEL_H

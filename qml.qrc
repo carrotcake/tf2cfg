@@ -20,7 +20,7 @@
         <file>qml/pages/StartPage.qml</file>
         <file>qml/pages/EditorPage.qml</file>
         <file>qml/pages/tabs/CommandOverviewTab.qml</file>
-        <file>qml/pages/tabs/PlaceholderTab.qml</file>
+        <file>qml/pages/tabs/ConfigEditorTab.qml</file>
         <file>qml/pages/tabs/BindEditorTab.qml</file>
 
         <file>qml/dialogs/BindEditorDialog.qml</file>

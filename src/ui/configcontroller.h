@@ -9,6 +9,7 @@
 #include <QFuture>
 
 #include "gamecfg/gameconfig.h"
+#include "ui/commandfiltermodel.h"
 #include "ui/commandlistmodel.h"
 #include "ui/consolecommandmodel.h"
 
@@ -24,6 +25,8 @@ class ConfigController : public QObject {
 
     Q_PROPERTY(QAbstractItemModel *commandModel READ commandModel CONSTANT)
     Q_PROPERTY(QAbstractItemModel *consoleModel READ consoleModel CONSTANT)
+    /// The Config Editor's filtered view of commandModel (docs/DESIGN-config-editor.md §2).
+    Q_PROPERTY(QAbstractItemModel *rowFilter READ rowFilter CONSTANT)
     Q_PROPERTY(QVariantList presets READ presets CONSTANT)
     Q_PROPERTY(QString cfgPath READ cfgPath NOTIFY cfgPathChanged)
     Q_PROPERTY(QString lastError READ lastError NOTIFY lastErrorChanged)
@@ -41,6 +44,10 @@ public:
     QAbstractItemModel *commandModel();
     /// The allcmds.csv catalog (Build-A-Bind source data).
     QAbstractItemModel *consoleModel() { return &m_console; }
+    QAbstractItemModel *rowFilter() { return &m_rowFilter; }
+
+    /// One row as a QVariantMap for the Config Editor's pane (delegates to the model).
+    Q_INVOKABLE QVariantMap rowInfo(int row) const { return m_commands.rowInfo(row); }
     QVariantList presets() const;
     QString cfgPath() const;
     QString lastError() const;
@@ -80,6 +87,26 @@ public:
 
     /// "bind" or "bindtoggle" for key token `key`, else "".
     Q_INVOKABLE QString bindingKind(const QString &key) const;
+
+    // -- Config Editor (docs/DESIGN-config-editor.md) --------------------------------
+
+    /// Tokenize one command line the way the parser would and classify its head.
+    /// { ok, args, typeName, error }: ok is false for an empty/comment-only line.
+    /// The guided editors (§8) reverse-parse custom text through this, so there is
+    /// one tokenizer, not a second one in QML.
+    Q_INVOKABLE QVariantMap parseCommandLine(const QString &line) const;
+
+    /// Replace row `row` with the tokenized text (raw edit). False when the text
+    /// parses to nothing.
+    Q_INVOKABLE bool setRowText(int row, const QString &text);
+
+    /// Remove row `row`; the save drops its line.
+    Q_INVOKABLE bool deleteRow(int row);
+
+    /// Insert a new row after `anchorRow` (its file line is the save anchor;
+    /// anchorRow < 0 appends at end of file). Returns the new row index, -1 on
+    /// refusal.
+    Q_INVOKABLE int insertRowAfter(int anchorRow, const QString &text);
 
     /**
      * Surgical save (docs/legacy/ui-qml-rewrite.md 10.1): rewrite only the lines the
@@ -126,6 +153,7 @@ private:
 
     GameCfg m_cfg; ///< default ctor loads res/cfg/allcmds.csv once
     CommandListModel m_commands;
+    CommandFilterModel m_rowFilter; ///< over m_commands; set in the ctor
     ConsoleCommandModel m_console;
     /// Rows exactly as the parse produced them. The save compares this against the live
     /// model: a line the parse covered but whose row the user since deleted is dropped
@@ -134,6 +162,9 @@ private:
     QString m_cfgPath;
     QString m_lastError;
     bool m_loading = false;
+    /// Parsed rows deleted since load/save; each will drop its file line on save, so
+    /// dirty must be true even with no app-owned row left (docs/DESIGN-config-editor.md).
+    int m_droppedParsedLines = 0;
     QFuture<void> m_loadFuture;
     QDateTime m_loadedStamp;  ///< file mtime at load; compared at save
     qint64 m_loadedSize = -1; ///< file size at load

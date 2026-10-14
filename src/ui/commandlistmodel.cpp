@@ -12,6 +12,8 @@ QHash<int, QByteArray> makeRoleNames() {
     names[CommandListModel::TypeRole] = "cmdType";
     names[CommandListModel::TypeNameRole] = "typeName";
     names[CommandListModel::BoundKeyRole] = "boundKey";
+    names[CommandListModel::WarningRole] = "warning";
+    names[CommandListModel::RowRole] = "sourceRow";
     return names;
 }
 
@@ -96,13 +98,13 @@ QVariant CommandListModel::data(const QModelIndex &index, int role) const {
     case TypeNameRole:
         return typeName(entry.type);
     case BoundKeyRole: {
-        if (entry.args.isEmpty())
-            return QString();
-        const QString head = unquoted(entry.args.at(0)).toLower();
-        if (!isBindCommand(head) || entry.args.size() < 2)
-            return QString();
-        return unquoted(entry.args.at(1)).toLower();
+        return boundKeyOf(entry);
     }
+    case WarningRole:
+        ensureScan();
+        return m_warningsCache.value(index.row(), QString());
+    case RowRole:
+        return index.row();
     default:
         return {};
     }
@@ -117,43 +119,23 @@ void CommandListModel::setEntries(const QVector<cmd::Entry> &entries) {
     beginResetModel();
     m_entries = entries;
     endResetModel();
-    m_bindsCacheValid = false;
-    m_bindingKindsCacheValid = false;
-    emit bindsChanged();
+    invalidateDerived();
 }
 
 void CommandListModel::clearEntries() {
     beginResetModel();
     m_entries.clear();
     endResetModel();
-    m_bindsCacheValid = false;
-    m_bindingKindsCacheValid = false;
-    emit bindsChanged();
+    invalidateDerived();
 }
 
 QVariantMap CommandListModel::binds() const {
-    if (m_bindsCacheValid) {
-        return m_bindsCache;
-    }
-
-    const BindScanResult result = scanBinds();
-    m_bindsCache = result.binds;
-    m_bindingKindsCache = result.bindingKinds;
-    m_bindsCacheValid = true;
-    m_bindingKindsCacheValid = true;
+    ensureScan();
     return m_bindsCache;
 }
 
 QVariantMap CommandListModel::bindingKinds() const {
-    if (m_bindingKindsCacheValid) {
-        return m_bindingKindsCache;
-    }
-
-    const BindScanResult result = scanBinds();
-    m_bindsCache = result.binds;
-    m_bindingKindsCache = result.bindingKinds;
-    m_bindsCacheValid = true;
-    m_bindingKindsCacheValid = true;
+    ensureScan();
     return m_bindingKindsCache;
 }
 
@@ -169,8 +151,28 @@ QVector<int> CommandListModel::bindRows(const QString &key) const {
     return result.rowsByKey.value(wanted);
 }
 
+QString CommandListModel::boundKeyOf(const cmd::Entry &entry) const {
+    if (entry.args.isEmpty())
+        return QString();
+    const QString head = unquoted(entry.args.at(0)).toLower();
+    if (!isBindCommand(head) || entry.args.size() < 2)
+        return QString();
+    return unquoted(entry.args.at(1)).toLower();
+}
+
 CommandListModel::BindScanResult CommandListModel::scanBinds() const {
     BindScanResult result;
+
+    // Replay-order warning bookkeeping (docs/DESIGN-config-editor.md §7): the last
+    // bind/bindtoggle row per key (an unbind after it kills it), every bind row so far
+    // (an unbindall after them kills them all), and the rows that set each cvar head
+    // (a later set leaves the earlier ones dead). Line numbers in the text are 1-based.
+    QHash<QString, int> lastBindRow;
+    QVector<int> bindRowsSoFar;
+    QHash<QString, QVector<int>> cvarSets;
+    const auto deadBy = [&result](int row, const QString &what) {
+        result.warnings.insert(row, QStringLiteral("dead: %1").arg(what));
+    };
 
     for (int row = 0; row < m_entries.size(); ++row) {
         const cmd::Entry &entry = m_entries.at(row);
@@ -180,6 +182,11 @@ CommandListModel::BindScanResult CommandListModel::scanBinds() const {
         const QString head = unquoted(entry.args.at(0)).toLower();
 
         if (head == BindSyntax::UnbindAll) {
+            for (int earlier : bindRowsSoFar)
+                deadBy(earlier, QStringLiteral("unbindall on line %1 clears this bind")
+                                     .arg(entry.sourceLine + 1));
+            bindRowsSoFar.clear();
+            lastBindRow.clear();
             result.binds.clear();
             result.bindingKinds.clear();
             result.rowsByKey.clear();
@@ -188,6 +195,12 @@ CommandListModel::BindScanResult CommandListModel::scanBinds() const {
         if (head == BindSyntax::Unbind) {
             if (entry.args.size() >= 2) {
                 const QString key = unquoted(entry.args.at(1)).toLower();
+                if (lastBindRow.contains(key)) {
+                    deadBy(lastBindRow.value(key),
+                           QStringLiteral("unbind on line %1 clears this bind")
+                               .arg(entry.sourceLine + 1));
+                    lastBindRow.remove(key);
+                }
                 result.binds.remove(key);
                 result.bindingKinds.remove(key);
                 result.rowsByKey[key].append(row);
@@ -212,10 +225,58 @@ CommandListModel::BindScanResult CommandListModel::scanBinds() const {
             result.bindingKinds.insert(key, head == BindSyntax::BindToggle
                                                ? QStringLiteral("bindtoggle")
                                                : QStringLiteral("bind"));
+            lastBindRow.insert(key, row);
+            bindRowsSoFar.append(row);
+        }
+    }
+
+    // Cvar sets, second pass: flag every earlier row a later set overrides. Plain
+    // value rows only - commands and aliases have no "last write wins" death.
+    for (int row = 0; row < m_entries.size(); ++row) {
+        const cmd::Entry &entry = m_entries.at(row);
+        if (entry.args.isEmpty())
+            continue;
+        switch (entry.type) {
+        case cmd::CMD_IVAR:
+        case cmd::CMD_FVAR:
+        case cmd::CMD_SVAR:
+        case cmd::CMD_BVAR: {
+            const QString head = unquoted(entry.args.at(0)).toLower();
+            for (int earlier : cvarSets.value(head)) {
+                if (!result.warnings.contains(earlier))
+                    deadBy(earlier, QStringLiteral("overridden by the line %1 set")
+                                        .arg(entry.sourceLine + 1));
+            }
+            cvarSets[head].append(row);
+            break;
+        }
+        default:
+            break;
         }
     }
 
     return result;
+}
+
+void CommandListModel::ensureScan() const {
+    if (m_bindsCacheValid && m_bindingKindsCacheValid && m_warningsCacheValid)
+        return;
+    const BindScanResult result = scanBinds();
+    m_bindsCache = result.binds;
+    m_bindingKindsCache = result.bindingKinds;
+    m_warningsCache = result.warnings;
+    m_bindsCacheValid = true;
+    m_bindingKindsCacheValid = true;
+    m_warningsCacheValid = true;
+}
+
+void CommandListModel::invalidateDerived() {
+    m_bindsCacheValid = false;
+    m_bindingKindsCacheValid = false;
+    m_warningsCacheValid = false;
+    if (!m_entries.isEmpty())
+        emit dataChanged(index(0), index(m_entries.size() - 1), {WarningRole});
+    emit bindsChanged();
 }
 
 bool CommandListModel::setBind(const QString &key, const QString &command, bool toggle) {
@@ -265,9 +326,7 @@ bool CommandListModel::setBind(const QString &key, const QString &command, bool 
         const QModelIndex idx = index(row);
         emit dataChanged(idx, idx, {LineRole, CommandRole, ArgsRole, TypeRole, TypeNameRole,
                                     BoundKeyRole});
-        m_bindsCacheValid = false;
-        m_bindingKindsCacheValid = false;
-        emit bindsChanged();
+        invalidateDerived();
         return true;
     }
 
@@ -293,9 +352,7 @@ bool CommandListModel::setBind(const QString &key, const QString &command, bool 
     m_entries.push_back(entry);
     endInsertRows();
 
-    m_bindsCacheValid = false;
-    m_bindingKindsCacheValid = false;
-    emit bindsChanged();
+    invalidateDerived();
     return true;
 }
 
@@ -315,10 +372,84 @@ bool CommandListModel::clearBind(const QString &key) {
         endRemoveRows();
     }
 
-    m_bindsCacheValid = false;
-    m_bindingKindsCacheValid = false;
-    emit bindsChanged();
+    invalidateDerived();
     return true;
+}
+
+bool CommandListModel::setEntryArgs(int row, const QStringList &args, cmd::CmdType type) {
+    if (row < 0 || row >= m_entries.size() || args.isEmpty())
+        return false;
+
+    cmd::Entry &entry = m_entries[row];
+    entry.args = args;
+    entry.type = type;
+    entry.appOwned = true; // the Config Editor owns the line from here on (§9)
+
+    const QModelIndex idx = index(row);
+    emit dataChanged(idx, idx, {LineRole, CommandRole, ArgsRole, TypeRole, TypeNameRole,
+                                BoundKeyRole});
+    invalidateDerived();
+    return true;
+}
+
+bool CommandListModel::deleteEntry(int row) {
+    if (row < 0 || row >= m_entries.size())
+        return false;
+
+    beginRemoveRows(QModelIndex(), row, row);
+    m_entries.remove(row);
+    endRemoveRows();
+    invalidateDerived();
+    return true;
+}
+
+int CommandListModel::insertEntry(int anchorRow, const QStringList &args, cmd::CmdType type) {
+    if (args.isEmpty())
+        return -1;
+
+    cmd::Entry entry;
+    entry.args = args;
+    entry.type = type;
+    entry.appOwned = true;
+    // Save position: right after the anchor row's file line, so the new row lands
+    // where the user placed it (docs/DESIGN-config-editor.md §9). An anchor that is
+    // itself a session row chains to that row's anchor; no anchor means end of file.
+    if (anchorRow >= 0 && anchorRow < m_entries.size()) {
+        const cmd::Entry &src = m_entries.at(anchorRow);
+        entry.anchorLine = src.sourceLine >= 0 ? src.sourceLine
+                         : src.anchorLine >= 0 ? src.anchorLine
+                                               : cmd::ANCHOR_EOF;
+    } else {
+        entry.anchorLine = cmd::ANCHOR_EOF;
+    }
+
+    // Display order mirrors the anchor: the row lands directly after the anchor row,
+    // so the list shows it where the save will write it. Session rows sharing an
+    // anchor keep their relative order, which this preserves.
+    const int row = (anchorRow >= 0 && anchorRow < m_entries.size()) ? anchorRow + 1
+                                                                     : m_entries.size();
+    beginInsertRows(QModelIndex(), row, row);
+    m_entries.insert(row, entry);
+    endInsertRows();
+    invalidateDerived();
+    return row;
+}
+
+QVariantMap CommandListModel::rowInfo(int row) const {
+    QVariantMap info;
+    if (row < 0 || row >= m_entries.size())
+        return info;
+
+    const cmd::Entry &entry = m_entries.at(row);
+    info.insert(QStringLiteral("row"), row);
+    info.insert(QStringLiteral("line"), entry.args.join(QLatin1Char(' ')));
+    info.insert(QStringLiteral("command"), entry.args.value(0));
+    info.insert(QStringLiteral("type"), static_cast<int>(entry.type));
+    info.insert(QStringLiteral("typeName"), typeName(entry.type));
+    info.insert(QStringLiteral("boundKey"), boundKeyOf(entry));
+    ensureScan();
+    info.insert(QStringLiteral("warning"), m_warningsCache.value(row, QString()));
+    return info;
 }
 
 QString CommandListModel::typeName(cmd::CmdType type) {

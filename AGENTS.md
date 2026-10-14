@@ -39,10 +39,11 @@ cd build-test && .\release\tf2cfg_test.exe -o testlog.txt,txt
 - The test suite is the gate: all cases green before every commit. It parses real files
   offline against temp paths; `QT += concurrent` and `RESOURCES += ../res/res.qrc` are
   required (tests read the catalog from the same resource the app uses).
-- `qmllint` must stay at 0 errors; 28 unqualified-access warnings are tolerated
-  (counted 2026-10-13, all are context-property `cfg` reads - a pragma sweep cannot
-  fix those), do not add new ones. All QML files carry
-  `pragma ComponentBehavior: Bound`; new files must too.
+- `qmllint` must stay at 0 errors; 29 unqualified-access warnings are tolerated
+  (counted 2026-10-13 at 28; the Config Editor tab added one more on 2026-10-14,
+  accepted - all are context-property `cfg` reads, and clearing them needs the
+  structural context-property cleanup, not a pragma), do not add new ones. All QML
+  files carry `pragma ComponentBehavior: Bound`; new files must too.
 - `pwsh -File deploy.ps1 [-Config debug] [-QtRoot ...]` packages a self-contained `dist/`.
 - Linux packaging is CI's AppImage job (`.github/workflows/ci.yml`): every push produces
   a `TF2-Config-Manager-x86_64.AppImage` artifact; a `v*` tag publishes it as a release.

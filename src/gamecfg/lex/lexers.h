@@ -28,6 +28,18 @@ public:
     }
     bool hasNext() const { return line < arr.size(); }
     void close() { arr.clear(); }
+    /// Parse-from-string entry point (docs/DESIGN-config-editor.md §8): feed raw lines
+    /// instead of a file. Every line is preprocessed exactly like open() does, so a
+    /// buffer tokenizes identically to the same text read from disk.
+    void setBuffer(QStringList lines) {
+        arr.clear();
+        for (QString &str : lines) {
+            preprocess(str);
+            arr += str;
+        }
+        line = 0;
+        col = 0;
+    }
     /// 0-based index of the line the cursor is on. nextToken() reads one line per call,
     /// so this is the line a command starts on - which is what the surgical save keys
     /// app-owned rows to.

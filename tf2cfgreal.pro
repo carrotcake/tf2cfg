@@ -17,6 +17,7 @@ SOURCES += \
     src/gamecfg/gameconfig.cpp \
     src/gamecfg/lex/cmdlexer.cpp \
     src/gamecfg/lex/configlexer.cpp \
+    src/ui/commandfiltermodel.cpp \
     src/ui/commandlistmodel.cpp \
     src/ui/consolecommandmodel.cpp \
     src/ui/configcontroller.cpp
@@ -25,6 +26,7 @@ HEADERS += \
     src/gamecfg/convars.h \
     src/gamecfg/gameconfig.h \
     src/gamecfg/lex/lexers.h \
+    src/ui/commandfiltermodel.h \
     src/ui/commandlistmodel.h \
     src/ui/consolecommandmodel.h \
     src/ui/configcontroller.h

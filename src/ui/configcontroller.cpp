@@ -10,6 +10,8 @@
 #include <QVariantMap>
 #include <QtConcurrent>
 
+#include "gamecfg/lex/lexers.h"
+
 #include <algorithm>
 
 ConfigController::ConfigController(QObject *parent)
@@ -22,6 +24,9 @@ ConfigController::ConfigController(QObject *parent)
 
     // Build-A-Bind browses the game's command catalog, not the parsed config.
     m_console.setCommands(m_cfg.allCmds());
+
+    // The Config Editor's list is this filter over the parsed rows.
+    m_rowFilter.setSourceModel(&m_commands);
 }
 
 void ConfigController::setLoading(bool loading) {
@@ -66,6 +71,10 @@ bool ConfigController::needsConfirm() const {
 }
 
 bool ConfigController::isDirty() const {
+    // A deleted parsed row also changes the file on the next save (its line is
+    // dropped) even though no app-owned row remains (docs/DESIGN-config-editor.md).
+    if (m_droppedParsedLines > 0)
+        return true;
     for (const cmd::Entry &entry : m_commands.entries())
         if (entry.appOwned)
             return true;
@@ -135,6 +144,7 @@ void ConfigController::resyncAfterSave() {
     }
     m_commands.setEntries(m_cfg.getCmdList());
     m_parsed = m_cfg.getCmdList();
+    m_droppedParsedLines = 0; // the resync reproduces the saved file exactly
 }
 
 /**
@@ -147,8 +157,8 @@ void ConfigController::resyncAfterSave() {
  * `args.join(" ")` — the exact text the Command Overview shows, so there is one
  * rendering, not two. A line the parse covered but whose row the model no longer holds
  * (the user deleted the bind) is dropped. Rows added in this session (`sourceLine < 0`)
- * are inserted after the last bind line, in row order, or at end of file when the
- * config has no binds at all.
+ * insert at their anchor (Entry::anchorLine, docs/DESIGN-config-editor.md §9); the
+ * legacy anchor -1 keeps the original rule (after the last bind line).
  *
  * shortcut: a parsed-but-deleted command on an untouched compound line keeps the whole
  * line, because nothing owns that line. Touched compound lines now rebuild all of their
@@ -217,7 +227,22 @@ bool ConfigController::writeConfig(const QString &path, const QString &source,
     for (const cmd::Entry &parsed : m_parsed)
         if (parsed.sourceLine >= 0)
             parsedLines.insert(parsed.sourceLine);
-    int insertAfter = -1; // last bind line: session rows land right after the binds
+
+    // Session rows grouped by their save anchor (docs/DESIGN-config-editor.md §9):
+    // anchorLine -1 = the legacy bind rule, cmd::ANCHOR_EOF = end of file, anything
+    // else = right after that source line's emitted text.
+    QHash<int, QVector<int>> sessionsByAnchor;
+    for (int row = 0; row < entries.size(); ++row) {
+        const cmd::Entry &entry = entries.at(row);
+        if (entry.appOwned && entry.sourceLine < 0 && !entry.args.isEmpty())
+            sessionsByAnchor[entry.anchorLine].append(row);
+    }
+    QSet<int> anchorLines;
+    for (auto it = sessionsByAnchor.constBegin(); it != sessionsByAnchor.constEnd(); ++it)
+        if (it.key() >= 0 && it.key() != cmd::ANCHOR_EOF)
+            anchorLines.insert(it.key());
+
+    int insertAfter = -1; // legacy anchor: last bind line; session binds land after it
     for (int row = 0; row < entries.size(); ++row) {
         const cmd::Entry &entry = entries.at(row);
         if (entry.sourceLine < 0)
@@ -231,6 +256,7 @@ bool ConfigController::writeConfig(const QString &path, const QString &source,
     QByteArray out;
     out.reserve(bytes.size() + 128);
     qint64 insertOffset = -1; // byte offset in out right after the insertAfter line
+    QHash<int, qint64> anchorOffsets; // explicit anchor line -> offset after its text
     for (int i = 0; i < lines.size(); ++i) {
         const QByteArray lineBytes = lines.at(i);
         QByteArray terminator;
@@ -278,36 +304,84 @@ bool ConfigController::writeConfig(const QString &path, const QString &source,
 
         if (i == insertAfter)
             insertOffset = out.size();
+        if (anchorLines.contains(i))
+            anchorOffsets[i] = out.size();
     }
 
-    // Rows created in this session, right after the last bind line (so new binds stay
-    // with the binds) or at end of file when the config has no binds.
-    QByteArray sessionBlock;
-    QByteArray nl = QByteArrayLiteral("\n");
-    if (insertAfter >= 0 && insertAfter < lines.size()) {
-        const QByteArray &nb = lines.at(insertAfter);
-        if (nb.endsWith("\r\n"))
-            nl = QByteArrayLiteral("\r\n");
-        else if (nb.endsWith('\n') || nb.endsWith('\r'))
-            nl = QByteArray(1, nb.at(nb.size() - 1));
-    }
-    for (const cmd::Entry &entry : entries) {
-        if (!entry.appOwned || entry.sourceLine >= 0 || entry.args.isEmpty())
-            continue;
-        sessionBlock += entry.args.join(QLatin1Char(' ')).toUtf8() + nl;
-    }
-    if (!sessionBlock.isEmpty()) {
-        // If the anchor line itself had no terminator, the first row would glue onto it.
-        if (insertAfter >= 0 && insertAfter < lines.size()) {
-            const QByteArray &nb = lines.at(insertAfter);
-            if (!nb.endsWith('\n') && !nb.endsWith('\r'))
-                sessionBlock.prepend(nl);
+    // -- session-row emission ------------------------------------------------------
+    // Every group renders to (offset, bytes) and inserts at its offset, descending so
+    // earlier inserts never shift a later one. Groups without a usable offset append
+    // at end of file (anchor line dropped or never existed).
+    struct SessionBlock {
+        qint64 offset;
+        QByteArray bytes;
+    };
+
+    const auto terminatorOf = [&lines](int idx) -> QByteArray {
+        if (idx < 0 || idx >= lines.size())
+            return QByteArrayLiteral("\n");
+        const QByteArray &lineBytes = lines.at(idx);
+        if (lineBytes.endsWith("\r\n"))
+            return QByteArrayLiteral("\r\n");
+        if (lineBytes.endsWith('\n') || lineBytes.endsWith('\r'))
+            return QByteArray(1, lineBytes.at(lineBytes.size() - 1));
+        return QByteArrayLiteral("\n"); // unterminated last line: rows still separate
+    };
+    const auto hasOwnTerminator = [&lines](int idx) -> bool {
+        if (idx < 0 || idx >= lines.size())
+            return true;
+        const QByteArray &lineBytes = lines.at(idx);
+        return lineBytes.endsWith('\n') || lineBytes.endsWith('\r');
+    };
+    // Rows of one group, each rendered on its own line in row order.
+    const auto renderGroup = [&entries](const QVector<int> &rows, const QByteArray &nl) {
+        QByteArray block;
+        for (int row : rows) {
+            const cmd::Entry &entry = entries.at(row);
+            if (!entry.appOwned || entry.sourceLine >= 0 || entry.args.isEmpty())
+                continue;
+            block += entry.args.join(QLatin1Char(' ')).toUtf8() + nl;
         }
-        if (insertOffset < 0)
-            out += sessionBlock;
-        else
-            out.insert(insertOffset, sessionBlock);
+        return block;
+    };
+
+    QVector<SessionBlock> blocks;
+    const auto addBlock = [&blocks, &out](qint64 offset, QByteArray bytes) {
+        if (!bytes.isEmpty())
+            blocks.append({offset, std::move(bytes)});
+    };
+
+    // Legacy binds: after the last bind line, or end of file when there is none.
+    if (sessionsByAnchor.contains(-1)) {
+        QByteArray nl = terminatorOf(insertAfter);
+        QByteArray block = renderGroup(sessionsByAnchor.value(-1), nl);
+        // If the anchor line itself had no terminator, the first row would glue onto it.
+        if (insertAfter >= 0 && !hasOwnTerminator(insertAfter))
+            block.prepend(QByteArrayLiteral("\n"));
+        addBlock(insertOffset < 0 ? out.size() : insertOffset, std::move(block));
     }
+    // Explicitly anchored rows: right after the anchor line's emitted text.
+    for (auto it = sessionsByAnchor.constBegin(); it != sessionsByAnchor.constEnd(); ++it) {
+        if (it.key() < 0 || it.key() == cmd::ANCHOR_EOF || !anchorOffsets.contains(it.key()))
+            continue;
+        QByteArray block = renderGroup(it.value(), terminatorOf(it.key()));
+        if (!hasOwnTerminator(it.key()))
+            block.prepend(QByteArrayLiteral("\n"));
+        addBlock(anchorOffsets.value(it.key()), std::move(block));
+    }
+    // Unanchored rows: end of file, using the file's own line-ending convention.
+    if (sessionsByAnchor.contains(cmd::ANCHOR_EOF)) {
+        addBlock(out.size(),
+                 renderGroup(sessionsByAnchor.value(cmd::ANCHOR_EOF),
+                             terminatorOf(lines.size() - 1)));
+    }
+
+    std::stable_sort(blocks.begin(), blocks.end(),
+                     [](const SessionBlock &a, const SessionBlock &b) {
+                         return a.offset > b.offset;
+                     });
+    for (const SessionBlock &block : blocks)
+        out.insert(static_cast<int>(block.offset), block.bytes);
 
     return commitWrite(path, out, error);
 }
@@ -431,6 +505,66 @@ QString ConfigController::bindingKind(const QString &key) const {
     return m_commands.bindingKind(key);
 }
 
+QVariantMap ConfigController::parseCommandLine(const QString &line) const {
+    QVariantMap result;
+    result.insert(QStringLiteral("ok"), false);
+
+    Lexers::cfgLex lex;
+    lex.setBuffer({line});
+    QStringList args;
+    while (lex.hasNext()) {
+        const auto tok = lex.nextToken();
+        if (tok.isEndToken())
+            break;
+        args << tok.string();
+    }
+    if (args.isEmpty()) {
+        result.insert(QStringLiteral("error"), QStringLiteral("nothing to parse"));
+        return result;
+    }
+
+    const cmd::CmdType type = m_cfg.lookupType(args.first());
+    QVariantList argList;
+    for (const QString &arg : args)
+        argList << arg;
+    result.insert(QStringLiteral("ok"), true);
+    result.insert(QStringLiteral("args"), argList);
+    result.insert(QStringLiteral("type"), static_cast<int>(type));
+    result.insert(QStringLiteral("typeName"), CommandListModel::typeName(type));
+    return result;
+}
+
+bool ConfigController::setRowText(int row, const QString &text) {
+    const QVariantMap parsed = parseCommandLine(text);
+    if (!parsed.value(QStringLiteral("ok")).toBool())
+        return false;
+    QStringList args;
+    for (const QVariant &arg : parsed.value(QStringLiteral("args")).toList())
+        args << arg.toString();
+    return m_commands.setEntryArgs(
+        row, args, static_cast<cmd::CmdType>(parsed.value(QStringLiteral("type")).toInt()));
+}
+
+bool ConfigController::deleteRow(int row) {
+    // Pending file change without an app-owned row: track it for dirty (see isDirty).
+    if (row >= 0 && row < m_commands.entries().size()
+        && m_commands.entries().at(row).sourceLine >= 0)
+        ++m_droppedParsedLines;
+    return m_commands.deleteEntry(row);
+}
+
+int ConfigController::insertRowAfter(int anchorRow, const QString &text) {
+    const QVariantMap parsed = parseCommandLine(text);
+    if (!parsed.value(QStringLiteral("ok")).toBool())
+        return -1;
+    QStringList args;
+    for (const QVariant &arg : parsed.value(QStringLiteral("args")).toList())
+        args << arg.toString();
+    return m_commands.insertEntry(
+        anchorRow, args,
+        static_cast<cmd::CmdType>(parsed.value(QStringLiteral("type")).toInt()));
+}
+
 bool ConfigController::setBind(const QString &key, const QString &command) {
     return m_commands.setBind(key, command);
 }
@@ -510,6 +644,7 @@ void ConfigController::loadCfg(const QString &path) {
 
 void ConfigController::clear() {
     m_commands.clearEntries();
+    m_droppedParsedLines = 0;
     setCfgPath(QString());
     setLastError(QString());
     emit loadedChanged();
