@@ -161,7 +161,10 @@ jobs:
           # undefined (libQt6EntryPoint.a). Hard-check the glob so a miss fails
           # here instead of silently building with the wrong gcc.
           shopt -s nullglob
-          MINGW_BIN=( "$(qmake -query QT_INSTALL_DIR)/../Tools"/mingw*/bin )
+          # QT_ROOT_DIR is what install-qt-action exports (QT_INSTALL_DIR is
+          # "**Unknown**" in Qt 6.12's qmake -query); Tools is a sibling of the
+          # version dir.
+          MINGW_BIN=( "$QT_ROOT_DIR/../Tools"/mingw*/bin )
           shopt -u nullglob
           if [ ${#MINGW_BIN[@]} -eq 0 ]; then
             echo "::error::Qt's bundled MinGW not found under Tools/" >&2
