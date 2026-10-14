@@ -1,0 +1,4 @@
+// Windows binary icon, compiled in by qmake (RC_FILE -> windres). The .ico is
+// generated at build time by release.yml's Windows job (ImageMagick, same font +
+// draw script as the AppImage icon); it is never committed.
+IDI_ICON1 ICON "tf2cfg.ico"

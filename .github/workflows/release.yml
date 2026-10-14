@@ -106,3 +106,97 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           files: TF2-Config-Manager-x86_64.AppImage
+
+  # -- Windows build (MinGW, same toolchain as the dev box) ----------------------
+  # Runs only on v* tags, parallel to the AppImage job; attaches a windeployqt
+  # zip (runnable on a clean machine) to the same Release. The exe's icon is
+  # rendered at build time from the same font + draw script the AppImage uses,
+  # then baked into the binary through a Windows resource file (qmake RC_FILE,
+  # compiled by windres).
+  windows:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Qt (MinGW)
+        uses: jurplel/install-qt-action@v4
+        with:
+          arch: win64_mingw
+          version: '6.12.*'
+          # Qt split the Windows desktop package folders per architecture from 6.11
+          # on (qt6_6120/qt6_6120_mingw_64/Updates.xml, not qt6_6120/qt6_6120/); the
+          # released aqtinstall 3.3.0 - this action's default backend - still asks
+          # for the old path, so 6.12 dies with "Failed to locate XML data". Pin the
+          # upstream commit that learned the new layout (miurahr/aqtinstall#1000 via
+          # jurplel/install-qt-action#374). Full commit, not a branch, for
+          # reproducibility. Revisit when aqtinstall cuts a release with the fix;
+          # fallback: version '6.10.*' without aqtsource.
+          aqtsource: 'git+https://github.com/miurahr/aqtinstall.git@076e1659807d0b362a3ed684d54c2e9c775eb9c7'
+
+      - name: Render the app icon (ImageMagick, from the repo's TF2 font)
+        shell: bash
+        run: |
+          # Same draw script as the AppImage job. One 256x256 render, then one
+          # auto-resize convert packs every size (256/64/48/32/16) into the .ico -
+          # no per-size calls. The intermediate PNG is not kept; the committed
+          # res/icon/tf2cfg.svg is the mockup, the .ico is never checked in.
+          magick -size 256x256 xc:none \
+                 -fill "#141719" -draw "roundrectangle 0,0 255,255 40,40" \
+                 -fill "#f0a30a" -font res/font/tf2build.ttf -pointsize 80 \
+                 -gravity center -annotate +0-10 ".cfg" \
+                 res/icon/tf2cfg_win.png
+          magick res/icon/tf2cfg_win.png -define icon:auto-resize=256,64,48,32,16 \
+                 res/icon/tf2cfg.ico
+          rm res/icon/tf2cfg_win.png
+
+      - name: Build app (qmake + mingw32-make)
+        shell: bash
+        run: |
+          qmake -o Makefile tf2cfgreal.pro
+          mingw32-make -j"$(nproc 2>/dev/null || echo 8)"
+
+      - name: Deploy the runtime beside the exe (windeployqt)
+        shell: cmd
+        run: windeployqt --qmldir qml release\tf2cfgreal.exe
+
+      - name: Smoke-test the deployed exe (headless run)
+        shell: pwsh
+        run: |
+          # AppImage smoke-test parity: the app runs its event loop headless
+          # (offscreen platform) until killed - a still-running process after 15 s
+          # is success (exit 124 semantics). Any earlier exit is a broken
+          # deployment (e.g. a missing bundled plugin fails before the first frame).
+          $env:QT_QPA_PLATFORM = "offscreen"
+          $p = Start-Process -FilePath "release\tf2cfgreal.exe" -WorkingDirectory (Get-Location) -PassThru -NoNewWindow
+          Start-Sleep -Seconds 15
+          if ($p.HasExited) {
+            "::error::deployed exe exited early (code $($p.ExitCode))"
+            exit 1
+          }
+          Stop-Process -Id $p.Id -Force
+          "deployed exe runs headless"
+
+      - name: Archive the deployed build
+        shell: pwsh
+        run: |
+          # Everything the deployed folder needs: exe + DLLs + windeployqt's plugin
+          # dirs. The offscreen platform plugin is part of platforms/, so the
+          # smoke-test configuration is what ships.
+          $items = Get-ChildItem release | Where-Object {
+            $_.Name -match '\.(exe|dll)$' -or
+            $_.PSIsContainer -and $_.Name -in @('platforms','styles','imageformats','iconengines','qml')
+          }
+          Compress-Archive -Path $items.FullName -DestinationPath TF2-Config-Manager-windows-x64.zip -Force
+          Get-Item TF2-Config-Manager-windows-x64.zip | Select-Object Name, Length
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TF2-Config-Manager-windows-x64
+          path: TF2-Config-Manager-windows-x64.zip
+
+      - name: Attach to release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: TF2-Config-Manager-windows-x64.zip

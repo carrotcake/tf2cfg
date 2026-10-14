@@ -42,6 +42,12 @@ qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
+# Windows: bake the app icon into the exe (qmake runs windres). The .ico is
+# generated at build time by release.yml's Windows job and must exist in
+# res/icon/ before qmake; local Windows builds render it with the same magick
+# script (see .github/workflows/release.yml, "Render the app icon").
+win32: RC_FILE = res/icon/tf2cfg.rc
+
 STATECHARTS +=
 
 RESOURCES += \

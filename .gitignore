@@ -11,3 +11,4 @@ __pycache__/
 
 # local backup made by tools/csvio.py on rewrite
 allcmds_bak.csv
+res/icon/tf2cfg.ico

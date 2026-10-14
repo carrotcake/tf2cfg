@@ -30,6 +30,17 @@ contrast and skips entirely on docs-only pushes (`paths-ignore: ["docs/**", "**.
 plus `workflow_dispatch` for manual runs). Compatibility note: the AppImage
 targets current distros (glibc 2.39 / Qt 6.4.2 floor) — accepted, per project decision.
 
+DONE 2026-10-14, later: `release.yml` gained a parallel `windows` job (MinGW, the dev
+box's toolchain): the exe icon is rendered at build time with the same ImageMagick
+font script and packed into a multi-size `.ico` (`icon:auto-resize`, never committed),
+baked into the binary via `res/icon/tf2cfg.rc` + `win32: RC_FILE` (qmake/windres,
+verified locally), deployed with `windeployqt --qmldir qml`, smoke-tested headless
+(15 s alive = success, AppImage parity), and attached to the same Release as
+`TF2-Config-Manager-windows-x64.zip`. install-qt-action pins an aqtinstall upstream
+commit: aqt 3.3.0 cannot resolve Qt ≥6.11 Windows desktop metadata (per-arch package
+folders since 6.11; miurahr/aqtinstall#1000) — revisit on the next aqtinstall
+release, fallback `version: '6.10.*'` without the pin.
+
 ## 2. Accessibility (`docs/accessibility.md`)
 
 The gap was real: the app is keyboard-usable up to the keyboard panel, then stops - the
