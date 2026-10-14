@@ -217,13 +217,26 @@ QVariantMap ConsoleCommandModel::findCommand(const QString &name) const {
     auto it = m_commandIndex.find(name.toLower());
     if (it == m_commandIndex.end())
         return {};
-    const cmd::ConVar *cmd = m_all.at(*it);
+    return fullRecord(m_all.at(*it));
+}
+
+QVariantMap ConsoleCommandModel::fullRecord(const cmd::ConVar *cmd) const {
     QVariantMap map;
     map.insert(QStringLiteral("name"), cmd->get_name());
-    map.insert(QStringLiteral("context"), cmd->get_context());
+    map.insert(QStringLiteral("docs"), cmd->get_docs());
+    map.insert(QStringLiteral("input"), cmd->get_usage());
     map.insert(QStringLiteral("platform"), cmd->get_platform());
+    map.insert(QStringLiteral("context"), cmd->get_context());
     map.insert(QStringLiteral("cheat"), cmd->isCheat());
+    map.insert(QStringLiteral("def"), cmd->defaultStr());
+    map.insert(QStringLiteral("min"), cmd->hasMinBound() ? number(cmd->minVal()) : QString());
+    map.insert(QStringLiteral("max"), cmd->hasMaxBound() ? number(cmd->maxVal()) : QString());
     map.insert(QStringLiteral("argsSpec"), argSpecList(cmd));
+    // A bare type (bool/int/flt/str, no brackets) is a cvar value; commands carry a
+    // signature with []/<>/none. The argument panes switch on this.
+    const QString input = cmd->get_usage();
+    map.insert(QStringLiteral("isCvar"),
+               !input.contains('[') && !input.contains('<') && input != QLatin1String("none"));
     return map;
 }
 
@@ -253,23 +266,5 @@ QStringList ConsoleCommandModel::suggest(const QString &text, int limit) const {
 QVariantMap ConsoleCommandModel::commandAt(int row) const {
     if (row < 0 || row >= m_visible.size())
         return {};
-
-    const cmd::ConVar *cmd = m_all.at(m_visible.at(row));
-    QVariantMap map;
-    map.insert(QStringLiteral("name"), cmd->get_name());
-    map.insert(QStringLiteral("docs"), cmd->get_docs());
-    map.insert(QStringLiteral("input"), cmd->get_usage());
-    map.insert(QStringLiteral("platform"), cmd->get_platform());
-    map.insert(QStringLiteral("context"), cmd->get_context());
-    map.insert(QStringLiteral("cheat"), cmd->isCheat());
-    map.insert(QStringLiteral("def"), cmd->defaultStr());
-    map.insert(QStringLiteral("min"), cmd->hasMinBound() ? number(cmd->minVal()) : QString());
-    map.insert(QStringLiteral("max"), cmd->hasMaxBound() ? number(cmd->maxVal()) : QString());
-    map.insert(QStringLiteral("argsSpec"), argSpecList(cmd));
-    // A bare type (bool/int/flt/str, no brackets) is a cvar value; commands carry a
-    // signature with []/<>/none. The arguments pane switches on this.
-    const QString input = cmd->get_usage();
-    map.insert(QStringLiteral("isCvar"),
-               !input.contains('[') && !input.contains('<') && input != QLatin1String("none"));
-    return map;
+    return fullRecord(m_all.at(m_visible.at(row)));
 }

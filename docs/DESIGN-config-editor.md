@@ -194,6 +194,11 @@ land at end of file. Binds keep their current anchoring unchanged.
 | C | Chain editor + alias create/edit + BindEditorDialog "Alias" tab (`setAlias`) | tests: alias body round-trip, compound rebuild |
 | D | Comment rows (lexer capture, model, save, Overview) | tests: standalone + trailing comments round-trip |
 
+Chunk A landed 2026-10-14 (`0d9360c`), Chunk B landed 2026-10-14 (guided pane + the
+`findCommand` full-record extension; field mapping is QML-side, so its engine gate is
+the `findCommandCarriesTheFullRecord` record test and the same-correctness of
+`parseCommandLine`).
+
 Each chunk commits separately; `qml` additions carry
 `pragma ComponentBehavior: Bound` (AGENTS.md bar) and no new qmllint advisories.
 

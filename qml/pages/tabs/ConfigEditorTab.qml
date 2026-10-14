@@ -21,6 +21,11 @@ Panel {
     property var selectedInfo: null
     /// True while the editor pane inserts a new row instead of editing the selection.
     property bool addMode: false
+    /// Catalog record (findCommand) of the selected row's head, null when the row is
+    /// unknown/raw/a bind - the guided pane (Chunk B) shows only for known commands.
+    property var guidedRec: null
+    /// The cvar's current value token (raw token, quotes included), one field.
+    property string cvarValue: ""
 
     /// Requested by the redirect dialog: open this key's bind in Edit Binds.
     signal bindActivated(string keyToken)
@@ -29,6 +34,105 @@ Panel {
         selectedInfo = selectedRow >= 0 ? cfgRef.rowInfo(selectedRow) : null
         // Imperative, not a binding: the user's typing would break a text binding.
         lineEdit.text = addMode ? "" : (selectedInfo === null ? "" : selectedInfo.line)
+        rebuildGuided()
+    }
+
+    // -- guided pane (Chunk B, docs/DESIGN-config-editor.md §4) -------------------
+    // shortcut: parseSignature/validBottom/validTop/defaultValueFor are duplicated
+    // from BindEditorDialog; extract to a shared JS lib when a third consumer appears.
+
+    function parseSignature(sig) {
+        if (!sig || sig === "none")
+            return []
+        return sig.split(/\s+/).filter(function (t) { return t !== "" }).map(function (t) {
+            let m = t.match(/^\[([a-z]+)\]$/)
+            if (m)
+                return { kind: m[1], optional: false }
+            m = t.match(/^<([a-z]+)>$/)
+            if (m)
+                return { kind: m[1], optional: true }
+            return { kind: t, optional: false }
+        })
+    }
+
+    // Radix 10 on purpose: without it "0x10" parses as 16.
+    function validBottom(bound) { return bound === "" ? -2147483647 : parseInt(bound, 10) }
+    function validTop(bound) { return bound === "" ? 2147483647 : parseInt(bound, 10) }
+
+    function defaultValueFor(kind) {
+        if (kind === "int")
+            return "0"
+        if (kind === "flt")
+            return "0.0"
+        return ""
+    }
+
+    /// Fill the guided editors from a command line. Called with the selection's line
+    /// (selection change / Apply) or with the raw field's text (editingFinished) - the
+    /// §8 reverse-parse: custom text drives the guided fields, through the same C++
+    /// tokenizer the file parser uses.
+    function rebuildGuided(text) {
+        argModel.clear()
+        guidedRec = null
+        cvarValue = ""
+        if (addMode || selectedInfo === null || selectedInfo.boundKey !== "")
+            return
+        const parsed = cfgRef.parseCommandLine(text !== undefined ? text
+                                                                 : selectedInfo.line)
+        if (!parsed.ok)
+            return
+        const parts = parsed.args
+        const rec = cfgRef.consoleModel.findCommand(parts[0])
+        if (rec.name === undefined)
+            return // not in catalog: raw text only (§3)
+        guidedRec = rec
+        if (rec.isCvar) {
+            cvarValue = parts.length > 1 ? parts[1] : ""
+            cvarField.text = cvarValue
+            return
+        }
+        const specs = parseSignature(rec.input)
+        const argSpecs = rec.argsSpec || []
+        specs.forEach(function (spec, i) {
+            // Per-argument bounds from the catalog (docs/DESIGN-arg-bounds.md), the
+            // same rule the bind dialog's rebuildArgs applies.
+            const bs = argSpecs[i] && argSpecs[i].index === i ? argSpecs[i] : null
+            const kind = bs ? (bs.isFloat ? "flt" : spec.kind) : spec.kind
+            const token = parts[i + 1] !== undefined ? parts[i + 1] : ""
+            argModel.append({
+                kind: kind,
+                optional: spec.optional,
+                included: token !== "" || !spec.optional,
+                label: "param " + (i + 1) + " (" + kind + ")",
+                value: token !== "" ? token
+                     : specs.length === 1 && rec.def !== "" ? rec.def
+                     : defaultValueFor(kind),
+                min: bs ? (bs.hasMin ? bs.min : "") : rec.min,
+                max: bs ? (bs.hasMax ? bs.max : "") : rec.max
+            })
+        })
+    }
+
+    /// Regenerate the raw line from the guided editors and put it in the raw field -
+    /// one commit path: Apply parses whatever the raw field holds (§4.2).
+    function regenGuided() {
+        if (guidedRec === null)
+            return
+        const parts = [guidedRec.name]
+        if (guidedRec.isCvar) {
+            if (cvarValue !== "")
+                parts.push(cvarValue)
+        } else {
+            for (let i = 0; i < argModel.count; ++i) {
+                const arg = argModel.get(i)
+                if (arg.optional && !arg.included)
+                    continue
+                if (arg.value === "")
+                    continue
+                parts.push(arg.value)
+            }
+        }
+        lineEdit.text = parts.join(" ")
     }
 
     onSelectedRowChanged: {
@@ -298,6 +402,205 @@ Panel {
                         }
                     }
 
+                    // -- guided editors (§4.1): catalog-known, non-bind rows only --
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        visible: tab.guidedRec !== null && !tab.addMode
+                        spacing: Theme.spacingTight
+
+                        Tf2Label {
+                            Layout.fillWidth: true
+                            text: tab.guidedRec !== null ? tab.guidedRec.docs : ""
+                            color: Theme.colorTextMuted
+                            font.pointSize: Theme.sizeSmall
+                            wrapMode: Text.WordWrap
+                            visible: text !== ""
+                        }
+
+                        Tf2Label {
+                            Layout.fillWidth: true
+                            text: tab.guidedRec !== null && tab.guidedRec.cheat
+                                  ? "Requires sv_cheats 1 to run." : ""
+                            color: Theme.colorTextMuted
+                            font.pointSize: Theme.sizeSmall
+                            visible: text !== ""
+                        }
+
+                        // One cvar value, typed by the catalog: bool checkbox,
+                        // int/flt field clamped to the catalog range, str token.
+                        RowLayout {
+                            Layout.fillWidth: true
+                            visible: tab.guidedRec !== null && tab.guidedRec.isCvar
+                            spacing: Theme.spacing
+
+                            Label {
+                                text: "Value:"
+                                color: Theme.colorText
+                                font.family: Theme.familyUi
+                                font.pointSize: Theme.sizeUi
+                            }
+
+                            CheckBox {
+                                visible: tab.guidedRec !== null
+                                         && tab.guidedRec.input === "bool"
+                                checked: tab.cvarValue === "1"
+                                onToggled: {
+                                    tab.cvarValue = checked ? "1" : "0"
+                                    tab.regenGuided()
+                                }
+                                Accessible.name: "Value"
+                            }
+
+                            TextField {
+                                id: cvarField
+                                visible: tab.guidedRec !== null
+                                         && tab.guidedRec.input !== "bool"
+                                Layout.fillWidth: true
+                                color: Theme.colorText
+                                font.family: Theme.familyMono
+                                font.pointSize: Theme.sizeMono
+                                hoverEnabled: true
+                                selectByMouse: true
+                                onTextEdited: {
+                                    tab.cvarValue = text
+                                    tab.regenGuided()
+                                }
+                                // The token is edited verbatim (quotes included), so
+                                // the lexer stays the only quoting authority.
+                                validator: tab.guidedRec !== null
+                                           && tab.guidedRec.input === "int" ? cvarIntV
+                                           : tab.guidedRec !== null
+                                             && tab.guidedRec.input === "flt" ? cvarFltV
+                                           : null
+                                IntValidator {
+                                    id: cvarIntV
+                                    bottom: tab.guidedRec !== null
+                                            ? tab.validBottom(tab.guidedRec.min)
+                                            : -2147483647
+                                    top: tab.guidedRec !== null
+                                         ? tab.validTop(tab.guidedRec.max)
+                                         : 2147483647
+                                }
+                                DoubleValidator {
+                                    id: cvarFltV
+                                    notation: DoubleValidator.StandardNotation
+                                    bottom: tab.guidedRec !== null
+                                            ? tab.validBottom(tab.guidedRec.min)
+                                            : -2147483647
+                                    top: tab.guidedRec !== null
+                                         ? tab.validTop(tab.guidedRec.max)
+                                         : 2147483647
+                                }
+                                background: Rectangle {
+                                    color: Theme.colorSurface
+                                    radius: Theme.radius
+                                    border.width: Theme.borderWidth
+                                    border.color: cvarField.activeFocus ? Theme.colorAccent
+                                                                        : Theme.colorBorder
+                                }
+                                Accessible.name: "Value"
+                            }
+                        }
+
+                        Label {
+                            text: "Arguments:"
+                            visible: tab.guidedRec !== null && !tab.guidedRec.isCvar
+                                     && tab.guidedRec.input !== "none"
+                            color: Theme.colorText
+                            font.family: Theme.familyUi
+                            font.pointSize: Theme.sizeUi
+                        }
+
+                        // One editor per usage-signature token; optional tokens get an
+                        // include checkbox. Same shape as the bind dialog's pane.
+                        Repeater {
+                            model: ListModel { id: argModel }
+
+                            delegate: RowLayout {
+                                required property var model
+                                required property int index
+
+                                Layout.fillWidth: true
+                                spacing: Theme.spacing
+
+                                CheckBox {
+                                    text: "include"
+                                    checked: model.included
+                                    visible: model.optional
+                                    onToggled: {
+                                        model.included = checked
+                                        tab.regenGuided()
+                                    }
+                                    Accessible.name: model.label
+                                }
+
+                                Label {
+                                    text: model.label
+                                    color: Theme.colorText
+                                    font.family: Theme.familyUi
+                                    font.pointSize: Theme.sizeUi
+                                }
+
+                                CheckBox {
+                                    checked: model.value === "1"
+                                    visible: model.kind === "bool"
+                                    onToggled: {
+                                        model.value = checked ? "1" : "0"
+                                        tab.regenGuided()
+                                    }
+                                    Accessible.name: model.label
+                                }
+                                TextField {
+                                    visible: model.kind === "int"
+                                    text: model.value
+                                    font.family: Theme.familyMono
+                                    font.pointSize: Theme.sizeMono
+                                    onTextEdited: {
+                                        model.value = text
+                                        tab.regenGuided()
+                                    }
+                                    validator: IntValidator {
+                                        bottom: tab.validBottom(model.min)
+                                        top: tab.validTop(model.max)
+                                    }
+                                }
+                                TextField {
+                                    visible: model.kind === "flt"
+                                    text: model.value
+                                    font.family: Theme.familyMono
+                                    font.pointSize: Theme.sizeMono
+                                    onTextEdited: {
+                                        model.value = text
+                                        tab.regenGuided()
+                                    }
+                                    validator: DoubleValidator {
+                                        bottom: tab.validBottom(model.min)
+                                        top: tab.validTop(model.max)
+                                        notation: DoubleValidator.StandardNotation
+                                    }
+                                }
+                                TextField {
+                                    visible: model.kind === "str"
+                                    text: model.value
+                                    Layout.fillWidth: true
+                                    font.family: Theme.familyMono
+                                    font.pointSize: Theme.sizeMono
+                                    onTextEdited: {
+                                        model.value = text
+                                        tab.regenGuided()
+                                    }
+                                }
+                            }
+                        }
+
+                        Tf2Label {
+                            text: tab.guidedRec !== null && tab.guidedRec.input === "none"
+                                  ? "This command takes no arguments." : ""
+                            color: Theme.colorTextMuted
+                            visible: text !== ""
+                        }
+                    }
+
                     // Raw text editor (§4.2); guided fields are Chunk B. The text is
                     // set imperatively by refreshSelection/Apply, never bound.
                     TextArea {
@@ -325,6 +628,9 @@ Panel {
                         }
                         Accessible.name: "Command line editor"
                         Accessible.role: Accessible.EditableText
+                        // §8 reverse-parse: committing raw text re-fills the guided
+                        // fields from the same text, so both paths stay one truth.
+                        onEditingFinished: tab.rebuildGuided(lineEdit.text)
                     }
 
                     Item { Layout.fillHeight: true }

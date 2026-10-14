@@ -109,6 +109,7 @@ private slots:
     void suggestOnlyOffersVisibleNames();
     void suggestNeedsSomeText();
     void findCommandIgnoresCaseAndFilters();
+    void findCommandCarriesTheFullRecord();
     void commandAtCarriesTheArgumentMetadata();
 
     // ConfigController: the surgical save (docs/legacy/ui-qml-rewrite.md 10.1)
@@ -764,6 +765,29 @@ void EngineTest::findCommandIgnoresCaseAndFilters() {
     QCOMPARE(found.value(QStringLiteral("name")).toString(), QStringLiteral("sensitivity"));
     QCOMPARE(found.value(QStringLiteral("context")).toString(), QStringLiteral("client settings"));
     QVERIFY(model.findCommand(QStringLiteral("no_such_command")).isEmpty());
+}
+
+void EngineTest::findCommandCarriesTheFullRecord() {
+    // The Config Editor's guided pane (docs/DESIGN-config-editor.md §4.1) fills its
+    // editors from findCommand, so the record must carry the cvar metadata too, not
+    // only the name/context/platform the bind dialog needed.
+    CatalogFixture fixture;
+    ConsoleCommandModel model;
+    model.setCommands(fixture.make());
+
+    const QVariantMap cvar = model.findCommand(QStringLiteral("SENSITIVITY"));
+    QCOMPARE(cvar.value(QStringLiteral("input")).toString(), QStringLiteral("flt"));
+    QCOMPARE(cvar.value(QStringLiteral("def")).toString(), QStringLiteral("3"));
+    QCOMPARE(cvar.value(QStringLiteral("min")).toString(), QStringLiteral("0.0001"));
+    QCOMPARE(cvar.value(QStringLiteral("max")).toString(), QStringLiteral("10000000"));
+    QVERIFY(cvar.value(QStringLiteral("isCvar")).toBool());
+    QCOMPARE(cvar.value(QStringLiteral("docs")).toString(), QStringLiteral("Mouse sensitivity."));
+
+    // A command is not a cvar; its signature is what the per-token editors parse.
+    const QVariantMap cmd = model.findCommand(QStringLiteral("bind"));
+    QVERIFY(!cmd.value(QStringLiteral("isCvar")).toBool());
+    QCOMPARE(cmd.value(QStringLiteral("input")).toString(), QStringLiteral("[str] [str]"));
+    QVERIFY(model.findCommand(QStringLiteral("nope")).isEmpty());
 }
 
 void EngineTest::commandAtCarriesTheArgumentMetadata() {

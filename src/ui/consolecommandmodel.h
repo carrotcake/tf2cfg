@@ -57,7 +57,7 @@ public:
     /// name, docs, input, platform, context, cheat, def, min, max.
     Q_INVOKABLE QVariantMap commandAt(int row) const;
 
-    /// Record (name, context, platform) for the named command, found
+    /// Full record (same fields as commandAt) for the named command, found
     /// case-insensitively anywhere in the catalog. Empty map when unknown.
     Q_INVOKABLE QVariantMap findCommand(const QString &name) const;
 
@@ -72,6 +72,8 @@ signals:
 
 private:
     void rebuild();
+    /// The record both commandAt() and findCommand() hand the argument panes.
+    QVariantMap fullRecord(const cmd::ConVar *cmd) const;
 
     // Filter cache key: context + platform + cheat visibility.
     struct FilterKey {
