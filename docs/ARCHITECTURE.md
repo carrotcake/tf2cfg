@@ -135,7 +135,9 @@ wholesale model write would destroy user content. Therefore:
 - Filters (`contextFilter`, `platformFilter`, `showCheats`) build a per-combo
   `FilterCache` of sorted visible indices; `suggest()` walks only that subset. `rebuild()`
   and `suggest()` must keep using identical filter logic - extract a shared helper if a
-  fourth filter ships.
+  fourth filter ships. Rows sort **context-first, then alphanumeric name** (the command
+  picker groups by the `context` role through `Tf2ComboBox`'s opt-in `sectionRole` -
+  headers need contiguous groups; pinned by `catalogSortsByContextThenName`).
 - Per-argument bounds (`docs/DESIGN-arg-bounds.md`): `GameCfg` attaches `cmd::ArgSpec`s
   from `res/cfg/argbounds.csv` after the catalog loads (companion file, hand-verified
   rows only); the model exposes them through the `argsSpec` role and inside
