@@ -56,9 +56,7 @@ jobs:
           sudo ln -s "$(command -v qmake6)" /usr/local/bin/qmake
           curl -sL -o linuxdeploy.AppImage \
               https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
-          curl -sL -o linuxdeploy-plugin-qt.AppImage \
-              https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
-          chmod +x linuxdeploy.AppImage linuxdeploy-plugin-qt.AppImage
+          chmod +x linuxdeploy.AppImage
 
       - name: Render app icon (ImageMagick, from the repo's TF2 font)
         run: |
@@ -76,10 +74,12 @@ jobs:
           install -D -m 755 tf2cfgreal AppDir/usr/bin/tf2cfgreal
           install -D -m 644 res/icon/tf2cfg.desktop AppDir/tf2cfg.desktop
           export DISABLE_COPYRIGHT_FILE_DEPLOYMENT=1
-          # --qmldir lets the qt plugin's import scanner see the QML tree. All app QML
-          # is qrc-embedded, but the scan is what decides whether the
-          # QuickControls2 style plugins get bundled - without them the app cannot
-          # start (QQuickStyle "Basic" is set in main.cpp).
+          # QML import scanning (this is what decides whether the QuickControls2
+          # style plugins get bundled - without them the app cannot start, since
+          # QQuickStyle "Basic" is set in main.cpp). All app QML is qrc-embedded;
+          # the scan of the qml/ tree covers the imports (QtQuick, QuickControls2).
+          # As a linuxdeploy plugin, linuxdeploy-plugin-qt is configured via env.
+          export QML_SOURCES_PATHS="$PWD/qml"
           APPIMAGE_EXTRACT_AND_RUN=1 ./linuxdeploy.AppImage \
               --appdir AppDir \
               --plugin qt \
