@@ -91,7 +91,8 @@ items (W1-W8). W1-W8 are done (2026-10-13); still open: the screen-reader pass (
   reports the next/previous tab with wrapping on Left/Right (W3). Manual pass steps stay in
   `docs/accessibility.md` section 4 - the tests prove the handlers fire, not that the UI
   looks right. Real screen-reader output is still unverifiable on this machine; re-run
-  step 4 with NVDA/Narrator/Orca before claiming more.
+  step 4 with NVDA/Narrator/Orca before claiming more - the runnable version of that pass is
+  `docs/in-game-checklist.md` §3.
 
 ## 3. QML cleanup
 
@@ -118,7 +119,7 @@ Confirmed bindable but not in the key table (evidence and caveats in
 Parser work: none. Any new id is UI-only - the pipeline already handles quoted keys with
 spaces. Do **not** surface the engine-enumerated-but-unproven ids (`break`, the lock
 toggles, Novint Falcon, Steam Controller) without an in-game check - list in the legacy
-doc.
+doc. The in-game run to settle these is written out in `docs/in-game-checklist.md` §2.
 
 ## 5. Feature backlog (extension points from the QML rewrite, section 10)
 

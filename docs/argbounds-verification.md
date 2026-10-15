@@ -5,7 +5,8 @@ Rows enter the CSV only when a source states the bound; everything weaker sits h
 until it is verified in-game. Sources used: the game's own command help text
 (`data/cvarlist_linux.txt`, mirrored into the catalog descriptions), community
 documentation (official TF2 wiki, long-standing community scripts), and the Source
-SDK's data structures.
+SDK's data structures. The in-game run that would settle the open rows is written out as a
+checklist in `docs/in-game-checklist.md` §1.
 
 ## Applied rows (2026-10-13)
 

@@ -101,6 +101,10 @@ rules: **the file on disk is the source of truth for lines the app does not own*
 - `docs/accessibility.md` - the A1-A8 findings and the W1-W8 work items. W1-W8 are done
   (2026-10-13); open: the screen-reader pass (section 4, needs real assistive tech) and
   the contrast re-check after any `Theme.qml` change.
+- `docs/in-game-checklist.md` - the runnable list for the user-gated work: the argument
+  bounds the ledger proposes, the bind ids missing from the keyboard model, and the
+  screen-reader pass. Only in-game evidence moves a row into `res/cfg/argbounds.csv` or an
+  id into `src/ui/keytable.cpp`.
 - `docs/legacy/*.md` - dated records (audit, code review, migrations, the original
   QML-rewrite design): historical evidence and verification logs. Do not edit them; the
   live versions of their contracts and open items are in the two files above.
