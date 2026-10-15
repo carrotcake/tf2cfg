@@ -90,6 +90,7 @@ private slots:
     void argBoundsAttachFromCompanionFile();
     void argBoundsTolerateAMissingFile();
     void argBoundsFromTheInGameRun();
+    void signatureParsesIntoEditorArguments();
     void argsSpecRoleCarriesPerArgumentBounds();
 
     // CommandListModel
@@ -714,6 +715,43 @@ void EngineTest::argBoundsFromTheInGameRun() {
     }
 }
 
+void EngineTest::signatureParsesIntoEditorArguments() {
+    // The one parse of allcmds field 8 (cmd::parseSignature): the Build-A-Bind and guided
+    // editors turn it into one editor per argument, and loadArgBounds validates its row
+    // indexes against the same shape, so the two cannot disagree about how many there are.
+    const QVector<cmd::SignatureArg> two = cmd::parseSignature(QStringLiteral("[str] <flt>"));
+    QCOMPARE(two.size(), 2);
+    QCOMPARE(two.at(0).kind, QStringLiteral("str"));
+    QVERIFY(!two.at(0).optional);
+    QCOMPARE(two.at(1).kind, QStringLiteral("flt"));
+    QVERIFY(two.at(1).optional);
+
+    // No arguments: the catalog's "none", an empty field, and stray whitespace between tokens.
+    QVERIFY(cmd::parseSignature(QStringLiteral("none")).isEmpty());
+    QVERIFY(cmd::parseSignature(QString()).isEmpty());
+    QCOMPARE(cmd::parseSignature(QStringLiteral("  [int]   <int> ")).size(), 2);
+
+    // A cvar's "signature" is its value type: bare, mandatory, passed through as written.
+    const QVector<cmd::SignatureArg> bare = cmd::parseSignature(QStringLiteral("bool"));
+    QCOMPARE(bare.size(), 1);
+    QCOMPARE(bare.at(0).kind, QStringLiteral("bool"));
+    QVERIFY(!bare.at(0).optional);
+
+    // Only a clean lower-case kind loses its brackets; an oddity reaches the editor verbatim
+    // instead of being silently rewritten (the catalog has none, hand-edited rows might).
+    QCOMPARE(cmd::parseSignature(QStringLiteral("[int] [a|b]")).at(1).kind, QStringLiteral("[a|b]"));
+
+    // And the shape QML gets: one {kind, optional} map per argument.
+    ConfigController controller;
+    const QVariantList forQml = controller.parseSignature(QStringLiteral("[str] <flt>"));
+    QCOMPARE(forQml.size(), 2);
+    QCOMPARE(forQml.at(0).toMap().value(QStringLiteral("kind")).toString(), QStringLiteral("str"));
+    QCOMPARE(forQml.at(0).toMap().value(QStringLiteral("optional")).toBool(), false);
+    QCOMPARE(forQml.at(1).toMap().value(QStringLiteral("kind")).toString(), QStringLiteral("flt"));
+    QCOMPARE(forQml.at(1).toMap().value(QStringLiteral("optional")).toBool(), true);
+    QVERIFY(controller.parseSignature(QStringLiteral("none")).isEmpty());
+}
+
 void EngineTest::argsSpecRoleCarriesPerArgumentBounds() {
     CatalogFixture fixture;
     QVector<cmd::ConVar *> cmds = fixture.make();
@@ -769,6 +807,22 @@ void EngineTest::argsSpecRoleCarriesPerArgumentBounds() {
                  .value(QStringLiteral("argsSpec")).toList().isEmpty());
     QVERIFY(sensRowIdx >= 0); // the cvar is visible; its role is empty, not unknown
     QVERIFY(model.commandAt(sensRowIdx).value(QStringLiteral("argsSpec")).toList().isEmpty());
+
+    // An optional argument reaches the role as optional, and an unbounded one takes its
+    // float-ness from the parsed kind ("<int>" is not float, "flt" is).
+    cmd::ConCmd optionalArg(QStringLiteral("addcond"), QStringLiteral("Apply a condition."),
+                            QStringLiteral("[int] <flt>"), QString(), QString(), QString());
+    QVector<cmd::ConVar *> only;
+    only << &optionalArg;
+    ConsoleCommandModel optionalModel;
+    optionalModel.setCommands(only);
+    const QVariantList optionalSpecs =
+        optionalModel.commandAt(0).value(QStringLiteral("argsSpec")).toList();
+    QCOMPARE(optionalSpecs.size(), 2);
+    QVERIFY(!optionalSpecs.at(0).toMap().value(QStringLiteral("optional")).toBool());
+    QVERIFY(!optionalSpecs.at(0).toMap().value(QStringLiteral("isFloat")).toBool());
+    QVERIFY(optionalSpecs.at(1).toMap().value(QStringLiteral("optional")).toBool());
+    QVERIFY(optionalSpecs.at(1).toMap().value(QStringLiteral("isFloat")).toBool());
 }
 
 // --- CommandListModel ---

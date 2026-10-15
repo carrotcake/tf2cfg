@@ -18,29 +18,19 @@ QString number(double value) {
 }
 
 /// Per-argument authoring bounds for one command row (docs/DESIGN-arg-bounds.md §7):
-/// one entry per usage-signature token, bounds filled from the command's ArgSpecs
-/// where the companion file provided them, "" where a side is unbounded. Cvars carry
-/// no argument specs (their range flows through MinRole/MaxRole).
+/// one entry per usage-signature argument (cmd::parseSignature), bounds filled from the
+/// command's ArgSpecs where the companion file provided them, "" where a side is unbounded.
+/// Cvars carry no argument specs (their range flows through MinRole/MaxRole), which is what
+/// the parser's `bare` flag marks: their signature is a value type, not an argument list.
 QVariantList argSpecList(const cmd::ConVar *cmd) {
-    const QStringList tokens =
-        cmd->get_usage().split(QLatin1Char(' '), Qt::SkipEmptyParts);
-    bool hasArgs = false;
-    for (const QString &t : tokens) {
-        if (t.startsWith(QLatin1Char('[')) || t.startsWith(QLatin1Char('<'))) {
-            hasArgs = true;
-            break;
-        }
-    }
-    if (!hasArgs)
-        return {};
-
     const auto *cmdCmd = dynamic_cast<const cmd::ConCmd *>(cmd);
     const QVector<cmd::ArgSpec> specs = cmdCmd ? cmdCmd->argSpecs() : QVector<cmd::ArgSpec>();
 
     QVariantList out;
     int index = 0;
-    for (const QString &token : tokens) {
-        if (!token.startsWith(QLatin1Char('[')) && !token.startsWith(QLatin1Char('<')))
+    const QVector<cmd::SignatureArg> args = cmd::parseSignature(cmd->get_usage());
+    for (const cmd::SignatureArg &arg : args) {
+        if (arg.bare)
             continue;
         const cmd::ArgSpec *spec = nullptr;
         for (const cmd::ArgSpec &s : specs) {
@@ -51,10 +41,10 @@ QVariantList argSpecList(const cmd::ConVar *cmd) {
         }
         QVariantMap entry;
         entry.insert(QStringLiteral("index"), index);
-        entry.insert(QStringLiteral("optional"), token.startsWith(QLatin1Char('<')));
+        entry.insert(QStringLiteral("optional"), arg.optional);
         // The spec's type wins; an unbounded arg falls back to what the signature says.
         entry.insert(QStringLiteral("isFloat"),
-                     spec ? spec->isFloat : token.contains(QLatin1String("flt")));
+                     spec ? spec->isFloat : arg.kind == QLatin1String("flt"));
         entry.insert(QStringLiteral("hasMin"), spec && spec->hasMin);
         entry.insert(QStringLiteral("min"),
                      spec && spec->hasMin ? number(spec->min) : QString());

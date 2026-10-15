@@ -136,8 +136,10 @@ are independent flags). This lands with step 1 of the rollout; it reuses the sam
   `QVariantMap { index, isFloat, hasMin, min, hasMax, max, optional }` — one entry per
   token in the usage signature, bounds empty when unknown. For cvars the role returns
   an empty list; cvar bounds keep flowing through `MinRole`/`MaxRole` (D-d).
-- The `optional` flag is derived from the usage string (`<...>` vs `[...]`), which the
-  model already receives via `get_usage()`; the companion file does not duplicate it.
+- The `optional` flag is derived from the usage string (`<...>` vs `[...]`) by the shared
+  parser, `cmd::parseSignature` - the same shape authority the argbounds reader validates
+  row indexes against, so the two cannot disagree. A `bare` signature - a cvar's value
+  type - is skipped, which is what keeps this role empty for cvars.
 - `findCommand()` includes `argsSpec` in its returned map so the dialog can look a
   command up by name without going through the visible list.
 

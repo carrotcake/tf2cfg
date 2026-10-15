@@ -72,9 +72,9 @@ For catalog-known commands, driven by the metadata the catalog already carries
 - **cvar rows**: one value field typed by the catalog — bool → checkbox, int/flt →
   spinbox clamped to the catalog's min/max (one-sided bounds respected), str → line edit
   with the catalog default as placeholder.
-- **cmd rows**: one editor per token of the usage signature (`parseSignature` logic
-  already exists QML-side in `BindEditorDialog`); optional `<...>` tokens get an include
-  checkbox.
+- **cmd rows**: one editor per argument of the usage signature (`cmd::parseSignature`, the
+  same parse the argbounds reader validates its row indexes against, reached from QML as
+  `Cfg.parseSignature`); optional `<...>` arguments get an include checkbox.
 - **No bind-mode radio here.** Toggle-vs-incrementvar is a *bind* concern
   (`allcmds-v5-migration.md` §4.4); the Config Editor sets values directly
   (`cl_interp 0.033`), so plain value fields only.

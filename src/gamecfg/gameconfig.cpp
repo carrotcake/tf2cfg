@@ -162,6 +162,45 @@ void GameCfg::loadAllCmds() {
     }
 }
 
+namespace {
+/// A bracket-wrapped lower-case kind, e.g. "[str]" / "<flt>". Anything else stays verbatim.
+bool stripSignatureToken(const QString &token, QString *kind, bool *optional)
+{
+    if (token.size() < 3)
+        return false;
+    const QChar open = token.at(0);
+    const QChar close = token.at(token.size() - 1);
+    if (!((open == QLatin1Char('[') && close == QLatin1Char(']'))
+          || (open == QLatin1Char('<') && close == QLatin1Char('>'))))
+        return false;
+    const QString inner = token.mid(1, token.size() - 2);
+    for (const QChar c : inner) {
+        if (c < QLatin1Char('a') || c > QLatin1Char('z'))
+            return false;
+    }
+    *kind = inner;
+    *optional = open == QLatin1Char('<');
+    return true;
+}
+} // namespace
+
+QVector<cmd::SignatureArg> cmd::parseSignature(const QString &usage)
+{
+    QVector<SignatureArg> args;
+    if (usage.isEmpty() || usage == QLatin1String("none"))
+        return args;
+    const QStringList tokens = usage.split(QLatin1Char(' '), Qt::SkipEmptyParts);
+    args.reserve(tokens.size());
+    for (const QString &token : tokens) {
+        SignatureArg arg;
+        arg.kind = token;
+        arg.bare = !token.startsWith(QLatin1Char('[')) && !token.startsWith(QLatin1Char('<'));
+        stripSignatureToken(token, &arg.kind, &arg.optional);
+        args.append(arg);
+    }
+    return args;
+}
+
 /**
  * Per-argument authoring bounds from the companion catalog file
  * (docs/DESIGN-arg-bounds.md §4). Row layout: command, argIndex, type (int/flt),
@@ -232,13 +271,9 @@ void GameCfg::loadArgBounds(const QString &path) {
             qWarning("argbounds: %s is not a known command", qPrintable(it.key()));
             continue;
         }
-        // The usage signature is the shape authority: "[str] [flt] ..." tokens, one
-        // per argument; a command with none accepts no bounds at all.
-        const QStringList tokens =
-            known_cmds.at(ci.value())->get_usage().split(QLatin1Char(' '), Qt::SkipEmptyParts);
-        const int argc = std::count_if(tokens.cbegin(), tokens.cend(), [](const QString &t) {
-            return t.startsWith(QLatin1Char('[')) || t.startsWith(QLatin1Char('<'));
-        });
+        // The usage signature is the shape authority: one parsed argument per editor slot, so
+        // an argbounds index lands on the same argument the QML editors render.
+        const int argc = cmd::parseSignature(known_cmds.at(ci.value())->get_usage()).size();
         if (argc == 0) {
             qWarning("argbounds: %s takes no documented arguments", qPrintable(it.key()));
             continue;

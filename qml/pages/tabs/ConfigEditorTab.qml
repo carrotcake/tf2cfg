@@ -45,22 +45,10 @@ Panel {
     }
 
     // -- guided pane (Chunk B, docs/DESIGN-config-editor.md §4) -------------------
-    // shortcut: parseSignature/validBottom/validTop/defaultValueFor are duplicated
-    // from BindEditorDialog; extract to a shared JS lib when a third consumer appears.
-
-    function parseSignature(sig) {
-        if (!sig || sig === "none")
-            return []
-        return sig.split(/\s+/).filter(function (t) { return t !== "" }).map(function (t) {
-            let m = t.match(/^\[([a-z]+)\]$/)
-            if (m)
-                return { kind: m[1], optional: false }
-            m = t.match(/^<([a-z]+)>$/)
-            if (m)
-                return { kind: m[1], optional: true }
-            return { kind: t, optional: false }
-        })
-    }
+    // shortcut: validBottom/validTop/defaultValueFor are still duplicated in
+    // BindEditorDialog; extract to a shared JS lib when a third consumer appears. The
+    // signature parse itself is Cfg.parseSignature (C++, beside the argbounds reader that
+    // validates rows against the same shape).
 
     // Radix 10 on purpose: without it "0x10" parses as 16.
     function validBottom(bound) { return bound === "" ? -2147483647 : parseInt(bound, 10) }
@@ -102,7 +90,7 @@ Panel {
             cvarField.text = cvarValue
             return
         }
-        const specs = parseSignature(rec.input)
+        const specs = Cfg.parseSignature(rec.input)
         const argSpecs = rec.argsSpec || []
         specs.forEach(function (spec, i) {
             // Per-argument bounds from the catalog (docs/DESIGN-arg-bounds.md), the

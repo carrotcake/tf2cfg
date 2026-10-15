@@ -25,6 +25,27 @@ struct ArgSpec {
     double max = 0.0;
 };
 
+/**
+ * One argument of a usage signature - allcmds.csv field 8 (res/cfg/schema.md).
+ *
+ * "[str] <flt>" is two arguments, the first mandatory, the second optional; a bare token is a
+ * cvar's value type and "none" means no arguments at all. argbounds rows are validated against
+ * this shape, and the Build-A-Bind and guided editors turn it into one editor per argument -
+ * one parse, four readers.
+ */
+struct SignatureArg {
+    QString kind;          ///< "str", "flt", "int", ... as the catalog writes it
+    bool optional = false; ///< true for `<kind>`
+    /// Written without brackets: a row's own value type (`bool` for a cvar), not an argument.
+    /// The Build-A-Bind dialog still shows one editor for it; the argsSpec role skips it.
+    bool bare = false;
+};
+
+/// Splits a usage signature into its arguments. A token only loses its brackets when what they
+/// hold is a plain lower-case kind; anything else is passed through as it stands, so a
+/// hand-written oddity shows up verbatim instead of being silently rewritten.
+QVector<SignatureArg> parseSignature(const QString &usage);
+
 
 struct Entry {
     QStringList args;

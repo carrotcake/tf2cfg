@@ -122,6 +122,19 @@ never announced their tab names) took two fixes in `Tf2TabBar`.
   two parent-element reads are qualified with their id. The CI lint step lints with
   `-I qmlmodules` (the module directory qmake assembles) and fails on any nonzero count, so
   the bar is now a gate rather than a printed number.
+- Usage-signature parsing: **one parse, four readers** (2026-10-15). `[str] <flt>` was being
+  taken apart four times - in `loadArgBounds` to count arguments, in `ConsoleCommandModel`'s
+  `argsSpec` role to derive `optional` and `isFloat`, and once in each of
+  `BindEditorDialog.qml` and `ConfigEditorTab.qml` to build the argument editors. It is now
+  `cmd::parseSignature` (`src/gamecfg/`, beside `ArgSpec`), reached from QML as
+  `Cfg.parseSignature` returning one `{kind, optional}` per argument; the other three readers
+  go through it, so they cannot disagree about an argument's index or its signed/optional
+  shape. The struct's `bare` flag carries what the role's old surface check meant (a cvar's
+  signature is a value type, not an argument), and `BindEditorDialog`'s argument-editor rows
+  are still untested by `tests/qml` (no test opens that dialog yet); the parse itself is pinned
+  by `EngineTest::signatureParsesIntoEditorArguments`,
+  `EngineTest::argsSpecRoleCarriesPerArgumentBounds` and
+  `test_parseSignatureReachesQmlAsAnArgumentList`.
 
 ## 4. Input ids missing from the Edit Binds model
 

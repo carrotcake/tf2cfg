@@ -149,6 +149,27 @@ Rectangle {
             tab.destroy()
         }
 
+        // -- the catalog signature parser (C++, shared with the argbounds reader) -----
+
+        function test_parseSignatureReachesQmlAsAnArgumentList() {
+            // Cfg.parseSignature is the one parse of allcmds field 8 (cmd::parseSignature).
+            // The Build-A-Bind dialog and the guided pane walk its result with forEach and
+            // read kind/optional per argument, so that shape is the contract.
+            const specs = Cfg.parseSignature("[str] <flt>")
+            compare(specs.length, 2, "two arguments")
+            compare(specs[0].kind, "str", "first argument kind")
+            compare(specs[0].optional, false, "[] is mandatory")
+            compare(specs[1].kind, "flt", "second argument kind")
+            compare(specs[1].optional, true, "<> is optional")
+
+            const seen = []
+            specs.forEach(function (spec, i) { seen.push(i + ":" + spec.kind) })
+            compare(seen.join(","), "0:str,1:flt", "forEach walks it the way the editors do")
+
+            compare(Cfg.parseSignature("none").length, 0, "no arguments")
+            compare(Cfg.parseSignature("bool")[0].kind, "bool", "a cvar's value type is its argument")
+        }
+
         // -- W2: key caps take focus and activate on Return/Space -------------
 
         function test_keyCapActivatesOnReturnAndSpace() {

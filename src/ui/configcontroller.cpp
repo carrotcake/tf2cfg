@@ -693,6 +693,18 @@ QStringList ConfigController::splitSegments(const QString &line) const {
     return out;
 }
 
+QVariantList ConfigController::parseSignature(const QString &signature) const
+{
+    const QVector<cmd::SignatureArg> args = cmd::parseSignature(signature);
+    QVariantList out;
+    out.reserve(args.size());
+    for (const cmd::SignatureArg &arg : args) {
+        out.append(QVariantMap { { QStringLiteral("kind"), arg.kind },
+                                 { QStringLiteral("optional"), arg.optional } });
+    }
+    return out;
+}
+
 QString ConfigController::quoteToken(const QString &raw) const {
     return CommandListModel::quoted(raw);
 }

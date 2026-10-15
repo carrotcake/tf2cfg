@@ -142,21 +142,10 @@ Dialog {
     /// panel's initial state.
     readonly property var boundParts: boundCommand === "" ? [] : boundCommand.trim().split(/\s+/)
 
-    /// "[str] <flt> bool none" -> editor specs. [] = mandatory, <> = optional,
-    /// bare tokens are cvar values; "none" means no arguments at all.
-    function parseSignature(sig) {
-        if (!sig || sig === "none")
-            return []
-        return sig.split(/\s+/).filter(function (t) { return t !== "" }).map(function (t) {
-            let m = t.match(/^\[([a-z]+)\]$/)
-            if (m)
-                return { kind: m[1], optional: false }
-            m = t.match(/^<([a-z]+)>$/)
-            if (m)
-                return { kind: m[1], optional: true }
-            return { kind: t, optional: false }
-        })
-    }
+    // shortcut: validBottom/validTop/defaultValueFor are still duplicated in
+    // ConfigEditorTab; extract to a shared JS lib when a third consumer appears. The
+    // signature parse itself is Cfg.parseSignature (C++, beside the argbounds reader that
+    // validates rows against the same shape).
 
     // Radix 10 on purpose: without it "0x10" parses as 16.
     function validBottom(bound) { return bound === "" ? -2147483647 : parseInt(bound, 10) }
@@ -333,7 +322,7 @@ Dialog {
         argModel.clear()
         if (!commandInfo)
             return
-        const specs = parseSignature(commandInfo.input)
+        const specs = Cfg.parseSignature(commandInfo.input)
         // Per-argument authoring bounds from the catalog (docs/DESIGN-arg-bounds.md):
         // one entry per signature token, bounds only on the sides the companion file
         // verified. Cvars have no argsSpec and keep their row range on every editor,

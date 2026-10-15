@@ -73,6 +73,11 @@ public:
     /// Short description of a preset, or an empty string.
     Q_INVOKABLE QString presetNote(int index) const;
 
+    /// A catalog usage signature ("[str] <flt>", "none") as one `{kind, optional}` per
+    /// argument, for the Build-A-Bind and guided editors (cmd::parseSignature, which also
+    /// shapes the argbounds rows - one parse, three readers).
+    Q_INVOKABLE QVariantList parseSignature(const QString &signature) const;
+
     /// Parse a config asynchronously and fill the command model. Appends, like the widget build (P37).
     /// Returns immediately; `loading` becomes true, then `loadedChanged`/`lastErrorChanged` fire when done.
     Q_INVOKABLE void loadCfg(const QString &path);
