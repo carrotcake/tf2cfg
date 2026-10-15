@@ -81,6 +81,7 @@ private slots:
     void catalogLoadsEveryRowAsACommand();
     void catalogRowsHaveTenFields();
     void catalogTypeFieldIsEmptyOrCommand();
+    void catalogRowsAddedFromTheLiveDump();
     void catalogRowsFixedFromTheInGameRun();
 
     // Per-argument + one-sided bounds (docs/DESIGN-arg-bounds.md)
@@ -412,7 +413,7 @@ void EngineTest::catalogRowsHaveTenFields() {
         QCOMPARE(commas + 1, 10);
         ++rows;
     }
-    QCOMPARE(rows, 3824);
+    QCOMPARE(rows, 3880);
 }
 
 void EngineTest::catalogTypeFieldIsEmptyOrCommand() {
@@ -441,8 +442,8 @@ void EngineTest::catalogTypeFieldIsEmptyOrCommand() {
                  qPrintable(QStringLiteral("bad type field \"%1\" in row: %2").arg(type, line)));
         census[type.isEmpty() ? QStringLiteral("variable") : type] += 1;
     }
-    QCOMPARE(census.value(QStringLiteral("variable")), 2795);
-    QCOMPARE(census.value(QStringLiteral("cmd")), 995);
+    QCOMPARE(census.value(QStringLiteral("variable")), 2831);
+    QCOMPARE(census.value(QStringLiteral("cmd")), 1015);
     QCOMPARE(census.value(QStringLiteral("ncmd")), 34);
 
     // The app-level effect: two of the retyped rows are variables now, each in the
@@ -453,6 +454,49 @@ void EngineTest::catalogTypeFieldIsEmptyOrCommand() {
         byName.insert(entry->get_name().toLower(), entry);
     QCOMPARE(byName.value(QStringLiteral("binds_per_command"))->get_type(), cmd::CMD_IVAR);
     QCOMPARE(byName.value(QStringLiteral("cl_playerspraydisable"))->get_type(), cmd::CMD_BVAR);
+}
+
+void EngineTest::catalogRowsAddedFromTheLiveDump() {
+    // The 2026-10-15 Windows dump (data/tf2-cvarlist-10-26-gamedump-w64.txt) carries 56 names
+    // the catalog lacked - cvars and commands added to the client since it was generated. The
+    // dump itself gives type, default, flags and help text; the input type and the context
+    // column come from res/cfg/schema.md's rules, and the signature of a command whose usage
+    // line nobody has seen stays `none` until an in-game run says otherwise.
+    GameCfg cfg;
+    QHash<QString, const cmd::ConVar *> byName;
+    for (const cmd::ConVar *entry : cfg.allCmds())
+        byName.insert(entry->get_name().toLower(), entry);
+
+    // A cheat-tagged cvar that arrived with the dump, and its neighbour without the tag.
+    QCOMPARE(byName.value(QStringLiteral("fog_radial"))->get_type(), cmd::CMD_IVAR);
+    QVERIFY(byName.value(QStringLiteral("fog_radial"))->isCheat());
+    QVERIFY(!byName.value(QStringLiteral("r_lightmap_bicubic"))->isCheat());
+
+    // Scale factors and rates are floats although the client prints them without a decimal
+    // point, the same call the catalog already makes for `sensitivity`.
+    QCOMPARE(byName.value(QStringLiteral("vgui_ui_scale_factor"))->get_type(), cmd::CMD_FVAR);
+    QCOMPARE(byName.value(QStringLiteral("snd_rear_speaker_scale"))->get_type(), cmd::CMD_FVAR);
+    QCOMPARE(byName.value(QStringLiteral("tf_armory_page_skip"))->get_type(), cmd::CMD_IVAR);
+    QCOMPARE(byName.value(QStringLiteral("tf_armory_page_skip"))->defaultStr(), QStringLiteral("10"));
+
+    // A new command, and a cvar the client still spells with its own typo.
+    QCOMPARE(byName.value(QStringLiteral("print_froggy"))->get_type(), cmd::CMD_CMD);
+    QCOMPARE(byName.value(QStringLiteral("print_froggy"))->get_usage(), QStringLiteral("none"));
+    QVERIFY(byName.contains(QStringLiteral("sv_allow_server_adverisement_to_master_server")));
+
+    // Description text the dump corrected: four typos and one rewritten sentence.
+    QVERIFY(!byName.value(QStringLiteral("set_party_contract_progress_enabled"))
+                 ->get_docs()
+                 .contains(QStringLiteral("memebers")));
+    QVERIFY(byName.value(QStringLiteral("sv_vote_quorum_ratio"))->get_docs().contains(QStringLiteral("Min 0.1")));
+    QVERIFY(byName.value(QStringLiteral("sv_master_share_game_socket"))
+                ->get_docs()
+                .contains(QStringLiteral("server browser traffic")));
+
+    // Two descriptions deliberately keep the catalog's wording: `disguise` carries the usage
+    // string the in-game run read off the console, and `sv_pure`'s own help text in the client
+    // is another command's ("Show user data.") - both settled in-game on 2026-10-15.
+    QVERIFY(byName.value(QStringLiteral("disguise"))->get_docs().contains(QStringLiteral("Usage: disguise")));
 }
 
 void EngineTest::catalogRowsFixedFromTheInGameRun() {

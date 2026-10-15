@@ -512,6 +512,9 @@ cl_meathook_neck_pivot_ingame_fwd,,3.0,,,client,Forward neck pivot offset for th
 cl_meathook_neck_pivot_ingame_up,,7.0,,,client,Upward neck pivot offset for the meathook view.,flt,universal,client render
 cl_mouseenable,,1,,,client,Enable mouse input.,bool,universal,client settings
 cl_mouselook,,1,,,client archive notconnected,"Set to 1 to use mouse for look, 0 for keyboard look. Cannot be set while connected to a server.",bool,universal,client settings
+cl_movehelper_process,,1,,,client,,bool,universal,client settings
+cl_movehelper_process_imp,,1,,,client,,bool,universal,client settings
+cl_movehelper_process_vel,,1,,,client,,bool,universal,client settings
 cl_mute_all_comms,,1,,,client archive,"If 1, then all communications from a player will be blocked when that player is muted, including chat messages.",bool,universal,client settings
 cl_muzzleflash_dlight_1st,,1,,,client,Show dynamic light from the first-person muzzle flash.,bool,universal,client render
 cl_mvm_wave_status_visible_during_wave,,0,,,client archive,Display full wave contents while a wave is active in MvM.,bool,universal,client settings
@@ -545,6 +548,7 @@ cl_pitchup,,89,,,client cheat,Maximum upward view angle.,int,universal,client se
 cl_playback_screenshots,,0,,,,Allows the client to playback screenshot and jpeg commands in demos.,bool,universal,client settings
 cl_playerspraydisable,,0,,,client archive,Disable player sprays.,bool,universal,client settings
 cl_precacheinfo,cmd,,,,,Show precache info (client).,none,universal,engine
+cl_pred_doresetlatch,,1,,,client,,bool,universal,client settings
 cl_pred_optimize,,2,,,client,"Optimize for not copying data if didn't receive a network update (1), and also for not repredicting if there were no errors (2).",int,universal,client settings
 cl_pred_track,cmd,,,,client,"<entindex> <fieldname>:  Track changes to entity index entindex, for field fieldname.",[int] [str],universal,engine
 cl_predict,,1.0,,,client userinfo notconnected,Perform client side prediction.,flt,universal,client settings
@@ -860,6 +864,8 @@ fog_endskybox,,-1,,,client cheat,Override 3D skybox fog end distance.,int,univer
 fog_maxdensity,,-1,,,client cheat,Override maximum fog density.,int,universal,client render
 fog_maxdensityskybox,,-1,,,client cheat,Override maximum 3D skybox fog density.,int,universal,client render
 fog_override,,0,,,client cheat,Enable fog value overrides.,bool,universal,client render
+fog_radial,,-1,,,client cheat,,int,universal,client render
+fog_radialskybox,,-1,,,client cheat,,int,universal,client render
 fog_start,,-1,,,client cheat,Override fog start distance.,int,universal,client render
 fog_startskybox,,-1,,,client cheat,Override 3D skybox fog start distance.,int,universal,client render
 fogui,cmd,,,,norecord,Show/hide fog control UI.,none,universal,engine
@@ -878,6 +884,9 @@ func_break_reduction_factor,,.5,,,game,Damage reduction applied to breakable gib
 func_breakdmg_bullet,,0.5,,,game,Bullet damage dealt to breakable objects.,flt,universal,server settings
 func_breakdmg_club,,1.5,,,game,Melee damage dealt to breakable objects.,flt,universal,server settings
 func_breakdmg_explosive,,1.25,,,game,Explosive damage dealt to breakable objects.,flt,universal,server settings
+fx_drawimpactdebris,,1,,,,Draw impact debris effects.,bool,universal,client render
+fx_drawimpactdust,,1,,,,Draw impact dust effects.,bool,universal,client render
+fx_drawmetalspark,,1,,,,Draw metal spark effects.,bool,universal,client render
 g15_dumpplayer,cmd,,,,client,Spew player data.,none,universal,engine
 g15_reload,cmd,,,,client,Reloads the Logitech G-15 Keyboard configs.,none,universal,engine
 g15_update_msec,,250,,,client archive,Logitech G-15 Keyboard update interval.,int,universal,client settings
@@ -1849,6 +1858,9 @@ plugin_unpause_all,cmd,,,,,unpauses all disabled plugins,none,universal,engine
 pointworldtext_rainbowspeed_char,,15.0f,,,client,Rainbow color cycling speed per character for point_worldtext.,flt,universal,client settings
 pointworldtext_rainbowspeed_time,,100.0f,,,client,Rainbow color cycling speed over time for point_worldtext.,flt,universal,client settings
 print_colorcorrection,cmd,,,,cheat,Display the color correction layer information.,none,universal,engine
+print_froggy,cmd,,,,,Prints my best friend,none,universal,engine
+print_sparkles,cmd,,,,,Prints some sparkles,none,universal,engine
+print_sparklyfroggy,cmd,,,,,A magical prince,none,universal,engine
 progress_enable,cmd,,,,,Enable progress bar display (loading).,none,universal,engine
 prop_active_gib_limit,,999999,,,game,Maximum active gibs from props.,int,universal,server settings
 prop_active_gib_max_fade_time,,999999,,,game,Maximum fade time for active gibs.,int,universal,server settings
@@ -2057,6 +2069,7 @@ r_lightcachecenter,,1,,,cheat,Center the light cache on the camera.,bool,univers
 r_lightcachemodel,,-1,,,cheat,Light cache mode for models.,int,universal,client render
 r_lightinterp,,5,,,cheat,"Controls the speed of light interpolation, 0 turns off interpolation",int,universal,client render
 r_lightmap,,-1,,,cheat matsysthread,Render a specific lightmap.,int,universal,client render
+r_lightmap_bicubic,,0,,,,Enable bi-cubic (high quality) lightmap sampling.,bool,universal,client render
 r_lightstyle,,-1,,,cheat matsysthread,Render a specific light style.,int,universal,client render
 r_lightwarpidentity,,0,,,cheat matsysthread,Use the identity light warp texture.,bool,universal,client render
 r_lockpvs,,0,,,cheat,Lock the PVS so you can fly around and inspect what is being drawn.,bool,universal,client render
@@ -2098,6 +2111,7 @@ r_propsmaxdist,,1200,,,client,Maximum visible distance,int,universal,client rend
 r_queued_decals,,0,,,,Offloads a bit of decal rendering setup work to the material system queue when enabled.,bool,universal,client render
 r_queued_post_processing,,0,,,client,Queue post-processing in a thread.,bool,universal,client render
 r_queued_ropes,,1,,,client,Queue rope rendering in a thread.,bool,universal,client render
+r_radialfog_force,,1,,,,Force-on toggle for testing radial fog on/off. -1 = default. 0 = force off. 1 = force on. This is not a cheat for the joy of playing with this set on if a player wants the new behaviour on old maps.,int,universal,client render
 r_radiosity,,4,,,cheat,"0: no radiosity 1: radiosity with ambient cube (6 samples) 2: radiosity with 162 samples 3: 162 samples for static props, 6 samples for everything else",int,universal,client render
 r_rainalpha,,0.4,,,client cheat,Rain alpha.,flt,universal,client render
 r_rainalphapow,,0.8,,,client cheat,Rain alpha exponent.,flt,universal,client render
@@ -2170,6 +2184,7 @@ rcon_password,,0,,,norecord svcannotquery,remote console password.,str,universal
 recompute_speed,cmd,,,,cheat,Recomputes clock speed (for debugging purposes).,none,universal,engine
 record,cmd,,,,norecord,Record a demo.,none,universal,engine
 redirect,cmd,,,,norecord svcanexec,Redirect client to specified server.,none,universal,engine
+refresh_gameui_dialogs_modeset,cmd,,,,,Refresh ALL GameUI Dialogs,none,universal,engine
 refresh_options_dialog,cmd,,,,client,Refresh the options dialog.,none,universal,engine
 reload,cmd,,,,,Reload the most recent saved game (add setpos to jump to current view position on reload).,none,universal,engine
 reload_char_info,cmd,,,,client,Reloads the char info panel,none,universal,engine
@@ -2314,6 +2329,7 @@ say,cmd,,,,game,Display player message,none,universal,server commands
 say_party,cmd,,,,client,"Send a message to the user's party, if they have one",none,universal,engine
 say_team,cmd,,,,game,Display player message to team,none,universal,server commands
 sb_close_browser_on_connect,,1,,,client archive,Close the server browser when connecting.,bool,universal,client settings
+sb_destroy_for_resize,cmd,,,,,destroy server browser for resize,none,universal,engine
 sb_dontshow_maxplayer_warning,,0,,,client archive,Hide the max player warning in the server browser.,bool,universal,client settings
 sb_filter_incompatible_versions,,1,,,,Hides servers running incompatible versions from the server browser.  (Internet tab only.),bool,universal,client settings
 sb_mod_suggested_maxplayers,,0,,,hidden,Suggested max players shown for this mod.,bool,universal,client settings
@@ -2375,7 +2391,7 @@ sdr_spew_level,,4,,,,"Verbosity level for SteamNetworkingSockets spew.  4=warnin
 sensitivity,,3,0.0001,10000000,client archive,Mouse sensitivity.,flt,universal,client settings
 server_game_time,cmd,,,,game,Gives the game time in seconds (server's curtime),none,universal,server commands
 servercfgfile,,server.cfg,,,game,Config file executed by dedicated servers.,str,universal,server settings
-set_party_contract_progress_enabled,cmd,,,,client,Set whether or not you'd like your party memebers to be able to make progress on your Contracts along with you.,none,universal,engine
+set_party_contract_progress_enabled,cmd,,,,client,Set whether or not you'd like your party members to be able to make progress on your Contracts along with you.,none,universal,engine
 setang,cmd,,,,game cheat,Snap player eyes to specified pitch yaw <roll:optional> (must have sv_cheats).,none,universal,server commands
 setang_exact,cmd,,,,game cheat,Snap player eyes and orientation to specified pitch yaw <roll:optional> (must have sv_cheats).,none,universal,server commands
 setinfo,cmd,,,,clcmdcanexec,Adds a new user info value,none,universal,engine
@@ -2514,20 +2530,30 @@ snd_async_spew_blocking,,1,,,,"Spew message to console any time async sound load
 snd_async_stream_spew,,0,,,,"Spew streaming info ( 0=Off, 1=streams, 2=buffers",int,universal,client settings
 snd_buildcache,cmd,,,,,<directory or VPK filename>  Rebulds sound cache for a given search path.,[str],universal,client settings
 snd_cull_duplicates,,0,,,,"If nonzero, aggressively cull duplicate sounds during mixing. The number specifies the number of duplicates allowed to be played.",bool,universal,client settings
+snd_debug_gaincurve,,0,,,,Visualize sound gain fall off,bool,universal,client settings
+snd_debug_gaincurvevol,,1,,,,Visualize sound gain fall off,bool,universal,client settings
+snd_debug_panlaw,,0,,,cheat,Visualize panning crossfade curves,bool,universal,client settings
 snd_defer_trace,,1,,,,Defer sound occlusion traces.,bool,universal,client settings
 snd_delay_sound_shift,,0.01,,,,Shift sounds to compensate for delays.,flt,universal,client settings
 snd_disable_mixer_duck,,0,,,cheat,Disable mixer ducking.,bool,universal,client settings
 snd_duckerattacktime,,0.5,,,archive,Ducker attack time.,flt,universal,client settings
 snd_duckerreleasetime,,2.5,,,archive,Ducker release time.,flt,universal,client settings
 snd_duckerthreshold,,0.15,,,archive,Ducker activation threshold.,flt,universal,client settings
+snd_ducking_off,,1,,,archive,,bool,universal,client settings
 snd_ducktovolume,,0.55,,,archive,Volume ducks reduce to.,flt,universal,client settings
 snd_dumpclientsounds,cmd,,,,cheat,Dump sounds to console,none,universal,engine
 snd_foliage_db_loss,,4,,,cheat,dB loss for sounds passing through foliage.,int,universal,client settings
+snd_front_headphone_position,cmd,,,,,Specifies the position (in degrees) of the virtual front left/right headphones.,none,universal,client settings
+snd_front_stereo_speaker_position,cmd,,,,,Specifies the position (in degrees) of the virtual front left/right speakers.,none,universal,client settings
+snd_front_surround_speaker_position,cmd,,,,,Specifies the position (in degrees) of the virtual front left/right speakers.,none,universal,client settings
 snd_gain,,1,,,cheat,Master sound gain.,bool,universal,client settings
 snd_gain_max,,1,,,cheat,Maximum sound gain.,bool,universal,client settings
 snd_gain_min,,0.01,,,cheat,Minimum sound gain.,flt,universal,client settings
+snd_headphone_pan_exponent,cmd,,,,,Specifies the exponent for the pan xfade from phone to phone if the 'exp' pan law is being used.,none,universal,client settings
+snd_headphone_pan_radial_weight,cmd,,,,,Apply cos(angle) * weight before pan law,none,universal,client settings
 snd_legacy_surround,,0,,,archive,Use legacy surround sound behavior.,bool,universal,client settings
 snd_lockpartial,,1,,,,Lock partial sound mixer setup.,bool,universal,client settings
+snd_mergemethod,,1,,,,"Sound merge method (0 == sum and clip, 1 == max, 2 == avg).",int,universal,client settings
 snd_mix_async,,0,,,cheat,Mix sound asynchronously.,bool,universal,client settings
 snd_mixahead,,0.1,,,archive,Sound mix-ahead time in seconds.,flt,universal,client settings
 snd_musicvolume,,1.0,0,1,archive archivexbox,Music volume,flt,universal,client settings
@@ -2536,6 +2562,10 @@ snd_noextraupdate,,0,,,,Disable extra sound updates.,bool,universal,client setti
 snd_obscured_gain_dB,,-2.70,,,cheat,Gain reduction in dB for occluded sounds.,flt,universal,client settings
 snd_pitchquality,,1,,,archive,Use pitch shifting to preserve quality.,bool,universal,client settings
 snd_profile,,0,,,demo,Profile sound mixing.,bool,universal,client settings
+snd_rear_headphone_position,cmd,,,,,Specifies the position  (in degrees) of the virtual rear left/right headphones.,none,universal,client settings
+snd_rear_speaker_scale,,1,,,cheat,How much to scale rear speaker contribution to front stereo output,flt,universal,client settings
+snd_rear_stereo_speaker_position,cmd,,,,,Specifies the position (in degrees) of the virtual rear left/right speakers.,none,universal,client settings
+snd_rear_surround_speaker_position,cmd,,,,,Specifies the position (in degrees) of the virtual rear left/right speakers.,none,universal,client settings
 snd_refdb,,60,,,cheat,Reference dB level for sound falloff.,int,universal,client settings
 snd_refdist,,36,,,cheat,Reference distance for sound falloff.,int,universal,client settings
 snd_restart,cmd,,,,,Restart sound system.,none,universal,client settings
@@ -2545,6 +2575,10 @@ snd_showmixer,,0,,,,Show the sound mixer debug.,bool,universal,client settings
 snd_showstart,,0,,,cheat,Show when sounds start.,bool,universal,client settings
 snd_soundmixer,,Default_Mix,,,,Active sound mixer preset.,str,universal,client settings
 snd_spatialize_roundrobin,,0,,,,"Lowend optimization: if nonzero, spatialize only a fraction of sound channels each frame. 1/2^x of channels will be spatialized per frame.",bool,universal,client settings
+snd_stereo_speaker_pan_exponent,cmd,,,,,Specifies the exponent for the pan xfade from speaker to speaker if the 'exp' pan law is being used.,none,universal,client settings
+snd_stereo_speaker_pan_radial_weight,cmd,,,,,Apply cos(angle) * weight before pan law,none,universal,client settings
+snd_surround_speaker_pan_exponent,cmd,,,,,Specifies the exponent for the pan xfade from speaker to speaker if the 'exp' pan law is being used.,none,universal,client settings
+snd_surround_speaker_pan_radial_weight,cmd,,,,,Apply cos(angle) * weight before pan law,none,universal,client settings
 snd_surround_speakers,,-1,,,,Number of surround speakers (-1 = automatic).,int,universal,client settings
 snd_visualize,,0,,,cheat,Show sounds location in world,bool,universal,client settings
 snd_vox_captiontrace,,0,,,,Shows sentence name for sentences which are set not to show captions.,bool,universal,client settings
@@ -2552,6 +2586,8 @@ snd_vox_globaltimeout,,300,,,,Global timeout for voice sequences.,int,universal,
 snd_vox_sectimetout,,300,,,,Section timeout for voice sequences.,int,universal,client settings
 snd_vox_seqtimetout,,300,,,,Sequence timeout for voice sequences.,int,universal,client settings
 sndplaydelay,cmd,,,,svcanexec,Usage:  sndplaydelay delay_in_sec (negative to skip ahead) soundname,none,universal,engine
+sound_device_list,cmd,,,,,Lists all available audio devices.,none,universal,engine
+sound_device_override,,0,,,archive,ID of the sound device to use,int,universal,client settings
 soundfade,cmd,,,,svcanexec,Fade client volume.,none,universal,engine
 soundinfo,cmd,,,,,Describe the current sound device.,none,universal,engine
 soundlist,cmd,,,,,List all known sounds.,none,universal,engine
@@ -2600,6 +2636,7 @@ sv_accelerate,,10,,,game replicated notify,Ground acceleration rate.,int,univers
 sv_airaccelerate,,10,,,game replicated notify,Air acceleration rate.,int,universal,server settings
 sv_allow_color_correction,,1,,,replicated,Allow or disallow clients to use color correction on this server.,bool,universal,client settings
 sv_allow_point_servercommand,,official,,,game,Allow use of point_servercommand entities in map. Potentially dangerous for untrusted maps.   disallow : Always disallow   official : Allowed for valve maps only   always   : Allow for all maps,str,universal,server settings
+sv_allow_server_adverisement_to_master_server,,0,,,,,bool,universal,server settings
 sv_allow_voice_from_file,,1,,,replicated,Allow or disallow clients from using voice_inputfromfile on this server.,bool,universal,client settings
 sv_allow_votes,,1,,,game,Allow voting?,bool,universal,server settings
 sv_allow_wait_command,,1,,,replicated,Allow or disallow the wait command on clients connected to this server.,bool,universal,client settings
@@ -2619,8 +2656,8 @@ sv_bonus_map_complete,cmd,,,,client cheat,Completes a bonus map.,none,universal,
 sv_bonus_map_unlock,cmd,,,,client cheat,Locks a bonus map.,none,universal,engine
 sv_bounce,,0,,,game replicated notify,Bounce multiplier for when physically simulated objects collide with other objects.,bool,universal,server settings
 sv_cacheencodedents,,1,,,,"If set to 1, does an optimization to prevent extra SendTable_Encode calls.",bool,universal,client settings
-sv_chat_bucket_size_tier1,,4,,,game,The maxmimum size of the short term chat msg bucket.,int,universal,server settings
-sv_chat_bucket_size_tier2,,30,,,game,The maxmimum size of the long term chat msg bucket.,int,universal,server settings
+sv_chat_bucket_size_tier1,,4,,,game,The maximum size of the short term chat msg bucket.,int,universal,server settings
+sv_chat_bucket_size_tier2,,30,,,game,The maximum size of the long term chat msg bucket.,int,universal,server settings
 sv_chat_seconds_per_msg_tier1,,3,,,game,The number of seconds to accrue an additional short term chat msg.,int,universal,server settings
 sv_chat_seconds_per_msg_tier2,,10,,,game,The number of seconds to accrue an additional long term chat msg.,int,universal,server settings
 sv_cheats,,0,,,replicated notify,Allow cheats on server,bool,universal,client settings
@@ -2648,6 +2685,7 @@ sv_filterban,,1,,,,Set packet filtering by IP mode,bool,universal,client setting
 sv_footsteps,,1,,,game replicated notify,Play footstep sound for players,bool,universal,server settings
 sv_forcepreload,,0,,,archive,Force server side preloading.,bool,universal,client settings
 sv_friction,,4,,,game replicated notify,World friction.,int,universal,server settings
+sv_friends_only,,1,,,,Whether or not only friends should be allowed to join the game,bool,universal,server settings
 sv_gravity,,800,,,game replicated notify,World gravity.,int,universal,server settings
 sv_hudhint_sound,,1,,,game replicated,Play sound for HUD hints.,bool,universal,server settings
 sv_lan,,0,,,,"Server is a lan server ( no heartbeat, no authentication, no non-class C addresses )",bool,universal,client settings
@@ -2665,7 +2703,7 @@ sv_logsecret,,0,,,,"If set then include this secret when doing UDP logging (will
 sv_lowedict_action,,0,0,5,,"0 - no action, 1 - warn to log file, 2 - attempt to restart the game, if applicable, 3 - restart the map, 4 - go to the next map in the map cycle, 5 - spew all edicts.",int,universal,client settings
 sv_lowedict_threshold,,8,0,2048,,"When only this many edicts are free, take the action specified by sv_lowedict_action.",int,universal,client settings
 sv_massreport,,0,,,game,Report entity masses (debugging).,bool,universal,server settings
-sv_master_share_game_socket,,1,,,,"Use the game's socket to communicate to the master server. If this is 0, then it will create a socket on -steamport + 1 to communicate to the master server on.",bool,universal,client settings
+sv_master_share_game_socket,,1,,,,"Use the game's socket to communicate to the master server.  This is recommended.If this is 0, then it will create a socket on -steamport to handle server browser traffic",bool,universal,client settings
 sv_max_connects_sec,,2.0,,,,Maximum connections per second to respond to from a single IP address.,flt,universal,client settings
 sv_max_connects_sec_global,,0,,,,Maximum connections per second to respond to from anywhere.,bool,universal,client settings
 sv_max_connects_window,,4,,,,Window over which to average connections per second averages.,int,universal,client settings
@@ -2760,9 +2798,11 @@ sv_thinktimecheck,,0,,,game,Check for thinktimes all on same timestamp.,bool,uni
 sv_timeout,,65,,,,"After this many seconds without a message from a client, the client is dropped",int,universal,client settings
 sv_turbophysics,,0,,,game replicated,Turns on turbo physics,bool,universal,server settings
 sv_unlockedchapters,,1,,,archive archivexbox,Highest unlocked game chapter.,bool,universal,client settings
+sv_use_steam_networking,,1,,,,,bool,universal,server settings
 sv_use_steam_voice,,0,,,replicated hidden,Deprecated - placeholder convar for handling old network streams that had an incomplete SVC_VoiceInit packet.  Use 'sv_voicecodec steam',bool,universal,client settings
 sv_usercmd_custom_random_seed,,1,,,game cheat,When enabled server will populate an additional random seed independent of the client,bool,universal,server settings
 sv_vehicle_autoaim_scale,,8,,,game,Vehicle autoaim scale.,int,universal,server settings
+sv_viewmodel_lag_do_angles,,1,,,game replicated cheat,,bool,universal,server settings
 sv_visiblemaxplayers,,-1,,,,Overrides the max players reported to prospective clients,int,universal,client settings
 sv_voicecodec,,steam,,,,"Specifies which voice codec to use. Valid options are: vaudio_speex - Legacy Speex codec (lowest quality) vaudio_celt - Newer CELT codec (22kHz, 22kbps) vaudio_celt_high - Newer CELT codec, higher bitrate (44kHz, 44kbps) steam - Use Steam voice API",str,universal,client settings
 sv_voiceenable,,1,,,archive notify,Enable voice chat.,bool,universal,client settings
@@ -2805,10 +2845,11 @@ sv_vote_issue_scramble_teams_cooldown,,1200,,,game,Minimum time before another s
 sv_vote_kick_ban_duration,,20,,,game,The number of minutes a vote ban should last. (0 = Disabled),int,universal,server settings
 sv_vote_late_join_cooldown,,300,,,game,Length of the vote-creation cooldown when joining the server after the grace period has expired,int,universal,server settings
 sv_vote_late_join_time,,90,,,game,Grace period after the match starts before players who join the match receive a vote-creation cooldown,int,universal,server settings
-sv_vote_quorum_ratio,,0.6,0.1,1,game notify,"The minimum ratio of eligible players needed to pass a vote.  Min 0.5, Max 1.0.",flt,universal,server settings
+sv_vote_quorum_ratio,,0.6,0.1,1,game notify,"The minimum ratio of eligible players needed to pass a vote.  Min 0.1, Max 1.0.",flt,universal,server settings
 sv_vote_timer_allow_early_finish,,1,,,game,"If all votes are in, whether to end the vote (for debugging)",bool,universal,server settings
 sv_vote_timer_duration,,15,,,game,How long to allow voting on an issue,int,universal,server settings
 sv_vote_ui_hide_disabled_issues,,1,,,game,Suppress listing of disabled issues in the vote setup screen.,bool,universal,server settings
+sv_wallbug,,0,,,game replicated,,bool,universal,server settings
 sv_wateraccelerate,,10,,,game replicated notify,Acceleration while in water.,int,universal,server settings
 sv_waterdist,,12,,,game replicated,Vertical view fixup when eyes are near water plane.,int,universal,server settings
 sv_waterfriction,,1,,,game replicated notify,Friction while in water.,bool,universal,server settings
@@ -2866,6 +2907,7 @@ tf_arena_override_team_size,,0,,,game replicated,Overrides the maximum team size
 tf_arena_preround_time,,10,5,15,game replicated notify,Length of the Pre-Round time,int,universal,server settings
 tf_arena_round_time,,0,,,game replicated notify,Arena round time in seconds.,bool,universal,server settings
 tf_arena_use_queue,,1,,,game replicated notify,Enables the spectator queue system for Arena.,bool,universal,server settings
+tf_armory_page_skip,,10,,,client archive,Number of pages to skip in the Mann Co. Catalog,int,universal,client settings
 tf_autobalance_ask_candidates_maxtime,,10,,,game replicated,Max time to ask candidates for autobalance.,int,universal,server settings
 tf_autobalance_dead_candidates_maxtime,,15,,,game replicated,Max time for dead autobalance candidates.,int,universal,server settings
 tf_autobalance_force_candidates_maxtime,,5,,,game replicated,Max time before autobalance forces candidates.,int,universal,server settings
@@ -3006,6 +3048,7 @@ tf_cart_spell_drop_rate,,4,,,game,Rate spell drops appear on the Halloween cart.
 tf_casual_welcome_hide,,0,,,client archive hidden,Hide the casual mode welcome dialog.,bool,universal,client settings
 tf_chargedfriends,,0,,,client archive,Whether the 'charge friends' promo was shown.,bool,universal,client settings
 tf_chat_popup_hold_time,,5,,,client archive,Seconds chat popups stay on screen.,int,universal,client settings
+tf_christmas_ball_chance,,100,,,game replicated,Percent chance of a christmas beach ball spawning at each round start,int,universal,server settings
 tf_clamp_airducks,,1,,,game replicated,Limit air crouches (rocket jumping).,bool,universal,server settings
 tf_classlimit,,0,0,,game replicated notify,Limit on how many players can be any class (i.e. tf_class_limit 2 would limit 2 players per class).,bool,universal,server settings
 tf_clear_attribute,cmd,,,,game cheat,Remove given attribute from all areas in the selected set.,none,universal,server commands
@@ -3188,6 +3231,7 @@ tf_halloween_zombie_mob_spawn_count,,20,,,game cheat,How many zombies to spawn,i
 tf_halloween_zombie_mob_spawn_interval,,180,,,game cheat,"Average interval between zombie mob spawns, in seconds",int,universal,server settings
 tf_hat_effect_offset,,0,-8,8,client hidden,Adjust the position of the unusual effect for your hat.,int,universal,client render
 tf_healthicon_height_offset,,10,,,client archive,Offset of the health icon away from the top of the target.,int,universal,client settings
+tf_hide_custom_decals,,1,,,client archive,,bool,universal,client settings
 tf_highfive_debug,,0,,,game,Turns on some console spew for debugging high five issues.,bool,universal,server settings
 tf_highfive_hintcount,,0,0,,client archive norecord,Counts the number of times the high five hint has been displayed,bool,universal,client settings
 tf_hud_no_crosshair_on_scope_zoom,,0,,,client archive,Hide the crosshair while scoped.,bool,universal,client render
@@ -3290,6 +3334,7 @@ tf_mvm_engineer_teleporter_uber_duration,,5.f,,,game cheat,Uber duration of the 
 tf_mvm_force_victory,cmd,,,,game cheat,Force immediate victory.,none,universal,server commands
 tf_mvm_jump_to_wave,cmd,,,,game cheat,Jumps directly to the given Mann Vs Machine wave number,none,universal,server commands
 tf_mvm_max_connected_players,,10,,,game,Maximum number of connected real players in MvM,int,universal,server settings
+tf_mvm_max_invaders,,22,,,game,Maximum number of invaders in MvM,int,universal,server settings
 tf_mvm_min_players_to_start,,3,,,game replicated notify,Minimum number of players connected to start a countdown timer,int,universal,server settings
 tf_mvm_miniboss_scale,,1.75,,,game replicated cheat,Full body scale for minibosses.,flt,universal,server settings
 tf_mvm_missioncyclefile,,tf_mvm_missioncycle.res,,,game,Name of the .res file used to cycle mvm misisons,str,universal,server settings
@@ -3410,6 +3455,8 @@ tf_rd_finale_beep_time,,10,,,client archive,Beep interval during the Robot Destr
 tf_rd_max_points_override,,0,,,game,"When changed, overrides the current max points",bool,universal,server settings
 tf_rd_return_max_time,,90,,,game,Maximum seconds for a robot to return in Robot Destruction.,int,universal,server settings
 tf_rd_return_min_time,,30,,,game,Minimum seconds for a robot to return in Robot Destruction.,int,universal,server settings
+tf_ready_countdown_minimum,,60,,,game,When players ready up never reduce the countdown timer below this number of seconds,int,universal,server settings
+tf_ready_countdown_reduce_per_player,,30,,,game,How many seconds we should reduce the countdown timer by per player readying up,int,universal,server settings
 tf_recent_achievements,,0,,,client archive,Count of recent achievements to display.,bool,universal,client settings
 tf_remember_activeweapon,,0,,,client userinfo archive,Setting this to 1 will make the active weapon persist between lives.,bool,universal,client settings
 tf_remember_lastswitched,,0,,,client userinfo archive,Setting this to 1 will make the 'last weapon' persist between lives.,bool,universal,client settings
@@ -3521,6 +3568,9 @@ tf_use_fixed_weaponspreads,,0,,,game replicated notify,"If set to 1, weapons tha
 tf_use_match_hud,,1,,,client archive,Use the match status HUD.,bool,universal,client settings
 tf_use_min_viewmodels,,0,,,client archive,Use minimized viewmodels.,bool,universal,client render
 tf_viewmodels_offset_override,,0,,,client cheat,"If set, this will override the position of all viewmodels. Usage 'x y z'",bool,universal,client render
+tf_voice_command_suspension_mode,,2,,,game replicated,0 = None | 1 = No Voice Commands | 2 = Rate Limited,int,universal,server settings
+tf_voice_command_suspension_rate_limit_bucket_count,,5,,,game,,int,universal,server settings
+tf_voice_command_suspension_rate_limit_bucket_refill_rate,,6,,,game,,flt,universal,server settings
 tf_warpaint_explanation_viewed,,0,,,client archive,Whether the war paint explanation was viewed.,bool,universal,client settings
 tf_water_resolution,,1024,,,client,Needs to be set at game launch time to override.,int,universal,client render
 tf_weapon_criticals,,1,,,game replicated notify,Whether or not random crits are enabled,bool,universal,server settings
@@ -3640,9 +3690,14 @@ vgui_drawtree_panelptr,,0,,,,Show the panel pointer values in the vgui_drawtree 
 vgui_drawtree_popupsonly,,0,,,,Draws the vgui popup list in hierarchy(1) or most recently used(2) order.,bool,universal,client render
 vgui_drawtree_render_order,,0,,,,List the vgui_drawtree panels in render order.,bool,universal,client render
 vgui_drawtree_visible,,1,,,,Draw the visible panels.,bool,universal,client render
+vgui_font_reload,cmd,,,,,,none,universal,engine
 vgui_message_dialog_modal,,1,,,client archive,Make VGUI message dialogs modal.,bool,universal,client settings
 vgui_spew_fonts,cmd,,,,,Spew loaded font information.,none,universal,engine
 vgui_togglepanel,cmd,,,,,show/hide vgui panel by name.,[str],universal,engine
+vgui_ui_scale_factor,,1,,,,,flt,universal,client settings
+vgui_ui_scale_factor_deck_additional,,1,,,,,flt,universal,client settings
+vgui_ui_scale_height,,1080,,,,,int,universal,client settings
+vgui_ui_scale_width,,1920,,,,,int,universal,client settings
 video_quicktime_decode_gamma,,0,0,4,archive,QuickTime Video Playback Gamma Target- 0=no gamma adjust  1=platform default gamma  2 = gamma 1.8  3 = gamma 2.2  4 = gamma 2.5,int,universal,client settings
 video_quicktime_encode_gamma,,3,0,4,archive,QuickTime Video Encode Gamma Target- 0=no gamma adjust  1=platform default gamma  2 = gamma 1.8  3 = gamma 2.2  4 = gamma 2.5,int,universal,client settings
 viewanim_addkeyframe,cmd,,,,client cheat,Add a view animation keyframe.,none,universal,engine
@@ -3657,6 +3712,7 @@ violence_ablood,,1,,,archive,Draw alien blood,bool,universal,client settings
 violence_agibs,,1,,,archive,Show alien gib entities,bool,universal,client settings
 violence_hblood,,1,,,archive,Draw human blood,bool,universal,client settings
 violence_hgibs,,1,,,archive,Show human gib entities,bool,universal,client settings
+vmodule_resetparents,cmd,,,,,,none,universal,engine
 voice_avggain,,0.5,,,,Average voice gain.,flt,universal,client settings
 voice_buffer_ms,,100,,,,How many milliseconds of voice to buffer to avoid dropouts due to jitter and frame time differences.,int,universal,client settings
 voice_clientdebug,,0,,,client,Debug client voice transmission.,bool,universal,client settings
