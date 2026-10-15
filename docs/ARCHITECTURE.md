@@ -14,7 +14,7 @@ the contracts themselves.
 - `src/ui/` - Qt objects: `ConfigController` (load/save state machine, context property
   `cfg`), `CommandListModel` (parsed rows), `ConsoleCommandModel` (catalog + suggest).
 - `qml/` - the whole UI, embedded in `qml.qrc`. Theme tokens in `qml/theme/Theme.qml`.
-- `res/res.qrc` - the command catalog `res/cfg/allcmds.csv` (3825 rows, 10 columns,
+- `res/res.qrc` - the command catalog `res/cfg/allcmds.csv` (3824 rows, 10 columns,
   headerless by design - schema in `res/cfg/schema.md`) and four bundled cfg presets.
 
 Assumed load: single user, local, one config at a time, no network.

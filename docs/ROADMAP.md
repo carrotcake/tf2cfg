@@ -67,8 +67,9 @@ Qt's platform-plugin fatal text (a blocking fatal dialog keeps the process alive
 The gap was real: the app is keyboard-usable up to the keyboard panel, then stops - the
 104 key caps and the three editor tabs are `MouseArea`-only, and nothing carries
 `Accessible.*`. `docs/accessibility.md` holds the findings (A1-A8) and the sized work
-items (W1-W8). W1-W8 are done (2026-10-13); still open: the screen-reader pass (section
-4, needs a real screen reader).
+items (W1-W8). W1-W8 are done (2026-10-13) and the screen-reader pass ran 2026-10-15 with
+Microsoft Narrator: 4 of its 5 steps pass, and the one defect it found (the tab strip's
+names were never announced) is fixed in `Tf2TabBar`.
 
 | # | Work | Notes |
 |---|------|-------|
@@ -87,12 +88,18 @@ items (W1-W8). W1-W8 are done (2026-10-13); still open: the screen-reader pass (
 - Verification: the engine suite (`tests/tst_engine.cpp`) still covers none of this, but
   the QML suite (`tests/qml/`, Qt Quick Test, added 2026-10-15) now pins the kernels those
   work items added: a bindable cap takes focus and activates on Return/Space (W2), a
-  non-bindable cap stays out of the tab chain, focus shows the highlight, and the tab strip
-  reports the next/previous tab with wrapping on Left/Right (W3). Manual pass steps stay in
-  `docs/accessibility.md` section 4 - the tests prove the handlers fire, not that the UI
-  looks right. Real screen-reader output is still unverifiable on this machine; re-run
-  step 4 with NVDA/Narrator/Orca before claiming more - the runnable version of that pass is
-  `docs/in-game-checklist.md` §3.
+  non-bindable cap stays out of the tab chain, focus shows the highlight, the tab strip
+  reports the next/previous tab with wrapping on Left/Right (W3), and the strip announces
+  as a tab list with named page tabs (W4). The 2026-10-15 Narrator pass:
+  - Step 1 (start screen), 3 (cap focus + bind dialog opens), 5 (bound cap reads its bind
+    as the description): pass.
+  - Steps 2 and 4: the reader read the prev/next buttons and every dialog control, but
+    never the tab names. Cause: each tab carried `Accessible.PageTab` + name + selected,
+    but the strip itself had no role, and Qt's own TabBar pairs `PageTabList` on the bar
+    with `PageTab` on each button - a page tab is only announced inside a tab list.
+    Fixed in `Tf2TabBar` 2026-10-15; re-run the pass with a reader to confirm.
+  - Manual pass steps stay in `docs/accessibility.md` section 4 - the tests prove the
+    handlers fire and the properties are set, not what a reader says.
 
 ## 3. QML cleanup
 
@@ -109,17 +116,14 @@ items (W1-W8). W1-W8 are done (2026-10-13); still open: the screen-reader pass (
 
 ## 4. Input ids missing from the Edit Binds model
 
-Confirmed bindable but not in the key table (evidence and caveats in
-`docs/legacy/missing-input-ids.md`):
-
-- `joy11` .. `joy32` - generic joystick/gamepad buttons beyond the ten of the Xbox 360
-  pad. Valid-but-unproven in practice; Valve's shipped config never uses them.
-- `r axis pos` / `r axis neg` - joystick roll (twist) axis directions.
-
-Parser work: none. Any new id is UI-only - the pipeline already handles quoted keys with
-spaces. Do **not** surface the engine-enumerated-but-unproven ids (`break`, the lock
-toggles, Novint Falcon, Steam Controller) without an in-game check - list in the legacy
-doc. The in-game run to settle these is written out in `docs/in-game-checklist.md` §2.
+**Closed 2026-10-15** (in-game run, `docs/in-game-checklist.md` §2). Both candidate
+groups bind silently - `bind joy11 +attack` and `bind "r axis pos" "+attack"` print no
+error - but neither fired with real hardware (an Xbox-style pad for `joy11..joy32`, a USB
+flightstick for the twist axis). The engine takes key names without validating them, so
+"no error" proves nothing on its own; with no id observed firing, nothing entered the
+keyboard model. Evidence and the engine enumeration remain in
+`docs/legacy/missing-input-ids.md`. The engine-enumerated ids kept out of the UI (`break`,
+the lock toggles, Novint Falcon, Steam Controller) were not part of the run and stay out.
 
 ## 5. Feature backlog (extension points from the QML rewrite, section 10)
 
@@ -151,3 +155,21 @@ there: #1/#2/#3/#4 fixed in the 2026-10-13 sweep, #5 (`cmdLex` CSV malformed quo
 is a data-edge note only (catalog verified clean, pinned by
 `catalogRowsHaveTenFields`), #6 (`bindtoggle` modelling) is implemented as
 first-class support. Nothing open.
+
+## 7. Catalog fidelity (open, sized 2026-10-15)
+
+The 2026-10-15 in-game run showed the catalog is not a faithful mirror of the live client:
+`grab_window` answers **Unknown command** although the dump that fed the catalog
+(`data/cvarlist_linux.txt`) lists it, and `sv_pure` carried another command's
+description. Measured offline the same day:
+
+- `res/cfg/allcmds.csv` has 3824 rows, the TF2 dump has 3573 entries, and every dump entry
+  is in the catalog - so the catalog is a superset and that dump cannot be its only source.
+- 252 catalog names are absent from the TF2 dump. Some are real TF2 cheats the dump omits
+  (`addcond`), others plausibly come from `data/cs2_cvarlist.md`, CS2's list, which sits in
+  the repo. The 252 is a suspect list, not a defect list.
+
+Sizing it needs a dump from the live client rather than the stale one: in-game
+`con_logfile cvarlist.txt`, `cvarlist`, `con_logfile ""`. The diff is then mechanical -
+stale descriptions, stale signatures, rows that no longer exist - and each fix lands with
+a test like the four pinned by `catalogRowsFixedFromTheInGameRun`.

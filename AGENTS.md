@@ -99,12 +99,15 @@ rules: **the file on disk is the source of truth for lines the app does not own*
 - `docs/AUDIT.md` - the current audit's findings; open ones are mirrored in the roadmap.
   The 2026-10-12 audit is retired to `docs/legacy/`.
 - `docs/accessibility.md` - the A1-A8 findings and the W1-W8 work items. W1-W8 are done
-  (2026-10-13); open: the screen-reader pass (section 4, needs real assistive tech) and
-  the contrast re-check after any `Theme.qml` change.
-- `docs/in-game-checklist.md` - the runnable list for the user-gated work: the argument
-  bounds the ledger proposes, the bind ids missing from the keyboard model, and the
-  screen-reader pass. Only in-game evidence moves a row into `res/cfg/argbounds.csv` or an
-  id into `src/ui/keytable.cpp`.
+  (2026-10-13); the screen-reader pass ran 2026-10-15 (Microsoft Narrator) and its one
+  finding - the tab strip never announced tab names - is fixed in `Tf2TabBar` and pinned
+  by `tests/qml`. Open: a reader re-run to confirm that fix, and the contrast re-check
+  after any `Theme.qml` change.
+- `docs/in-game-checklist.md` - the list the repo owner takes into the game (argument
+  bounds, bind ids, screen-reader pass). Filled in for the 2026-10-15 run and now the
+  record of it; outcomes were applied to `res/cfg/argbounds.csv`, `allcmds.csv` and
+  `docs/argbounds-verification.md` the same day. Only in-game evidence moves a row into
+  `argbounds.csv` or an id into `src/ui/keytable.cpp`.
 - `docs/legacy/*.md` - dated records (audit, code review, migrations, the original
   QML-rewrite design): historical evidence and verification logs. Do not edit them; the
   live versions of their contracts and open items are in the two files above.

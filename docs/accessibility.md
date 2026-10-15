@@ -174,11 +174,22 @@ The engine suite (`tests/tst_engine.cpp`) tests C++ only. The QML side now has a
 its own: `tests/qml/` (Qt Quick Test, `tests/qml/qmltests.pro`, run headless in CI). It
 drives the real QML and currently pins: the shell loading `Main.qml` and opening the editor
 page, the Overview rows' catalog columns, KeyCap focus plus Return/Space activation, the
-non-bindable caps staying out of the tab chain, and Tf2TabBar's Left/Right with wrapping.
-Add a case there when a UI behavior needs pinning; the tests prove handlers fire and
-delegates render, not that the result looks right.
+non-bindable caps staying out of the tab chain, Tf2TabBar's Left/Right with wrapping, and
+the strip's tab-list/page-tab roles with names and selected state. Add a case there when a
+UI behavior needs pinning; the tests prove handlers fire and delegates render, not that the
+result looks right.
 
-What no test covers is the manual pass, which is short:
+Screen-reader pass: **ran 2026-10-15 with Microsoft Narrator** (repo owner). Steps 1, 3 and
+5 pass - the start screen announces every control, Tab reaches a cap and Enter opens the
+bind dialog for it, and a bound cap reads its bind as the description after the name.
+Steps 2 and 4 exposed one defect: the reader read the prev/next buttons and every dialog
+control, but never the tab names, in both the editor strip and the dialog's. Cause: each
+tab carried `Accessible.PageTab`, its title and its selected state, but the strip itself had
+no role - and Qt's own TabBar pairs `PageTabList` on the bar with `PageTab` on each button,
+because a page tab is only announced inside a tab list. `Tf2TabBar` now carries the role
+(2026-10-15, pinned by `test_tabBarAccessibleRoles`); a reader re-run confirms it.
+
+What remains is the manual pass below, which is short:
 
 1. Launch, press Tab repeatedly: every control on the start screen takes focus, shows a
    visible ring, and Enter/Space activates it.
@@ -189,7 +200,6 @@ What no test covers is the manual pass, which is short:
    pair takes focus and shows a ring.
 5. Contrast: re-run the ratio check after any `Theme.qml` change.
 
-Not verifiable here: real screen-reader output. No assistive technology is installed on this
-machine, so every `Accessible.*` claim above is a claim about what Qt is told, not about
-what a reader announces. Anyone with NVDA, Narrator or Orca should re-run step 4 and report
-what they hear before this document claims anything more.
+The reader pass above has run once (2026-10-15). Re-run it after any change to
+`Accessible.*`, focus or tab order, and record what the reader says here rather than in a
+commit message.
