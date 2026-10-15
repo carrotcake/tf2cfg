@@ -1,6 +1,5 @@
 import QtQuick
 import "../../keyboard"
-import "../../theme"
 pragma ComponentBehavior: Bound
 
 // Tab 2: the keyboard. Parity P18/P23-P28.
