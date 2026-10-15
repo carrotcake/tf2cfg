@@ -41,6 +41,27 @@ commit: aqt 3.3.0 cannot resolve Qt ≥6.11 Windows desktop metadata (per-arch p
 folders since 6.11; miurahr/aqtinstall#1000) — revisit on the next aqtinstall
 release, fallback `version: '6.10.*'` without the pin.
 
+DONE 2026-10-14, later: the first release run exposed two artifact bugs, both now
+guarded. (1) The build linked with the runner's preinstalled gcc 15.2, not Qt's
+bundled MinGW (`__imp___argc` undefined from `libQt6EntryPoint.a` - Qt's prebuilt libs
+are built against their bundled runtime). The toolchain now comes from
+install-qt-action's `tools: 'tools_mingw1310'` input (aqt installs GCC 13.1 under
+`<Qt root>/Tools/mingw1310_64` and the action puts it on PATH), and the build step
+fails loudly unless the compiler is GCC 13. (2) The published zip contained no exe:
+the archive step's PowerShell filter
+`$_.Name -match '\.(exe|dll)$' -or $_.PSIsContainer -and $_.Name -in @(...)` parses as
+`((is a file) -or (is a dir)) -and (name in the list)` - `-or` and `-and` have equal
+precedence and evaluate left to right - so only the named plugin directories survived
+and every top-level file (the exe and 46 Qt6 DLLs) was dropped. The job now stages the
+exe in a clean `tf2cfg/` dir, deploys into it with windeployqt, zips that dir, and
+asserts `tf2cfg/tf2cfgreal.exe` + `Qt6Core.dll` + `Qt6Qml.dll` are in the archive. The
+smoke test also tests the bundle rather than the runner: `--include-plugins qoffscreen`
+(windeployqt ships only `qwindows.dll`, and an offscreen run without the plugin dies
+before the event loop), `QT_PLUGIN_PATH`/`QML2_IMPORT_PATH` cleared and
+`PATH=System32` so the install's runtime cannot mask a bundle gap, plus a check for
+Qt's platform-plugin fatal text (a blocking fatal dialog keeps the process alive, so
+"still alive after 15 s" alone proved nothing).
+
 ## 2. Accessibility (`docs/accessibility.md`)
 
 The gap was real: the app is keyboard-usable up to the keyboard panel, then stops - the
