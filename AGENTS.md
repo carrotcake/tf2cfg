@@ -99,10 +99,10 @@ rules: **the file on disk is the source of truth for lines the app does not own*
 - `docs/AUDIT.md` - the current audit's findings; open ones are mirrored in the roadmap.
   The 2026-10-12 audit is retired to `docs/legacy/`.
 - `docs/accessibility.md` - the A1-A8 findings and the W1-W8 work items. W1-W8 are done
-  (2026-10-13); the screen-reader pass ran 2026-10-15 (Microsoft Narrator) and its one
-  finding - the tab strip never announced tab names - is fixed in `Tf2TabBar` and pinned
-  by `tests/qml`. Open: a reader re-run to confirm that fix, and the contrast re-check
-  after any `Theme.qml` change.
+  (2026-10-13) and the screen-reader pass ran 2026-10-15 (Microsoft Narrator, three rounds);
+  its one defect - the tab strips never announced tab names - is fixed in `Tf2TabBar` and
+  reader-confirmed. Re-run that pass after any change to `Accessible.*`, focus or tab order,
+  and re-check contrast after any `Theme.qml` change.
 - `docs/in-game-checklist.md` - the list the repo owner takes into the game (argument
   bounds, bind ids, screen-reader pass). Filled in for the 2026-10-15 run and now the
   record of it; outcomes were applied to `res/cfg/argbounds.csv`, `allcmds.csv` and

@@ -68,8 +68,8 @@ The gap was real: the app is keyboard-usable up to the keyboard panel, then stop
 104 key caps and the three editor tabs are `MouseArea`-only, and nothing carries
 `Accessible.*`. `docs/accessibility.md` holds the findings (A1-A8) and the sized work
 items (W1-W8). W1-W8 are done (2026-10-13) and the screen-reader pass ran 2026-10-15 with
-Microsoft Narrator: 4 of its 5 steps pass, and the one defect it found (the tab strip's
-names were never announced) is fixed in `Tf2TabBar`.
+Microsoft Narrator: all five steps pass now, after the one defect it found (the tab strips
+never announced their tab names) took two fixes in `Tf2TabBar`.
 
 | # | Work | Notes |
 |---|------|-------|
@@ -99,7 +99,9 @@ names were never announced) is fixed in `Tf2TabBar`.
     `Tf2TabBar` is now a `FocusScope` whose current tab takes the focus, which is Qt's own
     TabBar structure; the strip stays a single Tab stop and Left/Right still switch
     (pinned by `test_tabBarAccessibleRoles` and `test_tabBarFocusFollowsTheCurrentTab`).
-    A third reader run confirms the names.
+  - Round 3 confirmed the names ("Command Overview, tab, 1 of 3, selected"), so all five
+    steps of the pass have run with a real reader. Re-run it after any `Accessible.*`,
+    focus or tab-order change.
   - Manual pass steps stay in `docs/accessibility.md` section 4 - the tests prove the
     handlers fire and the properties are set, not what a reader says.
 

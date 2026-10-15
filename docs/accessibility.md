@@ -60,6 +60,9 @@ navigation, no role. The Prev/Next buttons (`EditorPage.qml:90-104`) remain a wo
 keyboard path to every tab, so this is an inconvenience rather than a dead end — but a user
 who tabs into the editor lands on Prev, not on the tabs.
 
+Fixed: W3 gave it focus and Left/Right; W4 plus two 2026-10-15 rounds (below) made a real
+reader announce the tab names - the list role and then the focus on the current tab.
+
 ### A3 — No focus indicator on buttons (medium)
 
 `Tf2Button.qml` never reads `activeFocus`, so a keyboard user gets no visual cue at all.
@@ -151,7 +154,7 @@ Ordered by value per line. Estimates are for the change itself, not its verifica
 | W1 | `Tf2Button` focus ring | DONE 2026-10-13: `activeFocus` case in the background - 2 px accent border. | ~4 lines, fixes A3 for every button at once. Do first. |
 | W2 | `KeyCap`: `activeFocusOnTab` on bindable caps, `Keys.onReturnPressed`/`onSpacePressed` → `activated(keyId)`, focus ring in the existing `Rectangle` | DONE 2026-10-13: tab-reachable bindable caps, Return/Space activate, focus shows the hover highlight, tooltip on focus (W7 folded in). | low | Must not fire for the two non-bindable caps - they stay out of the tab chain. |
 | W3 | `Tf2TabBar`: `activeFocusOnTab`, `Keys.onLeftPressed`/`onRightPressed` move + activate, focus ring on the delegate | DONE 2026-10-13: strip is tab-reachable, Left/Right wrap and activate, focused tab shows the 2 px accent ring, `Accessible.PageTab` on each tab (W4's tab part). | low | Alt+1..3 is a cheaper first cut if arrow semantics are not wanted. |
-| W4 | `Accessible.role`/`name`/`description` on `KeyCap`, the tab delegate, and labels for the two read-only fields | DONE 2026-10-13 for `KeyCap` (button role, label as name, bind line as description) and the two read-only fields (config path, existing bind). Tab delegate remains (W3's scope). | none | Purely additive; no visual change. |
+| W4 | `Accessible.role`/`name`/`description` on `KeyCap`, the tab delegate, and labels for the two read-only fields | DONE 2026-10-13 for `KeyCap` (button role, label as name, bind line as description), the two read-only fields (config path, existing bind), and the tab delegate (`PageTab` + name + selected). 2026-10-15: the strip itself needed the `PageTabList` role, and the current tab needed the focus - reader-confirmed, see section 4. | none | Purely additive; no visual change. |
 | W5 | Contrast: `colorRed` → `#da7a7d`, `colorBorderStrong` → `#59626a` | DONE 2026-10-13: `colorRed` #da7a7d (passes on all three error surfaces), `colorBorderStrong` #59626a, cap/panel borders fixed (#707d88 / #b76b2d / #626c74), disabled-cap label → `colorKeyCapText` @ 0.65 opacity. `colorTextDisabled` accepted as decoration. | visual | The two non-negotiable values change the palette; the rest are design calls. |
 | W6 | Keyboard scrolling: `KeyNavigation.left/right/up/down` on the panel, or a `Keys` handler driving `flick.contentX/Y` | DONE 2026-10-13: `Keys.onPressed` on the panel drives `flick.contentX/Y` (clamped, 60 px per press). | low | Prefer `KeyNavigation` - it handles the boundary for free. |
 | W7 | `KeyCap` tooltip: `visible: hovered \|\| focusWithin` once W2 lands | DONE 2026-10-13 (with W2): tooltip shows on focus too. | none | - |
@@ -192,8 +195,11 @@ description after the name. Steps 2 and 4 (the two tab strips) took two fixes:
    it, so there was no focused tab to name. `Tf2TabBar` is now a `FocusScope` whose current
    tab takes the focus - the structure Qt's TabBar uses (`ItemIsFocusScope` plus a focusable
    current button) - while the strip stays a single Tab stop and Left/Right still switch.
-   Pinned by `test_tabBarAccessibleRoles` and `test_tabBarFocusFollowsTheCurrentTab`; the
-   third reader run is what confirms it.
+   Pinned by `test_tabBarAccessibleRoles` and `test_tabBarFocusFollowsTheCurrentTab`.
+
+Round 3 confirmed it: Narrator reads the tab names in the form the fix targeted ("Command
+Overview, tab, 1 of 3, selected"), so both tab strips pass steps 2 and 4. All five steps of
+the pass have now been run at least once with a real reader.
 
 What remains is the manual pass below, which is short:
 
@@ -206,6 +212,6 @@ What remains is the manual pass below, which is short:
    pair takes focus and shows a ring.
 5. Contrast: re-run the ratio check after any `Theme.qml` change.
 
-The reader pass above has run once (2026-10-15). Re-run it after any change to
-`Accessible.*`, focus or tab order, and record what the reader says here rather than in a
-commit message.
+The reader pass above has run (2026-10-15, three rounds as the two tab fixes landed).
+Re-run it after any change to `Accessible.*`, focus or tab order, and record what the reader
+says here rather than in a commit message.

@@ -102,7 +102,7 @@ Needs NVDA or Narrator (Windows) / Orca (Linux). The keyboard steps are already 
 | # | Step | What to check | Result |
 |---|---|---|---|
 | 1 | Start screen, press Tab repeatedly | Every control takes focus, the ring is visible, Enter/Space activates, and the reader names each control | OK |
-| 2 | Load a config, then the editor tabs | Left/Right changes tab; the reader announces the tabs as tabs and says which is selected | **Round 1:** names never announced (the strip had no role). **Round 2** after `Accessible.PageTabList`: "Tab contains 3 items" - the list is recognised, names still not, because the strip itself held the focus. **Fix:** `Tf2TabBar` is now a `FocusScope` whose current tab takes the focus (Qt's TabBar structure) - round 3 to confirm |
+| 2 | Load a config, then the editor tabs | Left/Right changes tab; the reader announces the tabs as tabs and says which is selected | **Round 1:** names never announced (the strip had no role). **Round 2** after `Accessible.PageTabList`: "Tab contains 3 items" - list recognised, names still not, because the strip itself held the focus. **Fix:** `Tf2TabBar` is a `FocusScope` whose current tab takes the focus (Qt's TabBar structure). **Round 3: confirmed** - the reader names each tab ("Command Overview, tab, 1 of 3, selected") |
 | 3 | Keyboard panel: Tab to a cap, press Enter | The reader announces the cap as a button with its key label; the bind dialog opens | OK |
 | 4 | In the bind dialog, Tab through it | Every combo, checkbox, radio, field and the Ok/Cancel pair takes focus with a ring and is announced | All but tabs OK *(same cause - the dialog has its own Tf2TabBar; fixed with it)* |
 | 5 | A bound cap (orange) | The reader reads the bind as the description after the name | OK |
@@ -125,5 +125,5 @@ Applied 2026-10-15 (details in `docs/argbounds-verification.md`):
   `EngineTest::catalogRowsFixedFromTheInGameRun` (both fail if the data drifts) and by
   `test_tabBarAccessibleRoles` + `test_tabBarFocusFollowsTheCurrentTab`.
 
-Left open: a reader re-run to confirm the tab fix, and the catalog reconciliation in
-`docs/ROADMAP.md` §7, which needs a fresh in-game dump rather than the stale one.
+Left open: the catalog reconciliation in `docs/ROADMAP.md` section 7, which needs a fresh
+in-game dump rather than the stale one in `data/`.
