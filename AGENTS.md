@@ -53,10 +53,14 @@ cd build-qmltest && $env:QT_QPA_PLATFORM = "offscreen"; .\release\tst_app.exe -o
   delivers to the focused item of the test's own window. Test functions are named
   `test_*` (an underscore; a `testCamel` name is collected as no test at all and passes
   vacuously).
-- `qmllint` must stay at 0 errors. The unqualified-access bar: the CI lint step prints
-  the count every run (`unqualified-access warnings: N`) and it must not grow. It
-  measured 28 on 2026-10-13 (context-property `cfg` reads), but the current qmllint
-  reports 0 (verified 2026-10-14); the count is the authority, not the historic number.
+- `qmllint` must stay at 0 errors and **0 unqualified-access warnings**. The backend lives
+  in the `tf2cfg` QML module (`import tf2cfg`, then `Cfg.` and `KeyTable.`), registered from
+  `src/ui/*.h` by qmltyperegistrar; the app used to hand them over as context properties,
+  which no QML tool could resolve - every read was an unqualified access (47 of them on Qt
+  6.12). Reading a parent element's property or calling its function from a nested item is
+  the other way to trip the warning: qualify it with the owning id (`window.editorActive`,
+  `panel.fnGroupX(…)`). Both are enforced by the CI lint step, which lints with
+  `-I qmlmodules` (the module directory qmake assembles) and fails on any nonzero count.
   All QML files carry `pragma ComponentBehavior: Bound`; new files must too.
 - `pwsh -File deploy.ps1 [-Config debug] [-QtRoot ...]` packages a self-contained `dist/`.
 - Packaging lives in `.github/workflows/release.yml` (tag-only, `v*`): the `appimage` job

@@ -11,10 +11,11 @@ the contracts themselves.
 
 - `src/gamecfg/` - engine: config parser (`lex/`), `GameCfg`, `convars.h` (`cmd::Entry`,
   `cmd::ConVar` hierarchy). Deliberately UI-free.
-- `src/ui/` - Qt objects: `ConfigController` (load/save state machine, context property
-  `cfg`), `CommandListModel` (parsed rows), `ConsoleCommandModel` (catalog + suggest).
+- `src/ui/` - Qt objects: `ConfigController` (load/save state machine; the `Cfg`
+  singleton of the `tf2cfg` QML module), `CommandListModel` (parsed rows),
+  `ConsoleCommandModel` (catalog + suggest), `KeyTable` (the `KeyTable` singleton).
 - `qml/` - the whole UI, embedded in `qml.qrc`. Theme tokens in `qml/theme/Theme.qml`.
-- `res/res.qrc` - the command catalog `res/cfg/allcmds.csv` (3824 rows, 10 columns,
+- `res/res.qrc` - the command catalog `res/cfg/allcmds.csv` (3845 rows, 10 columns,
   headerless by design - schema in `res/cfg/schema.md`) and four bundled cfg presets.
 
 Assumed load: single user, local, one config at a time, no network.
@@ -145,7 +146,7 @@ wholesale model write would destroy user content. Therefore:
   one-sided (a lone min or max survives). Bounds are authoring metadata only - the
   engine never clamps command arguments.
 
-### `ConfigController` (context property `cfg`)
+### `ConfigController` (the `Cfg` singleton of the `tf2cfg` module)
 
 The historical parity table is `docs/legacy/ui-qml-rewrite.md` section 6; where that
 table differs from this one, this one is current (`loadCfg` in particular is now async,
@@ -157,7 +158,7 @@ and `consoleModel`/`loading`/`presetNote` exist).
 | `presetAt(index)` / `presetNote(index)` | `Q_INVOKABLE QString` | `:/cfg/...` path / note, or empty |
 | `loadCfg(path)` | `Q_INVOKABLE void` | **async**: parses on a `QtConcurrent` worker; `loading` goes true then false, `loadedChanged`/`lastErrorChanged` fire when done. Failure keeps the old rows and sets `lastError` |
 | `clear()` | `Q_INVOKABLE void` | empties the model and load state |
-| `commandModel` / `consoleModel` | `Q_PROPERTY QAbstractItemModel*` | parsed-config rows / the allcmds catalog (`CONSTANT`) |
+| `commandModel` / `consoleModel` | `Q_PROPERTY CommandListModel*` / `ConsoleCommandModel*` | parsed-config rows / the allcmds catalog (`CONSTANT`); concrete types so QML member calls are type-checked |
 | `cfgPath` | `Q_PROPERTY QString` | the file being edited; Save writes here, Save As re-points it (a `:/` preset is refused as a save target) |
 | `loaded` | `Q_PROPERTY bool` | `commandModel.rowCount() > 0` |
 | `loading` | `Q_PROPERTY bool` | true while a worker parse is in flight |

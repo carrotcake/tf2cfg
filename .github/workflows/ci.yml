@@ -55,15 +55,28 @@ jobs:
           grep -q "FAIL" testlog.txt && { cat testlog.txt; exit 1; }
           grep "Totals" testlog.txt
 
-      - name: qmllint (0 errors; unqualified-access warnings tolerated, see AGENTS.md)
+      - name: qmllint (0 errors, 0 unqualified accesses)
         run: |
-          find qml -name '*.qml' | xargs qmllint-qt6 2>lint.txt || true
+          # -I qmlmodules is the C++ backend module: `import tf2cfg` in qml/. qmake assembles
+          # that directory when it builds the app (tf2cfgreal.pro), so this step needs the
+          # build above - without the path every `Cfg.`/`KeyTable.` read reads as unqualified
+          # access again (which is exactly the drift this gate is for).
+          find qml -name '*.qml' | xargs qmllint-qt6 -I qmlmodules 2>lint.txt || true
           if grep -q "Error:" lint.txt; then
             echo "::error::qmllint reported errors"; cat lint.txt; exit 1
           fi
-          # The tolerated unqualified-access count is the context-property `cfg` reads
-          # (AGENTS.md); printed so a drift is visible per run.
-          echo "unqualified-access warnings: $(grep -c 'Warning: unqualified access' lint.txt || true)"
+          unqualified=$(grep -c 'Warning: unqualified access' lint.txt || true)
+          echo "unqualified-access warnings: $unqualified"
+          if [ "$unqualified" != "0" ]; then
+            echo "::error::unqualified access in QML (AGENTS.md: import tf2cfg, use Cfg./KeyTable., or qualify with the owning id)"
+            cat lint.txt
+            exit 1
+          fi
+          if grep -q "Failed to import tf2cfg" lint.txt; then
+            echo "::error::the tf2cfg module did not resolve - is qmlmodules/ assembled?"
+            cat lint.txt
+            exit 1
+          fi
           echo "qmllint: 0 errors"
 
       - name: Contrast gate (W8)

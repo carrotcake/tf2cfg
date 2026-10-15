@@ -11,8 +11,8 @@ audit (`docs/AUDIT.md`) live in section 6; dismissed items are not listed here a
 
 DONE 2026-10-13: `.github/workflows/ci.yml` — Linux only (`ubuntu-latest`), on push to
 `qml-rewrite`/`master` and on PRs. Jobs: install Qt 6 apt packages, build the app,
-build + run `tf2cfg_test` (offscreen platform), gate `qmllint` at 0 errors and print
-the unqualified-access warning count (the printed count is the bar, AGENTS.md), run
+build + run `tf2cfg_test` (offscreen platform), gate `qmllint` at 0 errors and 0
+unqualified-access warnings (the printed count is the bar, AGENTS.md), run
 `tools/contrast_check.py`. The app binary is only
 compiled, never launched (no display); the test binary runs headless via
 `QT_QPA_PLATFORM=offscreen`. First Linux compile of this codebase — the CI run is the
@@ -109,14 +109,19 @@ never announced their tab names) took two fixes in `Tf2TabBar`.
 
 - ~~Pragma sweep~~ done 2026-10-13 (`68fa1cc`): all QML files carry
   `pragma ComponentBehavior: Bound`; new files must too (AGENTS.md bar).
-- unqualified-access advisories: the CI lint step prints `unqualified-access warnings: N`
-  every run - the printed count is the authority (0 as of 2026-10-14), never add new ones
-  (AGENTS.md bar). The two linters count differently: the local qmllint (Qt 6.12) reports
-  ~48 `Unqualified access [unqualified]` lines across the tree (context-property `cfg`
-  reads it cannot resolve), while CI's `qmllint-qt6` (Qt 6.4) prints 0 for the same tree.
-  The CI number is the bar; locally, keep a file's count at or below what it was. New QML
-  does that by hoisting the context property into a root property
-  (`readonly property var cfgRef: cfg`) and reading the local id from nested delegates.
+- unqualified-access advisories: **0, enforced** (2026-10-15). The backend used to reach QML
+  as the `cfg`/`keyTable` context properties, which no QML tool can resolve, so every read
+  was an unqualified access (47 on Qt 6.12) and the tree worked around it with `cfgRef`
+  hoists. It is now the `tf2cfg` QML module - `Cfg` and `KeyTable` singletons registered from
+  `src/ui/*.h` by qmltyperegistrar, used as `Cfg.consoleModel` / `KeyTable.keyLabel(…)` - so
+  the accesses are qualified, type-checked and one `.qmltypes` away from completion in an
+  editor. The migration also fixed what the checker then exposed: three model properties are
+  declared as their concrete types (`ConsoleCommandModel *consoleModel`) instead of
+  `QAbstractItemModel *`, the four published pixel sizes are `double` rather than `qreal`, the
+  key table's lists are `QList<QVariant>` (`list<var>` - `QVariantList` hides `.length`), and
+  two parent-element reads are qualified with their id. The CI lint step lints with
+  `-I qmlmodules` (the module directory qmake assembles) and fails on any nonzero count, so
+  the bar is now a gate rather than a printed number.
 
 ## 4. Input ids missing from the Edit Binds model
 
