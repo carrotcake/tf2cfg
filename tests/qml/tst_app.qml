@@ -244,6 +244,50 @@ Rectangle {
                 compare(includes[1].checked, false, expected.name + ": and starts out of the bind")
             }
 
+            // The platform dropdown reads as words while the filter keeps the catalog token,
+            // so both halves of that mapping are pinned here. Labels first, read off the
+            // field the way the user sees it.
+            const platformCombo = findItem(contentRoot, function (it) { return it.objectName === "platformCombo" })
+            verify(platformCombo !== null, "the platform dropdown exists")
+            const platformLabels = ["universal", "Linux-only", "Windows-only", "Xbox-only", "all"]
+            for (let o = 0; o < platformLabels.length; ++o) {
+                platformCombo.currentIndex = o
+                compare(platformCombo.currentText, platformLabels[o],
+                        "option " + o + " reads as " + platformLabels[o])
+            }
+
+            // "all" carries the whole catalog, which is where the xbox row count comes from.
+            platformCombo.activated(4)
+            compare(Cfg.consoleModel.platformFilter, "", "'all' clears the platform filter")
+            let xboxRows = 0
+            for (let r = 0; r < model.rowCount(); ++r) {
+                if (model.commandAt(r).platform === "xbox")
+                    xboxRows++
+            }
+            verify(xboxRows > 0, "the catalog lists xbox rows to narrow to")
+
+            // Selecting an option filters by the catalog's token, never by the label the user
+            // reads: "Xbox-only" as a filter value would match no row at all.
+            platformCombo.currentIndex = 3
+            platformCombo.activated(3)
+            compare(Cfg.consoleModel.platformFilter, "xbox", "Xbox-only filters by the catalog token")
+            compare(platformCombo.currentText, "Xbox-only", "and the field still reads as words")
+            tryVerify(function () { return model.rowCount() === xboxRows }, 5000,
+                      "the list narrows to the " + xboxRows + " xbox rows")
+            let onlyXbox = true
+            for (let r = 0; r < model.rowCount(); ++r) {
+                if (model.commandAt(r).platform !== "xbox") {
+                    onlyXbox = false
+                    break
+                }
+            }
+            verify(onlyXbox, "every remaining row is xbox")
+
+            // Back to the default: the filter lives on the shared model, not in this dialog.
+            platformCombo.currentIndex = 0
+            platformCombo.activated(0)
+            compare(Cfg.consoleModel.platformFilter, "universal", "the field is back on universal")
+
             dialog.close()
             dialog.destroy()
         }

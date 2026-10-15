@@ -142,7 +142,11 @@ never announced their tab names) took two fixes in `Tf2TabBar`.
   the include checkbox on the optional argument only. Writing it turned the dialog's Category
   default from "client controls" to "all": a category the user has not picked must not hide
   commands, and `bot_hurt` (a `server commands` row) was out of the dropdown and the suggestion
-  list until it changed. The parse itself is pinned by
+  list until it changed. The same test pins the Platform dropdown: its options split the
+  catalog's value from the label the user reads (`dialog.platformOptions` - "linux"/"xbox" as
+  "Linux-only"/"Xbox-only"), every label is read back off the rendered field, and selecting one
+  is checked to filter by the value, since the label as a filter value matches no row at all.
+  The parse itself is pinned by
   `EngineTest::signatureParsesIntoEditorArguments`,
   `EngineTest::argsSpecRoleCarriesPerArgumentBounds` and
   `test_parseSignatureReachesQmlAsAnArgumentList`.

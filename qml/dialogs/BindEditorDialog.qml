@@ -80,6 +80,16 @@ Dialog {
         { value: "2 0", label: "Sentry gun" }
     ]
 
+    /// Platform filter options: the catalog's field-9 value and the label the user reads
+    /// (the catalog writes "linux"; a user reads "Linux-only").
+    property var platformOptions: [
+        { value: "universal", label: "universal" },
+        { value: "linux", label: "Linux-only" },
+        { value: "windows", label: "Windows-only" },
+        { value: "xbox", label: "Xbox-only" },
+        { value: "all", label: "all" }
+    ]
+
     property var customPanels: ({
         "voicemenu": { component: voicemenuPanel },
         "jointeam": { component: enumPanel, valueType: "str", options: [
@@ -431,7 +441,25 @@ Dialog {
 
     function applyPlatformFilter(platform) {
         Cfg.consoleModel.platformFilter = platform === "all" ? "" : platform
-        platformCombo.currentIndex = platformCombo.find(platform, Qt.MatchFixedString)
+        platformCombo.currentIndex = platformCombo.find(platformLabel(platform), Qt.MatchFixedString)
+    }
+
+    /// The label the platform dropdown shows for a catalog value ("linux" -> "Linux-only").
+    /// A value the dropdown does not list keeps its catalog spelling, so an unknown platform
+    /// names itself instead of leaving the field blank.
+    function platformLabel(value) {
+        for (let i = 0; i < platformOptions.length; ++i) {
+            if (platformOptions[i].value === value)
+                return platformOptions[i].label
+        }
+        return value
+    }
+
+    /// Push the platform dropdown's current option into the model filter: the option's value,
+    /// never the label the user reads. Runs on selection and once on completion.
+    function applyPlatformFromCombo() {
+        const index = platformCombo.currentIndex
+        applyPlatformFilter(index < 0 ? "all" : platformOptions[index].value)
     }
 
     /// Settle the command field: commit the typed name when it exists in allcmds,
@@ -511,7 +539,8 @@ Dialog {
         // model, which the combo does not have yet while it initialises.
         categoryCombo.currentIndex = categoryCombo.find("all")
         Cfg.consoleModel.contextFilter = categoryCombo.currentText === "all" ? "" : categoryCombo.currentText
-        Cfg.consoleModel.platformFilter = platformCombo.currentText === "all" ? "" : platformCombo.currentText
+        // Platform keeps its own default, the first option ("universal").
+        applyPlatformFromCombo()
     }
 
     /// Open the dialog for a TF2 key token: shows the bind the key carries today, if any.
@@ -759,12 +788,12 @@ Dialog {
                         objectName: "platformCombo"
                         Layout.minimumWidth: 150
                         Layout.preferredWidth: 150
-                        model: ["universal", "linux", "windows", "xbox", "all"]
+                        // Labels, not the catalog's field value: the dropdown says what the
+                        // option means ("Linux-only"), the filter keeps the token ("linux").
+                        model: dialog.platformOptions
+                        textRole: "label"
                         currentIndex: 0
-                        onActivated: function (index) {
-                            Cfg.consoleModel.platformFilter =
-                                    currentText === "all" ? "" : currentText
-                        }
+                        onActivated: applyPlatformFromCombo()
                     }
 
                     // Cheats filter: off hides "cheat"-flagged commands from the
