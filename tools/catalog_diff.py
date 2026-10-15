@@ -24,7 +24,9 @@ NAMES = collections.OrderedDict([
     ('invalid_type',             'catalog row whose type field is not "", cmd or ncmd'),
     ('cheat_differs',            'cheat flag differs (cvars only; dump records no command flags)'),
     ('description_differs',      'description differs'),
-    ('dead_rows',                'in catalog, absent from dump (dead-row candidates)'),
+    ('dead_rows',                'in catalog, universal, absent from dump (dead-row candidates)'),
+    ('dead_rows_other_platform', 'in catalog, platform-tagged, absent from dump (expected if the '
+                                 'dump is from another platform - read the tag in the row)'),
     ('new_rows',                 'in dump, absent from catalog (new-row candidates)'),
 ])
 
@@ -54,7 +56,7 @@ def parse_dump(path):
 def main():
     argv = [a for a in sys.argv[1:] if not a.startswith('--')]
     opts = dict(a[2:].split('=', 1) for a in sys.argv[1:] if a.startswith('--') and '=' in a)
-    dump_path = argv[0] if argv else 'data/cvarlist_linux.txt'
+    dump_path = argv[0] if argv else 'data/tf2-cvarlist-10-26-gamedump-w64.txt'
     canon = opts.get('canon', 'res/cfg/allcmds.csv')
     out_dir = opts.get('out', os.path.join(os.environ.get('TEMP', '/tmp'), 'catdiff'))
 
@@ -62,13 +64,9 @@ def main():
     rows = list(csv.reader(open(canon, encoding='utf-8', newline='')))
     cat = {r[0].lower(): r for r in rows}
 
-    # Platform mismatch is not drift: a Linux client registers gl_*/ToGL internals a
-    # Windows client has not, and vice versa, and the Xbox rows ship nowhere on PC.
-    platform = opts.get('platform', 'auto')
-    if platform == 'auto':
-        platform = 'linux' if any(k.startswith('gl_') for k in dump) else 'windows'
-    platform_rows = {n for n, r in cat.items() if r[8] not in ('universal', platform)}
-
+    # Platform is not inferred: a Linux client registers gl_*/ToGL internals a Windows client
+    # has not, and the Xbox rows ship nowhere on PC, so an absent row that carries a platform
+    # tag gets its own bucket instead of being silently dropped from "absent".
     found = collections.OrderedDict((k, []) for k in NAMES)
     for name, (value, flags, desc) in dump.items():
         if name not in cat:
@@ -88,15 +86,23 @@ def main():
                 f'{name}: catalog flags="{r[5]}" (cheat={"cheat" in r[5].split()}) '
                 f'dump flags="{flags}" (cheat={"\"cheat\"" in flags})')
 
+    expected_absent = 0
     for name, r in cat.items():
         if r[1] not in ('', 'cmd', 'ncmd'):
             found['invalid_type'].append(f'{name}: type="{r[1]}" (schema: "", cmd or ncmd)')
-        if name not in dump and name not in platform_rows and name not in KNOWN_REMOVALS:
-            found['dead_rows'].append(f'{name},{r[1]},{r[7]},{r[8]},{r[9]}')
+        if name in dump or name in KNOWN_REMOVALS:
+            continue
+        # The live cvarlist omits hidden rows (104 of the 109 in this catalog) and never lists
+        # undeclared commands (34 of 34), so those absences are expected, not candidates.
+        if 'hidden' in r[5].split() or r[1] == 'ncmd':
+            expected_absent += 1
+            continue
+        row = f'{name},{r[1]},{r[7]},{r[8]},{r[9]}'
+        found['dead_rows' if r[8] == 'universal' else 'dead_rows_other_platform'].append(row)
 
     print(f'dump {dump_path}: {len(dump)} names{f" ({len(dups)} printed twice)" if dups else ""}; '
-          f'catalog {canon}: {len(rows)} rows; dump platform assumed {platform} '
-          f'({len(platform_rows)} rows of other platforms are not "absent")')
+          f'catalog {canon}: {len(rows)} rows; {expected_absent} absent rows are hidden-flagged '
+          f'or ncmd, which cvarlist never lists')
     os.makedirs(out_dir, exist_ok=True)
     for key, label in NAMES.items():
         hits = found[key]
