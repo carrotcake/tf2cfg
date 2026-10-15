@@ -10,6 +10,25 @@ uint qHash(const ConsoleCommandModel::FilterKey &key, uint seed = 0) noexcept {
     return h;
 }
 
+/// The platform vocabulary of allcmds field 9, in the order the filter menu lists it: the
+/// value the catalog writes and the words the UI shows for it. `offered` marks the entries the
+/// menu carries - the catalog has 48 linux rows and 13 xbox rows (2026-10-15), everything else
+/// universal, so Windows is not offered; its label stays here so a windows row would still read
+/// as words if one ever appears, and the filter itself takes any value either way.
+struct PlatformOption {
+    const char *value;
+    const char *label;
+    bool offered;
+};
+
+const PlatformOption kPlatformOptions[] = {
+    { "universal", "Universal", true },
+    { "linux", "Linux-only", true },
+    { "windows", "Windows-only", false },
+    { "xbox", "Xbox-only", true },
+    { "all", "All", true },
+};
+
 /// Bounds and defaults for the argument editors. QString::number's default 'g' format
 /// renders 10000000.0 as "1e+07" (sensitivity's maximum), so the precision is raised far
 /// enough to print whole numbers in full; 15 significant digits still round-trips a double.
@@ -212,6 +231,25 @@ QVariantMap ConsoleCommandModel::findCommand(const QString &name) const {
     if (it == m_commandIndex.end())
         return {};
     return fullRecord(m_all.at(*it));
+}
+
+QString ConsoleCommandModel::platformLabel(const QString &platform) const {
+    for (const PlatformOption &option : kPlatformOptions) {
+        if (platform == QLatin1String(option.value))
+            return QString::fromLatin1(option.label);
+    }
+    return platform;
+}
+
+QList<QVariant> ConsoleCommandModel::platformOptions() const {
+    QList<QVariant> out;
+    for (const PlatformOption &option : kPlatformOptions) {
+        if (!option.offered)
+            continue;
+        out.append(QVariantMap { { QStringLiteral("value"), QString::fromLatin1(option.value) },
+                                 { QStringLiteral("label"), QString::fromLatin1(option.label) } });
+    }
+    return out;
 }
 
 QVariantMap ConsoleCommandModel::fullRecord(const cmd::ConVar *cmd) const {

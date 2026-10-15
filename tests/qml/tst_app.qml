@@ -146,6 +146,23 @@ Rectangle {
             verify(host.cfgRef.consoleModel.findCommand("noclip").cheat === true,
                    "catalog flags feed the marker")
 
+            // The platform column names the platform the way the Platform filter does: insert a
+            // linux-only cvar (gl_blitmode, one of the catalog's 48 linux rows) and read the
+            // cell off the delegate that renders it.
+            const inserted = host.cfgRef.insertRowAfter(0, "gl_blitmode 1")
+            verify(inserted > 0, "the linux-only line went in at row " + inserted)
+            list.positionViewAtIndex(inserted, ListView.Beginning)
+            let cells = []
+            tryVerify(function () {
+                const delegate = list.itemAtIndex(inserted)
+                if (!delegate)
+                    return false
+                cells = rowTexts(delegate)
+                return cells.indexOf("Linux-only") >= 0
+            }, 5000, "the platform cell reads Linux-only")
+            verify(cells.indexOf("linux") < 0,
+                   "the catalog's token is not shown: " + cells.join(" | "))
+
             tab.destroy()
         }
 
@@ -249,15 +266,17 @@ Rectangle {
             // field the way the user sees it.
             const platformCombo = findItem(contentRoot, function (it) { return it.objectName === "platformCombo" })
             verify(platformCombo !== null, "the platform dropdown exists")
-            const platformLabels = ["universal", "Linux-only", "Windows-only", "Xbox-only", "all"]
+            const platformLabels = ["Universal", "Linux-only", "Xbox-only", "All"]
+            compare(platformCombo.count, platformLabels.length,
+                    "the menu offers every platform the catalog has, and no more")
             for (let o = 0; o < platformLabels.length; ++o) {
                 platformCombo.currentIndex = o
                 compare(platformCombo.currentText, platformLabels[o],
                         "option " + o + " reads as " + platformLabels[o])
             }
 
-            // "all" carries the whole catalog, which is where the xbox row count comes from.
-            platformCombo.activated(4)
+            // "All" carries the whole catalog, which is where the xbox row count comes from.
+            platformCombo.activated(3)
             compare(Cfg.consoleModel.platformFilter, "", "'all' clears the platform filter")
             let xboxRows = 0
             for (let r = 0; r < model.rowCount(); ++r) {
@@ -268,8 +287,8 @@ Rectangle {
 
             // Selecting an option filters by the catalog's token, never by the label the user
             // reads: "Xbox-only" as a filter value would match no row at all.
-            platformCombo.currentIndex = 3
-            platformCombo.activated(3)
+            platformCombo.currentIndex = 2
+            platformCombo.activated(2)
             compare(Cfg.consoleModel.platformFilter, "xbox", "Xbox-only filters by the catalog token")
             compare(platformCombo.currentText, "Xbox-only", "and the field still reads as words")
             tryVerify(function () { return model.rowCount() === xboxRows }, 5000,

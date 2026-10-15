@@ -26,6 +26,11 @@ class ConsoleCommandModel : public QAbstractListModel {
     Q_PROPERTY(QString platformFilter READ platformFilter WRITE setPlatformFilter NOTIFY filtersChanged)
     /// false hides commands flagged "cheat" from the list and suggestions.
     Q_PROPERTY(bool showCheats READ showCheats WRITE setShowCheats NOTIFY filtersChanged)
+    /// The platform filter menu, in order: one {value, label} per offered platform. The
+    /// vocabulary itself is kPlatformOptions below - the Build-A-Bind dialog's Platform
+    /// dropdown and the Command Overview's platform column both read it, so they cannot
+    /// disagree about what a platform is called.
+    Q_PROPERTY(QList<QVariant> platformOptions READ platformOptions CONSTANT)
 
 public:
     enum Role {
@@ -63,6 +68,14 @@ public:
     /// Full record (same fields as commandAt) for the named command, found
     /// case-insensitively anywhere in the catalog. Empty map when unknown.
     Q_INVOKABLE QVariantMap findCommand(const QString &name) const;
+
+    /// The words the UI shows for a catalog platform value ("linux" -> "Linux-only"),
+    /// used for the rows that carry one. A value the vocabulary does not know is
+    /// returned unchanged, so it names itself instead of rendering blank.
+    Q_INVOKABLE QString platformLabel(const QString &platform) const;
+
+    /// The platform filter menu (kPlatformOptions, offered entries only).
+    QList<QVariant> platformOptions() const;
 
     /// Names (in the model's sorted order) containing the text,
     /// case-insensitive, restricted to the active filters, capped at limit.

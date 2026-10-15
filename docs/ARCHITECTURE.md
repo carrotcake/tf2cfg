@@ -139,6 +139,12 @@ wholesale model write would destroy user content. Therefore:
   fourth filter ships. Rows sort **context-first, then alphanumeric name** (the command
   picker groups by the `context` role through `Tf2ComboBox`'s opt-in `sectionRole` -
   headers need contiguous groups; pinned by `catalogSortsByContextThenName`).
+- One platform vocabulary: `platformOptions` (`{value, label}` per offered platform, in menu
+  order) and `platformLabel(value)` (the words a row's platform renders as). The Build-A-Bind
+  Platform dropdown and the Command Overview's platform column both read them, so the menu and
+  the column cannot name a platform differently. The catalog's value ("linux") never reaches
+  the UI. Windows sits in the table but is not offered: no `allcmds` row carries it, and the
+  filter itself takes any value, so exposing it again is one flag.
 - Per-argument bounds (`docs/DESIGN-arg-bounds.md`): `GameCfg` attaches `cmd::ArgSpec`s
   from `res/cfg/argbounds.csv` after the catalog loads (companion file, hand-verified
   rows only); the model exposes them through the `argsSpec` role and inside

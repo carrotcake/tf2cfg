@@ -92,6 +92,7 @@ private slots:
     void argBoundsFromTheInGameRun();
     void signatureParsesIntoEditorArguments();
     void argsSpecRoleCarriesPerArgumentBounds();
+    void platformVocabularyNamesTheFilterMenu();
 
     // CommandListModel
     void appendCfgReportsAnUnreadableFile();
@@ -823,6 +824,36 @@ void EngineTest::argsSpecRoleCarriesPerArgumentBounds() {
     QVERIFY(!optionalSpecs.at(0).toMap().value(QStringLiteral("isFloat")).toBool());
     QVERIFY(optionalSpecs.at(1).toMap().value(QStringLiteral("optional")).toBool());
     QVERIFY(optionalSpecs.at(1).toMap().value(QStringLiteral("isFloat")).toBool());
+}
+
+void EngineTest::platformVocabularyNamesTheFilterMenu() {
+    ConsoleCommandModel model;
+
+    // One vocabulary for both readers: the Platform dropdown's menu and the Command
+    // Overview's platform column. Menu order, value first, then the words the UI shows.
+    const QList<QVariant> options = model.platformOptions();
+    QStringList values;
+    QStringList labels;
+    for (const QVariant &option : options) {
+        values << option.toMap().value(QStringLiteral("value")).toString();
+        labels << option.toMap().value(QStringLiteral("label")).toString();
+    }
+    // Windows is deliberately not offered: the catalog has 48 linux and 13 xbox rows and no
+    // windows row at all (2026-10-15), so the menu does not promise a filter that finds none.
+    QCOMPARE(values, QStringList({ QStringLiteral("universal"), QStringLiteral("linux"),
+                                   QStringLiteral("xbox"), QStringLiteral("all") }));
+    QCOMPARE(labels, QStringList({ QStringLiteral("Universal"), QStringLiteral("Linux-only"),
+                                   QStringLiteral("Xbox-only"), QStringLiteral("All") }));
+
+    // The words a row's platform renders as, and what the dropdown prefills from a command's
+    // own platform. The label survives for windows so such a row would still read as words;
+    // the filter itself takes any value, which is what keeps that path working.
+    QCOMPARE(model.platformLabel(QStringLiteral("universal")), QStringLiteral("Universal"));
+    QCOMPARE(model.platformLabel(QStringLiteral("linux")), QStringLiteral("Linux-only"));
+    QCOMPARE(model.platformLabel(QStringLiteral("xbox")), QStringLiteral("Xbox-only"));
+    QCOMPARE(model.platformLabel(QStringLiteral("windows")), QStringLiteral("Windows-only"));
+    // A platform the vocabulary has never seen names itself rather than rendering blank.
+    QCOMPARE(model.platformLabel(QStringLiteral("plan9")), QStringLiteral("plan9"));
 }
 
 // --- CommandListModel ---

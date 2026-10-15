@@ -149,10 +149,12 @@ Panel {
                     }
                     Text {
                         // Field 9: blank when universal (almost every row), so only the
-                        // platform-specific entries stand out.
+                        // platform-specific entries stand out. Named in the words the
+                        // Platform filter lists ("Linux-only"), not the catalog's token,
+                        // through the model's one platform vocabulary.
                         Layout.preferredWidth: tab.colPlatform
                         text: rowDelegate.known && rowDelegate.rec.platform !== "universal"
-                              ? rowDelegate.rec.platform : ""
+                              ? Cfg.consoleModel.platformLabel(rowDelegate.rec.platform) : ""
                         color: Theme.colorTextMuted
                         font.family: Theme.familyMono
                         font.pointSize: Theme.sizeSmall

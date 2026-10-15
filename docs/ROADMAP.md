@@ -142,14 +142,20 @@ never announced their tab names) took two fixes in `Tf2TabBar`.
   the include checkbox on the optional argument only. Writing it turned the dialog's Category
   default from "client controls" to "all": a category the user has not picked must not hide
   commands, and `bot_hurt` (a `server commands` row) was out of the dropdown and the suggestion
-  list until it changed. The same test pins the Platform dropdown: its options split the
-  catalog's value from the label the user reads (`dialog.platformOptions` - "linux"/"xbox" as
-  "Linux-only"/"Xbox-only"), every label is read back off the rendered field, and selecting one
-  is checked to filter by the value, since the label as a filter value matches no row at all.
-  The parse itself is pinned by
+  list until it changed. The Platform vocabulary lives in the model
+  (`ConsoleCommandModel::platformOptions`, one `{value, label}` table) because two UIs read it:
+  the dropdown, and the Command Overview's platform column, which named the catalog's token
+  ("linux") until it was pointed at the same table. Windows is in that table but not offered -
+  the catalog has 48 linux rows, 13 xbox rows and none for windows (2026-10-15) - so the menu
+  no longer promises a filter that finds nothing, while the label stays for a row that might
+  appear. The dialog test reads all four labels off the rendered field, checks the menu size,
+  and checks that selecting one filters by the value (the label as a filter value matches no
+  row); the overview test inserts a linux-only line, renders it, and asserts the cell reads
+  "Linux-only" rather than "linux". The parse itself is pinned by
   `EngineTest::signatureParsesIntoEditorArguments`,
   `EngineTest::argsSpecRoleCarriesPerArgumentBounds` and
-  `test_parseSignatureReachesQmlAsAnArgumentList`.
+  `test_parseSignatureReachesQmlAsAnArgumentList`, the platform vocabulary by
+  `EngineTest::platformVocabularyNamesTheFilterMenu`.
 
 ## 4. Input ids missing from the Edit Binds model
 
