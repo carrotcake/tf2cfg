@@ -82,6 +82,7 @@ private slots:
     void catalogRowsHaveTenFields();
     void catalogTypeFieldIsEmptyOrCommand();
     void catalogRowsAddedFromTheLiveDump();
+    void catalogRowsCheckedInGame();
     void catalogRowsFixedFromTheInGameRun();
 
     // Per-argument + one-sided bounds (docs/DESIGN-arg-bounds.md)
@@ -413,7 +414,7 @@ void EngineTest::catalogRowsHaveTenFields() {
         QCOMPARE(commas + 1, 10);
         ++rows;
     }
-    QCOMPARE(rows, 3880);
+    QCOMPARE(rows, 3845);
 }
 
 void EngineTest::catalogTypeFieldIsEmptyOrCommand() {
@@ -442,18 +443,20 @@ void EngineTest::catalogTypeFieldIsEmptyOrCommand() {
                  qPrintable(QStringLiteral("bad type field \"%1\" in row: %2").arg(type, line)));
         census[type.isEmpty() ? QStringLiteral("variable") : type] += 1;
     }
-    QCOMPARE(census.value(QStringLiteral("variable")), 2831);
-    QCOMPARE(census.value(QStringLiteral("cmd")), 1015);
+    QCOMPARE(census.value(QStringLiteral("variable")), 2802);
+    QCOMPARE(census.value(QStringLiteral("cmd")), 1009);
     QCOMPARE(census.value(QStringLiteral("ncmd")), 34);
 
     // The app-level effect: two of the retyped rows are variables now, each in the
-    // subclass its input-type column asks for.
+    // subclass its input-type column asks for. (Two others, binds_per_command and
+    // cl_playerspraydisable, were retyped the same way and then removed - the 2026-10-15
+    // second run found the client has neither.)
     GameCfg cfg;
     QHash<QString, const cmd::ConVar *> byName;
     for (const cmd::ConVar *entry : cfg.allCmds())
         byName.insert(entry->get_name().toLower(), entry);
-    QCOMPARE(byName.value(QStringLiteral("binds_per_command"))->get_type(), cmd::CMD_IVAR);
-    QCOMPARE(byName.value(QStringLiteral("cl_playerspraydisable"))->get_type(), cmd::CMD_BVAR);
+    QCOMPARE(byName.value(QStringLiteral("gl_blitmode"))->get_type(), cmd::CMD_IVAR);
+    QCOMPARE(byName.value(QStringLiteral("gl_batch_tex_creates"))->get_type(), cmd::CMD_BVAR);
 }
 
 void EngineTest::catalogRowsAddedFromTheLiveDump() {
@@ -497,6 +500,45 @@ void EngineTest::catalogRowsAddedFromTheLiveDump() {
     // string the in-game run read off the console, and `sv_pure`'s own help text in the client
     // is another command's ("Show user data.") - both settled in-game on 2026-10-15.
     QVERIFY(byName.value(QStringLiteral("disguise"))->get_docs().contains(QStringLiteral("Usage: disguise")));
+}
+
+void EngineTest::catalogRowsCheckedInGame() {
+    // data/checks.txt - the second 2026-10-15 run, on a listen server with sv_cheats 0 - asked
+    // the client what `cvarlist` could not answer (docs/in-game-checklist.md §4). Three answers:
+    //
+    // 1. 35 names printed "Unknown command" and lost their rows. But r_spewleaf answered with a
+    //    value although cvarlist never lists it, so an absent name is a candidate, never proof.
+    for (const auto &gone : {QStringLiteral("bench_upload"), QStringLiteral("binds_per_command"),
+                             QStringLiteral("cl_playerspraydisable"),
+                             QStringLiteral("dxa_nullrefresh_capslock"),
+                             QStringLiteral("hud_magnetism"), QStringLiteral("sdl_double_click_time"),
+                             QStringLiteral("snd_lockpartial"),
+                             QStringLiteral("video_quicktime_encode_gamma"),
+                             QStringLiteral("vr_track_reinit"),
+                             QStringLiteral("windows_speaker_config")})
+        QVERIFY2(findCmdRow(gone).isEndToken(),
+                 qPrintable(QStringLiteral("row still in the catalog: ") + gone));
+    QVERIFY(!findCmdRow(QStringLiteral("r_spewleaf")).isEndToken());
+
+    // 2. The 20 commands added from the dump all ran bare without printing a usage line, so
+    //    `none` stands as their signature. The twelve snd_* speaker commands answer with their
+    //    setting ("snd_front_headphone_position = 90.000000"), which is why the dump calls them
+    //    commands rather than variables.
+    QCOMPARE(findCmdRow(QStringLiteral("snd_front_headphone_position")).inputType(), QStringLiteral("none"));
+    QCOMPARE(findCmdRow(QStringLiteral("print_froggy")).inputType(), QStringLiteral("none"));
+
+    // 3. 13 rows lost their `cheat` tag: the wiki carried it, but both live dumps agree with the
+    //    run, where a bare set with sv_cheats 0 was never refused.
+    GameCfg cfg;
+    QHash<QString, const cmd::ConVar *> byName;
+    for (const cmd::ConVar *entry : cfg.allCmds())
+        byName.insert(entry->get_name().toLower(), entry);
+    QVERIFY(!byName.value(QStringLiteral("r_shadows"))->isCheat());
+    QVERIFY(!byName.value(QStringLiteral("sv_memlimit"))->isCheat());
+    QVERIFY(!byName.value(QStringLiteral("tf_powerup_mode_imbalance_delta"))->isCheat());
+    QCOMPARE(byName.value(QStringLiteral("r_drawropes"))->get_flags(), QStringLiteral("client"));
+    // A cheat tag the dump did report stays: fog_radial arrived with one.
+    QVERIFY(byName.value(QStringLiteral("fog_radial"))->isCheat());
 }
 
 void EngineTest::catalogRowsFixedFromTheInGameRun() {
