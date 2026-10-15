@@ -266,7 +266,7 @@ bench_end,cmd,,,,cheat,Ends gathering of info.,none,universal,engine
 bench_showstatsdialog,cmd,,,,client cheat,Shows a dialog displaying the most recent benchmark results.,none,universal,engine
 bench_start,cmd,,,,cheat,Starts gathering of info. Arguments: filename to write results into,<str>,universal,engine
 bench_upload,cmd,,,,,Uploads most recent benchmark stats to the Valve servers.,none,universal,engine
-benchframe,cmd,,,,,Takes a snapshot of a particular frame in a time demo.,[int],universal,engine
+benchframe,cmd,,,,,Takes a snapshot of a particular frame in a time demo.,[str] [int] [str],universal,engine
 bind,cmd,,,,norecord,Bind a key.,[str] [str],universal,engine
 bind_mac,cmd,,,,norecord,"Bind this key but only on Mac, not win32",[str] [str],universal,engine
 binds_per_command,cvar,1,,,client,Maximum number of keys that can be bound to one command.,int,universal,client settings
@@ -332,7 +332,7 @@ budget_show_averages,,0,,,archive,enable/disable averages in the budget panel,bo
 budget_show_history,,1,,,archive,turn history graph off and on. . good to turn off on low end,bool,universal,client settings
 budget_show_peaks,,1,,,archive,enable/disable peaks in the budget panel,bool,universal,client settings
 budget_toggle_group,cmd,,,,,Turn a budget group on/off,[str],universal,engine
-bug,cmd,,,,norecord,Show/hide the bug reporting UI.,<int>,universal,engine
+bug,cmd,,,,norecord,Show/hide the bug reporting UI.,none,universal,engine
 bug_swap,cmd,,,,game cheat,Automatically swaps the current weapon for the bug bait and back again.,none,universal,server commands
 bugreporter_includebsp,,1,,,,Include .bsp for internal bug submissions.,bool,universal,client settings
 bugreporter_uploadasync,,0,,,archive,Upload attachments asynchronously,bool,universal,client settings
@@ -964,7 +964,6 @@ global_set,cmd,,,,game cheat,"global_set <globalname> <state>: Sets the state of
 glow_outline_effect_enable,,1,,,client archive,Enable entity outline glow effects.,bool,universal,client render
 glow_outline_width,,10.0f,,,client cheat,Width of glow outline effect in screen space.,flt,universal,client render
 god,cmd,,,,game cheat,Toggle. Player becomes invulnerable.,none,universal,server commands
-grab_window,cmd,,,,,grab/ungrab window.,[int],universal,engine
 groundlist,cmd,,,,game,Display ground entity list <index>,none,universal,server commands
 hammer_update_entity,cmd,,,,game,Updates the entity's position/angles when in edit mode,none,universal,server commands
 hammer_update_safe_entities,cmd,,,,game,Updates entities in the map that can safely be updated (don't have parents or are affected by constraints). Also excludes entities mentioned in any hammer_updateignorelist objects in this map.,none,universal,server commands
@@ -2711,7 +2710,7 @@ sv_player_display_usercommand_errors,,0,,,game cheat,1 = Display warning when co
 sv_player_usercommand_timeout,,3,,,game cheat,"After this many seconds without a usercommand from a player, the server will RunNullCommand as if client sends an empty command.",int,universal,server settings
 sv_playerperfhistorycount,,60,1,128,game,Number of samples to maintain in player perf history,int,universal,server settings
 sv_precacheinfo,cmd,,,,,Show precache info.,none,universal,server commands
-sv_pure,cmd,,,,,Show user data.,<int>,universal,server commands
+sv_pure,cmd,,,,,"Only allow client to use certain files - -1 no rules, 0 pure_server_minimal.txt only, 1 pure_server_full.txt + pure_server_whitelist.txt, 2 pure_server_full.txt",<int>,universal,server commands
 sv_pure_consensus,,5,,,,Minimum number of file hashes to agree to form a consensus.,int,universal,client settings
 sv_pure_kick_clients,,1,,,,"If set to 1, the server will kick clients with mismatching files. Otherwise, it will issue a warning to the client.",bool,universal,client settings
 sv_pure_retiretime,,900,,,,Seconds of server idle time to flush the sv_pure file hash cache.,int,universal,client settings

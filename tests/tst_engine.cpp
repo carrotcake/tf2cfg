@@ -80,11 +80,13 @@ private slots:
     void csvShortRowIsPadded();
     void catalogLoadsEveryRowAsACommand();
     void catalogRowsHaveTenFields();
+    void catalogRowsFixedFromTheInGameRun();
 
     // Per-argument + one-sided bounds (docs/DESIGN-arg-bounds.md)
     void oneSidedCvarBoundsKeepTheirSide();
     void argBoundsAttachFromCompanionFile();
     void argBoundsTolerateAMissingFile();
+    void argBoundsFromTheInGameRun();
     void argsSpecRoleCarriesPerArgumentBounds();
 
     // CommandListModel
@@ -409,7 +411,29 @@ void EngineTest::catalogRowsHaveTenFields() {
         QCOMPARE(commas + 1, 10);
         ++rows;
     }
-    QCOMPARE(rows, 3825);
+    QCOMPARE(rows, 3824);
+}
+
+void EngineTest::catalogRowsFixedFromTheInGameRun() {
+    // Four rows the in-game run of 2026-10-15 changed (docs/in-game-checklist.md §1).
+    // The console prints a command's real usage when it is typed bare, and that beat the
+    // dump the catalog was generated from.
+    const auto bench = findCmdRow(QStringLiteral("benchframe"));
+    QCOMPARE(bench.name(), QStringLiteral("benchframe"));
+    QCOMPARE(bench.inputType(), QStringLiteral("[str] [int] [str]"));
+
+    // `bug` opens the reporter with or without an argument, so it takes none.
+    const auto bug = findCmdRow(QStringLiteral("bug"));
+    QCOMPARE(bug.inputType(), QStringLiteral("none"));
+
+    // The dump's "Show user data." was another command's text, not sv_pure's rule list.
+    const auto svPure = findCmdRow(QStringLiteral("sv_pure"));
+    QCOMPARE(svPure.name(), QStringLiteral("sv_pure"));
+    QVERIFY(svPure.docStr().contains(QStringLiteral("pure_server_full.txt")));
+
+    // `grab_window` answers "Unknown command" in the live client, so the row is gone
+    // rather than kept as a pickable entry that cannot work.
+    QVERIFY(findCmdRow(QStringLiteral("grab_window")).isEndToken());
 }
 
 // --- Per-argument + one-sided bounds (docs/DESIGN-arg-bounds.md) ---
@@ -504,6 +528,62 @@ void EngineTest::argBoundsTolerateAMissingFile() {
     cmd::ConCmd *lip = findLip();
     QVERIFY(lip);
     QCOMPARE(lip->argSpecs().size(), 1); // the resource-loaded spec survives
+}
+
+void EngineTest::argBoundsFromTheInGameRun() {
+    GameCfg cfg; // the default ctor already loaded the bundled argbounds.csv
+
+    const auto findCmd = [&cfg](const QString &name) -> cmd::ConCmd * {
+        for (cmd::ConVar *cv : cfg.allCmds())
+            if (cv->get_name() == name && cv->get_type() == cmd::CMD_CMD)
+                return static_cast<cmd::ConCmd *>(cv);
+        return nullptr;
+    };
+
+    // Every row below was verified in-game on 2026-10-15 and applied that day
+    // (docs/argbounds-verification.md). The run's evidence is the console's own usage
+    // line, which is why these sit at "highest" confidence.
+    struct Expect {
+        const char *cmd;
+        int index;
+        bool isFloat;
+        bool hasMin;
+        double min;
+        bool hasMax;
+        double max;
+    };
+    const QVector<Expect> expected = {
+        // sv_pure: the bare command prints -1/0/1/2 and rejects 3 (data/sv_pure.txt).
+        { "sv_pure", 0, false, true, -1.0, true, 2.0 },
+        // fs_warning_level: the bare command enumerates FILESYSTEM_WARNING_* 0..6.
+        { "fs_warning_level", 0, false, true, 0.0, true, 6.0 },
+        // maxplayers: 101 is the ceiling; 0 is accepted but the server never starts.
+        { "maxplayers", 0, false, true, 1.0, true, 101.0 },
+        // mat_setvideomode's windowed argument: 2 and up wrap to 1.
+        { "mat_setvideomode", 2, false, true, 0.0, true, 1.0 },
+        { "mat_enable_vrmode", 0, false, true, 0.0, true, 1.0 },
+        // cc_bot_selectweapon's slot: 0..2; higher values are silently ignored.
+        { "cc_bot_selectweapon", 1, false, true, 0.0, true, 2.0 },
+        // Floors only: playvol wraps -1 to 0, demo_timescale freezes at 0.
+        { "playvol", 1, true, true, 0.0, false, 0.0 },
+        { "demo_timescale", 0, true, true, 0.0, false, 0.0 },
+    };
+
+    for (const Expect &e : expected) {
+        const QString name = QString::fromLatin1(e.cmd);
+        cmd::ConCmd *cmd = findCmd(name);
+        QVERIFY2(cmd, qPrintable(name));
+        QCOMPARE(cmd->argSpecs().size(), 1);
+        const cmd::ArgSpec &spec = cmd->argSpecs().at(0);
+        QCOMPARE(spec.index, e.index);
+        QCOMPARE(spec.isFloat, e.isFloat);
+        QCOMPARE(spec.hasMin, e.hasMin);
+        QCOMPARE(spec.hasMax, e.hasMax);
+        if (e.hasMin)
+            QCOMPARE(spec.min, e.min);
+        if (e.hasMax)
+            QCOMPARE(spec.max, e.max);
+    }
 }
 
 void EngineTest::argsSpecRoleCarriesPerArgumentBounds() {
