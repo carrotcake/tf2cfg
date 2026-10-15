@@ -80,6 +80,7 @@ private slots:
     void csvShortRowIsPadded();
     void catalogLoadsEveryRowAsACommand();
     void catalogRowsHaveTenFields();
+    void catalogTypeFieldIsEmptyOrCommand();
     void catalogRowsFixedFromTheInGameRun();
 
     // Per-argument + one-sided bounds (docs/DESIGN-arg-bounds.md)
@@ -412,6 +413,46 @@ void EngineTest::catalogRowsHaveTenFields() {
         ++rows;
     }
     QCOMPARE(rows, 3824);
+}
+
+void EngineTest::catalogTypeFieldIsEmptyOrCommand() {
+    // res/cfg/schema.md defines field 2 as cmd / ncmd / empty (= a console variable), but
+    // cmdLex::Token::isCmd() asks only whether the field is non-empty. The 58 rows that
+    // said "cvar" therefore loaded as commands - they sat under the editor's Commands
+    // filter, showed "bool"/"int" where a usage string belongs, and got a command editor
+    // in the guided pane. The live dump reports a value for every one of them, not `cmd`
+    // (tools/catalog_diff.py).
+    QFile file(QStringLiteral(":/cfg/allcmds.csv"));
+    QVERIFY(file.open(QIODevice::ReadOnly | QIODevice::Text));
+    QTextStream in(&file);
+    QHash<QString, int> census;
+    while (!in.atEnd()) {
+        const QString line = in.readLine();
+        if (line.isEmpty())
+            continue;
+        // A quoted name can carry a comma; the type field itself never does.
+        const int firstComma = line.startsWith(QLatin1Char('"'))
+            ? line.indexOf(QStringLiteral("\",")) + 1
+            : line.indexOf(QLatin1Char(','));
+        QVERIFY2(firstComma > 0, qPrintable(line));
+        const QString type =
+            line.mid(firstComma + 1, line.indexOf(QLatin1Char(','), firstComma + 1) - firstComma - 1);
+        QVERIFY2(type.isEmpty() || type == QLatin1String("cmd") || type == QLatin1String("ncmd"),
+                 qPrintable(QStringLiteral("bad type field \"%1\" in row: %2").arg(type, line)));
+        census[type.isEmpty() ? QStringLiteral("variable") : type] += 1;
+    }
+    QCOMPARE(census.value(QStringLiteral("variable")), 2795);
+    QCOMPARE(census.value(QStringLiteral("cmd")), 995);
+    QCOMPARE(census.value(QStringLiteral("ncmd")), 34);
+
+    // The app-level effect: two of the retyped rows are variables now, each in the
+    // subclass its input-type column asks for.
+    GameCfg cfg;
+    QHash<QString, const cmd::ConVar *> byName;
+    for (const cmd::ConVar *entry : cfg.allCmds())
+        byName.insert(entry->get_name().toLower(), entry);
+    QCOMPARE(byName.value(QStringLiteral("binds_per_command"))->get_type(), cmd::CMD_IVAR);
+    QCOMPARE(byName.value(QStringLiteral("cl_playerspraydisable"))->get_type(), cmd::CMD_BVAR);
 }
 
 void EngineTest::catalogRowsFixedFromTheInGameRun() {

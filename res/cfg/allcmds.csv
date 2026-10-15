@@ -269,7 +269,7 @@ bench_upload,cmd,,,,,Uploads most recent benchmark stats to the Valve servers.,n
 benchframe,cmd,,,,,Takes a snapshot of a particular frame in a time demo.,[str] [int] [str],universal,engine
 bind,cmd,,,,norecord,Bind a key.,[str] [str],universal,engine
 bind_mac,cmd,,,,norecord,"Bind this key but only on Mac, not win32",[str] [str],universal,engine
-binds_per_command,cvar,1,,,client,Maximum number of keys that can be bound to one command.,int,universal,client settings
+binds_per_command,,1,,,client,Maximum number of keys that can be bound to one command.,int,universal,client settings
 blink_duration,,0.2,,,client,How many seconds an eye blink will last.,flt,universal,client settings
 bloodspray,cmd,,,,game cheat,blood,none,universal,server commands
 boo,ncmd,,,,game,Say boo (while the player is a ghost).,none,universal,client controls
@@ -493,9 +493,9 @@ cl_interp,,0.1,0,0.5,client userinfo archive notconnected,Sets the interpolation
 cl_interp_all,,0,,,client,Disable interpolation list optimizations.,bool,universal,client settings
 cl_interp_npcs,,0.0,,,client userinfo,"Interpolate NPC positions starting this many seconds in past (or cl_interp, if greater)",flt,universal,client settings
 cl_interp_ratio,,2.0,,,client userinfo archive notconnected,Sets the interpolation amount (final amount is cl_interp_ratio / cl_updaterate).,flt,universal,client settings
-cl_jiggle_bone_debug,cvar,0,,,client cheat,Display physics-based 'jiggle bone' debugging information,bool,universal,client settings
-cl_jiggle_bone_debug_pitch_constraints,cvar,0,,,client cheat,Display physics-based 'jiggle bone' debugging information,bool,universal,client settings
-cl_jiggle_bone_debug_yaw_constraints,cvar,0,,,client cheat,Display physics-based 'jiggle bone' debugging information,bool,universal,client settings
+cl_jiggle_bone_debug,,0,,,client cheat,Display physics-based 'jiggle bone' debugging information,bool,universal,client settings
+cl_jiggle_bone_debug_pitch_constraints,,0,,,client cheat,Display physics-based 'jiggle bone' debugging information,bool,universal,client settings
+cl_jiggle_bone_debug_yaw_constraints,,0,,,client cheat,Display physics-based 'jiggle bone' debugging information,bool,universal,client settings
 cl_jiggle_bone_framerate_cutoff,,20,,,client,Skip jiggle bone simulation if framerate drops below this value (frames/second),int,universal,client render
 cl_lagcompensation,,1,,,client userinfo notconnected,Perform server side lag compensation of weapon firing events.,bool,universal,client settings
 cl_language,,english,,,userinfo,Language (from HKCU\Software\Valve\Steam\Language),str,universal,client settings
@@ -543,7 +543,7 @@ cl_pitchdown,,89,,,client cheat,Maximum downward view angle.,int,universal,clien
 cl_pitchspeed,,225,-100000,100000,client,Client pitch speed.,int,universal,client settings
 cl_pitchup,,89,,,client cheat,Maximum upward view angle.,int,universal,client settings
 cl_playback_screenshots,,0,,,,Allows the client to playback screenshot and jpeg commands in demos.,bool,universal,client settings
-cl_playerspraydisable,cvar,0,,,client archive,Disable player sprays.,bool,universal,client settings
+cl_playerspraydisable,,0,,,client archive,Disable player sprays.,bool,universal,client settings
 cl_precacheinfo,cmd,,,,,Show precache info (client).,none,universal,engine
 cl_pred_optimize,,2,,,client,"Optimize for not copying data if didn't receive a network update (1), and also for not repredicting if there were no errors (2).",int,universal,client settings
 cl_pred_track,cmd,,,,client,"<entindex> <fieldname>:  Track changes to entity index entindex, for field fieldname.",[int] [str],universal,engine
@@ -766,7 +766,7 @@ dumpgamestringtable,cmd,,,,game cheat,Dump the contents of the game string table
 dumplongticks,cmd,,,,,Enables generating minidumps on long ticks.,none,universal,engine
 dumpsavedir,cmd,,,,,List the contents of the save directory in memory,none,universal,engine
 dumpstringtables,cmd,,,,,Print string tables to console.,none,universal,engine
-dxa_nullrefresh_capslock,cvar,0,,,,Internal D3D9Ex debug workaround (caps-lock null refresh).,bool,windows,client settings
+dxa_nullrefresh_capslock,,0,,,,Internal D3D9Ex debug workaround (caps-lock null refresh).,bool,windows,client settings
 echo,cmd,,,,svcanexec,Echo text to console.,none,universal,engine
 econ_show_items_with_tag,cmd,,,,client,Lists the item definitions that have a specified tag.,none,universal,engine
 enable_debug_overlays,,1,,,game cheat,Enable rendering of debug overlays,bool,universal,server settings
@@ -913,53 +913,53 @@ ghost_spawn,cmd,,,,game cheat,Spawns a Ghost where the player is looking.,none,u
 give,cmd,,,,game,Give item to player.  Arguments: <item_name>,none,universal,server commands
 givecurrentammo,cmd,,,,game cheat,Give a supply of ammo for current weapon..,none,universal,server commands
 gl_amd_occlusion_workaround,,1,,,matsysthread,Workaround for AMD occlusion query bugs.,bool,linux,client render
-gl_batch_tex_creates,cvar,0,,,,Count of batched texture creations.,bool,linux,client render
-gl_batch_tex_destroys,cvar,0,,,,Count of batched texture destructions.,bool,linux,client render
-gl_batch_vis,cvar,0,,,,Show texture batching visualization.,bool,linux,client render
-gl_blit_halfx,cvar,0,,,,Half-resolution blit offset on X axis.,bool,linux,client render
-gl_blit_halfy,cvar,0,,,,Half-resolution blit offset on Y axis.,bool,linux,client render
-gl_blitmode,cvar,1,,,,Render target blit mode selection.,int,linux,client render
-gl_bufmode,cvar,1,,,,OpenGL buffer mode selection.,int,linux,client render
-gl_can_query_fast,cvar,1,,,,Allow fast occlusion queries.,bool,linux,client render
-gl_can_resolve_flipped,cvar,0,,,,Report flipped resolve support.,bool,linux,client render
-gl_cannot_resolve_flipped,cvar,0,,,,Report missing flipped resolve support.,bool,linux,client render
+gl_batch_tex_creates,,0,,,,Count of batched texture creations.,bool,linux,client render
+gl_batch_tex_destroys,,0,,,,Count of batched texture destructions.,bool,linux,client render
+gl_batch_vis,,0,,,,Show texture batching visualization.,bool,linux,client render
+gl_blit_halfx,,0,,,,Half-resolution blit offset on X axis.,bool,linux,client render
+gl_blit_halfy,,0,,,,Half-resolution blit offset on Y axis.,bool,linux,client render
+gl_blitmode,,1,,,,Render target blit mode selection.,int,linux,client render
+gl_bufmode,,1,,,,OpenGL buffer mode selection.,int,linux,client render
+gl_can_query_fast,,1,,,,Allow fast occlusion queries.,bool,linux,client render
+gl_can_resolve_flipped,,0,,,,Report flipped resolve support.,bool,linux,client render
+gl_cannot_resolve_flipped,,0,,,,Report missing flipped resolve support.,bool,linux,client render
 gl_clear,,0,,,client,Clear the back buffer each frame (debugging).,bool,linux,client render
 gl_clear_randomcolor,,0,,,client cheat,Clear the back buffer to random colors every frame. Helps spot open seams in geometry.,bool,linux,client render
-gl_debug_output,cvar,1,,,,Enable OpenGL debug output.,bool,linux,client render
-gl_disable_forced_vsync,cvar,0,,,,Disable forced vsync.,bool,linux,client render
+gl_debug_output,,1,,,,Enable OpenGL debug output.,bool,linux,client render
+gl_disable_forced_vsync,,0,,,,Disable forced vsync.,bool,linux,client render
 gl_dump_stats,cmd,,,,,Dump OpenGL renderer statistics.,none,linux,engine
-gl_enabletexsubimage,cvar,1,,,,Allow texture sub-image updates.,bool,linux,client render
-gl_finish,cvar,0,,,,Call glFinish each frame (debugging).,bool,linux,client render
-gl_flushpaircache,cvar,0,,,,Flush the shader pair cache.,bool,linux,client render
-gl_magnify_resolve_mode,cvar,2,,,,Resolve mode when magnifying render targets.,int,linux,client render
-gl_minify_resolve_mode,cvar,1,,,,Resolve mode when minifying render targets.,int,linux,client render
-gl_minimize_all_tex,cvar,1,,,,Minimize all textures (memory debugging).,bool,linux,client render
-gl_minimize_rt_tex,cvar,0,,,,Minimize render target textures.,bool,linux,client render
-gl_minimize_tex_log,cvar,0,,,,Log texture minimization.,bool,linux,client render
-gl_mtglflush_at_tof,cvar,0,,,,Flush MTGL commands at top of frame.,bool,linux,client render
-gl_nullqueries,cvar,0,,,,Use null occlusion queries (debugging).,bool,linux,client render
-gl_paircache_rows_lg2,cvar,10,,,,Shader pair cache rows (log2).,int,linux,client render
-gl_paircache_ways_lg2,cvar,5,,,,Shader pair cache associativity (log2).,int,linux,client render
-gl_paircachestats,cvar,0,,,,Show shader pair cache statistics.,bool,linux,client render
+gl_enabletexsubimage,,1,,,,Allow texture sub-image updates.,bool,linux,client render
+gl_finish,,0,,,,Call glFinish each frame (debugging).,bool,linux,client render
+gl_flushpaircache,,0,,,,Flush the shader pair cache.,bool,linux,client render
+gl_magnify_resolve_mode,,2,,,,Resolve mode when magnifying render targets.,int,linux,client render
+gl_minify_resolve_mode,,1,,,,Resolve mode when minifying render targets.,int,linux,client render
+gl_minimize_all_tex,,1,,,,Minimize all textures (memory debugging).,bool,linux,client render
+gl_minimize_rt_tex,,0,,,,Minimize render target textures.,bool,linux,client render
+gl_minimize_tex_log,,0,,,,Log texture minimization.,bool,linux,client render
+gl_mtglflush_at_tof,,0,,,,Flush MTGL commands at top of frame.,bool,linux,client render
+gl_nullqueries,,0,,,,Use null occlusion queries (debugging).,bool,linux,client render
+gl_paircache_rows_lg2,,10,,,,Shader pair cache rows (log2).,int,linux,client render
+gl_paircache_ways_lg2,,5,,,,Shader pair cache associativity (log2).,int,linux,client render
+gl_paircachestats,,0,,,,Show shader pair cache statistics.,bool,linux,client render
 gl_persistent_buffer_max_offset,cmd,,,,,Maximum offset for persistent buffer mapping.,[int],linux,engine
-gl_pow2_tempmem,cvar,0,,,,"If set, use power-of-two allocations for temporary texture memory during uploads. May help with fragmentation on certain systems caused by heavy churn of large allocations.",bool,linux,client render
-gl_radar7954721_workaround_all,cvar,0,,,,Apply GL bug workaround 7954721 to all textures.,bool,linux,client render
-gl_radar7954721_workaround_maskval,cvar,0,,,,Mask value for GL bug workaround 7954721.,bool,linux,client render
-gl_radar7954721_workaround_mixed,cvar,1,,,,Apply GL bug workaround 7954721 to mixed formats.,bool,linux,client render
-gl_rt_forcergba,cvar,1,,,,Force RGBA format for render targets.,bool,linux,client render
+gl_pow2_tempmem,,0,,,,"If set, use power-of-two allocations for temporary texture memory during uploads. May help with fragmentation on certain systems caused by heavy churn of large allocations.",bool,linux,client render
+gl_radar7954721_workaround_all,,0,,,,Apply GL bug workaround 7954721 to all textures.,bool,linux,client render
+gl_radar7954721_workaround_maskval,,0,,,,Mask value for GL bug workaround 7954721.,bool,linux,client render
+gl_radar7954721_workaround_mixed,,1,,,,Apply GL bug workaround 7954721 to mixed formats.,bool,linux,client render
+gl_rt_forcergba,,1,,,,Force RGBA format for render targets.,bool,linux,client render
 gl_shader_compile_time_dump,cmd,,,,,Dump  stats shader compile time.,none,linux,engine
-gl_shaderpair_cachelog,cvar,0,,,,Log shader pair cache activity.,bool,linux,client render
-gl_swapdebug,cvar,0,,,,Debug buffer swapping.,bool,linux,client render
-gl_swapinterval,cvar,0,,,,Buffer swap interval (vsync) override.,int,linux,client render
-gl_swaplimit,cvar,0,,,,Frame swap limit for throttling.,int,linux,client render
-gl_swaplimit_mt,cvar,3,,,,Multithreaded frame swap limit.,int,linux,client render
-gl_swaptear,cvar,1,,,,Allow buffer swap tearing.,bool,linux,client render
-gl_telemetry_gpu,cvar,0,,,,Collect GPU telemetry.,bool,linux,client render
-gl_telemetry_gpu_pipeline_flushing,cvar,0,,,,Telemetry for GPU pipeline flushing.,bool,linux,client render
-gl_texlayoutstats,cvar,0,,,,Show texture layout statistics.,bool,linux,client render
-gl_texmsaalog,cvar,0,,,,Log MSAA texture allocation.,bool,linux,client render
-glm_literefresh_capslock,cvar,0,,,,Internal GLM debug workaround (caps-lock lite refresh).,bool,linux,client render
-glm_nullrefresh_capslock,cvar,0,,,,Internal GLM debug workaround (caps-lock null refresh).,bool,linux,client render
+gl_shaderpair_cachelog,,0,,,,Log shader pair cache activity.,bool,linux,client render
+gl_swapdebug,,0,,,,Debug buffer swapping.,bool,linux,client render
+gl_swapinterval,,0,,,,Buffer swap interval (vsync) override.,int,linux,client render
+gl_swaplimit,,0,,,,Frame swap limit for throttling.,int,linux,client render
+gl_swaplimit_mt,,3,,,,Multithreaded frame swap limit.,int,linux,client render
+gl_swaptear,,1,,,,Allow buffer swap tearing.,bool,linux,client render
+gl_telemetry_gpu,,0,,,,Collect GPU telemetry.,bool,linux,client render
+gl_telemetry_gpu_pipeline_flushing,,0,,,,Telemetry for GPU pipeline flushing.,bool,linux,client render
+gl_texlayoutstats,,0,,,,Show texture layout statistics.,bool,linux,client render
+gl_texmsaalog,,0,,,,Log MSAA texture allocation.,bool,linux,client render
+glm_literefresh_capslock,,0,,,,Internal GLM debug workaround (caps-lock lite refresh).,bool,linux,client render
+glm_nullrefresh_capslock,,0,,,,Internal GLM debug workaround (caps-lock null refresh).,bool,linux,client render
 global_set,cmd,,,,game cheat,"global_set <globalname> <state>: Sets the state of the given env_global (0 = OFF, 1 = ON, 2 = DEAD).",none,universal,server commands
 glow_outline_effect_enable,,1,,,client archive,Enable entity outline glow effects.,bool,universal,client render
 glow_outline_width,,10.0f,,,client cheat,Width of glow outline effect in screen space.,flt,universal,client render
@@ -1185,8 +1185,8 @@ mat_alphacoverage,,1,,,matsysthread,Use alpha coverage for mip generation.,bool,
 mat_antialias,,0,,,archive,"Anti-aliasing mode (0 = none, 2 = 2x MSAA, 4 = 4x MSAA, etc.).",int,universal,client render
 mat_autoexposure_max,,2,,,client,Maximum auto-exposure value.,int,universal,client render
 mat_autoexposure_min,,0.5,,,client,Minimum auto-exposure value.,flt,universal,client render
-mat_autoload_glshaders,cvar,1,,,,Automatically load cached GL shaders.,bool,universal,client render
-mat_autosave_glshaders,cvar,1,,,,Automatically save compiled GL shaders.,bool,universal,client render
+mat_autoload_glshaders,,1,,,,Automatically load cached GL shaders.,bool,universal,client render
+mat_autosave_glshaders,,1,,,,Automatically save compiled GL shaders.,bool,universal,client render
 mat_bloom_scalefactor_scalar,,1.0,,,client,Scalar factor for bloom brightness.,flt,universal,client render
 mat_bloomamount_rate,,0.05f,,,client cheat,Bloom amount change rate.,flt,universal,client render
 mat_bloomscale,,1,,,client,Bloom intensity scale.,bool,universal,client render
@@ -2368,8 +2368,8 @@ script_trace_disable_key,cmd,,,,game cheat,Turn off a particular trace output by
 script_trace_enable,cmd,,,,game cheat,Turn on a particular trace output by file or function name,[str],universal,server commands
 script_trace_enable_all,cmd,,,,game cheat,Turn on all trace output,none,universal,server commands
 script_trace_enable_key,cmd,,,,game cheat,Turn on a particular trace output by table/instance,[str],universal,server commands
-sdl_double_click_size,cvar,2,,,,Pixel area counted as a double click (SDL).,int,universal,client settings
-sdl_double_click_time,cvar,400,,,,Milliseconds counted as a double click (SDL).,int,universal,client settings
+sdl_double_click_size,,2,,,,Pixel area counted as a double click (SDL).,int,universal,client settings
+sdl_double_click_time,,400,,,,Milliseconds counted as a double click (SDL).,int,universal,client settings
 sdr,cmd,,,,,View/edit SteamNetworkingSockets configuration variables,<str>,universal,engine
 sdr_spew_level,,4,,,,"Verbosity level for SteamNetworkingSockets spew.  4=warning, 5=msg, 6=verbose, 7=debug",int,universal,client settings
 sensitivity,,3,0.0001,10000000,client archive,Mouse sensitivity.,flt,universal,client settings
@@ -3385,7 +3385,7 @@ tf_passtime_throwspeed_spy,,900.0f,,,game replicated notify,PASS Time throw spee
 tf_passtime_throwspeed_velocity_scale,,0.33f,,,game replicated notify,How much player velocity to add when tossing (0=none 1=100%),flt,universal,server settings
 tf_player_drop_bonus_ducks,,-1,,,game replicated,-1 Default (Holiday-based) 0 - Force off 1 - Force on,int,universal,server settings
 tf_player_movement_restart_freeze,,1,,,game replicated,"When set, prevent player movement during round restart",bool,universal,server settings
-tf_player_name_change_time,cvar,60,,,game notify,Seconds between name changes.,int,universal,server settings
+tf_player_name_change_time,,60,,,game notify,Seconds between name changes.,int,universal,server settings
 tf_player_spell_drop_on_death_rate,,0,,,game replicated,Rate of Halloween spell drops on death.,bool,universal,server settings
 tf_playergib,,1,0,2,game notify,"Allow player gibbing. 0: never, 1: normal, 2: always",int,universal,server settings
 tf_playround,cmd,,,,game cheat,Play the selected round  Argument: {round name given by 'tf_listrounds' command},none,universal,server commands
@@ -3805,11 +3805,11 @@ windows_speaker_config,,-1,,,archive,Windows speaker configuration index.,int,wi
 wipe_nav_attributes,cmd,,,,game cheat,Clear all nav attributes of selected area.,none,universal,server commands
 writeid,cmd,,,,,Writes a list of permanently-banned user IDs to banned_user.cfg.,none,universal,server commands
 writeip,cmd,,,,,Save the ban list to banned_ip.cfg.,none,universal,server commands
-x360_audio_english,cvar,0,,,client,Keeps track of whether we're forcing english in a localized language.,bool,xbox,client settings
-x360_resolution_height,cvar,480,,,client,This is only used for reference. Changing this value does nothing,int,xbox,client settings
-x360_resolution_interlaced,cvar,0,,,client,This is only used for reference. Changing this value does nothing,bool,xbox,client settings
-x360_resolution_widescreen_mode,cvar,0,,,client,This is only used for reference. Changing this value does nothing,bool,xbox,client settings
-x360_resolution_width,cvar,640,,,client,This is only used for reference. Changing this value does nothing,int,xbox,client settings
+x360_audio_english,,0,,,client,Keeps track of whether we're forcing english in a localized language.,bool,xbox,client settings
+x360_resolution_height,,480,,,client,This is only used for reference. Changing this value does nothing,int,xbox,client settings
+x360_resolution_interlaced,,0,,,client,This is only used for reference. Changing this value does nothing,bool,xbox,client settings
+x360_resolution_widescreen_mode,,0,,,client,This is only used for reference. Changing this value does nothing,bool,xbox,client settings
+x360_resolution_width,,640,,,client,This is only used for reference. Changing this value does nothing,int,xbox,client settings
 xbox_autothrottle,,1,,,game archive,Auto-throttle Xbox vehicles.,bool,xbox,server settings
 xbox_steering_deadzone,,0.0,,,game,Xbox controller steering deadzone.,flt,xbox,server settings
 xbox_throttlebias,,100,,,game archive,Xbox throttle bias.,int,xbox,server settings
