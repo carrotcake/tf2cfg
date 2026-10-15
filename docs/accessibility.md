@@ -170,11 +170,15 @@ rather than a pragma.
 
 ## 4. Verification
 
-Nothing above is covered by `tests/tst_engine.cpp`, which tests C++ only. QML would need
-`QtQuick.Test`, which is a new dependency and a new build target — the same decision CI
-(#22) will force anyway.
+The engine suite (`tests/tst_engine.cpp`) tests C++ only. The QML side now has a suite of
+its own: `tests/qml/` (Qt Quick Test, `tests/qml/qmltests.pro`, run headless in CI). It
+drives the real QML and currently pins: the shell loading `Main.qml` and opening the editor
+page, the Overview rows' catalog columns, KeyCap focus plus Return/Space activation, the
+non-bindable caps staying out of the tab chain, and Tf2TabBar's Left/Right with wrapping.
+Add a case there when a UI behavior needs pinning; the tests prove handlers fire and
+delegates render, not that the result looks right.
 
-Until then, the manual pass, which is short:
+What no test covers is the manual pass, which is short:
 
 1. Launch, press Tab repeatedly: every control on the start screen takes focus, shows a
    visible ring, and Enter/Space activates it.

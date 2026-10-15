@@ -84,11 +84,14 @@ items (W1-W8). W1-W8 are done (2026-10-13); still open: the screen-reader pass (
 - A8 decided 2026-10-14: the three empty menus (`Edit`/`View`/`Help`) stay. D20 in
   `docs/ARCHITECTURE.md` holds the rule - `File` carries the save actions, the other
   menus stay empty until something belongs in them. Not a bug and not open work.
-- Verification: none of this is covered by `tests/tst_engine.cpp`; QML would need
-  Qt Quick Test (a new dependency and build target - the same decision CI forces).
-  Manual pass steps are in `docs/accessibility.md` section 4. Real screen-reader output
-  is unverifiable on this machine; re-run step 4 with NVDA/Narrator/Orca before claiming
-  more.
+- Verification: the engine suite (`tests/tst_engine.cpp`) still covers none of this, but
+  the QML suite (`tests/qml/`, Qt Quick Test, added 2026-10-15) now pins the kernels those
+  work items added: a bindable cap takes focus and activates on Return/Space (W2), a
+  non-bindable cap stays out of the tab chain, focus shows the highlight, and the tab strip
+  reports the next/previous tab with wrapping on Left/Right (W3). Manual pass steps stay in
+  `docs/accessibility.md` section 4 - the tests prove the handlers fire, not that the UI
+  looks right. Real screen-reader output is still unverifiable on this machine; re-run
+  step 4 with NVDA/Narrator/Orca before claiming more.
 
 ## 3. QML cleanup
 
