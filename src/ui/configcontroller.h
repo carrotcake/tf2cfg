@@ -75,8 +75,9 @@ public:
 
     /// A catalog usage signature ("[str] <flt>", "none") as one `{kind, optional}` per
     /// argument, for the Build-A-Bind and guided editors (cmd::parseSignature, which also
-    /// shapes the argbounds rows - one parse, three readers).
-    Q_INVOKABLE QVariantList parseSignature(const QString &signature) const;
+    /// shapes the argbounds rows - one parse, three readers). QList<QVariant>, not
+    /// QVariantList, so QML and the tools see `list<var>` and its array members.
+    Q_INVOKABLE QList<QVariant> parseSignature(const QString &signature) const;
 
     /// Parse a config asynchronously and fill the command model. Appends, like the widget build (P37).
     /// Returns immediately; `loading` becomes true, then `loadedChanged`/`lastErrorChanged` fire when done.

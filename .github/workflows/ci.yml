@@ -60,8 +60,9 @@ jobs:
           # -I qmlmodules is the C++ backend module: `import tf2cfg` in qml/. qmake assembles
           # that directory when it builds the app (tf2cfgreal.pro), so this step needs the
           # build above - without the path every `Cfg.`/`KeyTable.` read reads as unqualified
-          # access again (which is exactly the drift this gate is for).
-          find qml -name '*.qml' | xargs qmllint-qt6 -I qmlmodules 2>lint.txt || true
+          # access again (which is exactly the drift this gate is for). tests/qml is QML too:
+          # it carried missing-property warnings nobody saw while only qml/ was linted.
+          find qml tests/qml -name '*.qml' | xargs qmllint-qt6 -I qmlmodules 2>lint.txt || true
           if grep -q "Error:" lint.txt; then
             echo "::error::qmllint reported errors"; cat lint.txt; exit 1
           fi

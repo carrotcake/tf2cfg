@@ -693,7 +693,7 @@ QStringList ConfigController::splitSegments(const QString &line) const {
     return out;
 }
 
-QVariantList ConfigController::parseSignature(const QString &signature) const
+QList<QVariant> ConfigController::parseSignature(const QString &signature) const
 {
     const QVector<cmd::SignatureArg> args = cmd::parseSignature(signature);
     QVariantList out;

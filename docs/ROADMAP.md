@@ -121,18 +121,25 @@ never announced their tab names) took two fixes in `Tf2TabBar`.
   key table's lists are `QList<QVariant>` (`list<var>` - `QVariantList` hides `.length`), and
   two parent-element reads are qualified with their id. The CI lint step lints with
   `-I qmlmodules` (the module directory qmake assembles) and fails on any nonzero count, so
-  the bar is now a gate rather than a printed number.
+  the bar is now a gate rather than a printed number. The step lints `tests/qml/` alongside
+  `qml/` since 2026-10-15: the test tree is QML too, and it had accumulated three
+  `missing-property` warnings (`.length`/`.forEach` on a `QVariantList`) that no gate saw
+  while only `qml/` was linted.
 - Usage-signature parsing: **one parse, four readers** (2026-10-15). `[str] <flt>` was being
   taken apart four times - in `loadArgBounds` to count arguments, in `ConsoleCommandModel`'s
   `argsSpec` role to derive `optional` and `isFloat`, and once in each of
   `BindEditorDialog.qml` and `ConfigEditorTab.qml` to build the argument editors. It is now
   `cmd::parseSignature` (`src/gamecfg/`, beside `ArgSpec`), reached from QML as
-  `Cfg.parseSignature` returning one `{kind, optional}` per argument; the other three readers
-  go through it, so they cannot disagree about an argument's index or its signed/optional
-  shape. The struct's `bare` flag carries what the role's old surface check meant (a cvar's
-  signature is a value type, not an argument), and `BindEditorDialog`'s argument-editor rows
-  are still untested by `tests/qml` (no test opens that dialog yet); the parse itself is pinned
-  by `EngineTest::signatureParsesIntoEditorArguments`,
+  `Cfg.parseSignature` returning one `{kind, optional}` per argument (`QList<QVariant>` in the
+  header, so QML and the tools see `list<var>` rather than a `QVariantList` whose array members
+  they cannot resolve); the other three readers go through it, so they cannot disagree about an
+  argument's index or its signed/optional shape. The struct's `bare` flag carries what the
+  role's old surface check meant (a cvar's signature is a value type, not an argument).
+  `BindEditorDialog`'s argument-editor rows are pinned from the outside by
+  `test_bindDialogBuildsOneEditorPerSignatureArgument`: it opens the dialog for a key, selects
+  `callvote` ("[str] <str>") in the dropdown the way a user would, and asserts the rendered
+  editors - both labels from the parsed kinds, the include checkbox on the optional argument
+  only. The parse itself is pinned by `EngineTest::signatureParsesIntoEditorArguments`,
   `EngineTest::argsSpecRoleCarriesPerArgumentBounds` and
   `test_parseSignatureReachesQmlAsAnArgumentList`.
 

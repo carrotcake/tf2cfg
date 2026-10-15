@@ -170,6 +170,72 @@ Rectangle {
             compare(Cfg.parseSignature("bool")[0].kind, "bool", "a cvar's value type is its argument")
         }
 
+        // -- the Build-A-Bind argument editors --------------------------------
+
+        function test_bindDialogBuildsOneEditorPerSignatureArgument() {
+            const made = createInStage("qrc:/qml/dialogs/BindEditorDialog.qml", { keyToken: "a" })
+            compare(made.error, "")
+            const dialog = made.item
+            verify(dialog !== null, "BindEditorDialog instantiated")
+            dialog.openForKey("a")
+            tryCompare(dialog, "opened", true, 5000)
+
+            // A Popup's content lives under its contentItem, not under the Popup object.
+            const contentRoot = dialog.contentItem
+            verify(contentRoot !== null, "the dialog content is instantiated")
+
+            const combo = findItem(contentRoot, function (it) { return it.objectName === "commandCombo" })
+            verify(combo !== null, "the command dropdown exists")
+
+            // Opening the dialog filters the catalog to its Category/Platform defaults
+            // (client controls + universal), and "callvote" - "[str] <str>", a mandatory
+            // argument then an optional one - is in that view and carries no hand-written
+            // panel, so it renders the generic argument editors. The dropdown indexes the
+            // model it shows, so the row comes from that model.
+            const model = Cfg.consoleModel
+            tryVerify(function () { return combo.count > 0 }, 5000, "the dropdown shows the catalog")
+            compare(combo.count, model.rowCount(), "the dropdown shows the filtered catalog")
+
+            let row = -1
+            tryVerify(function () {
+                for (let r = 0; r < model.rowCount(); ++r) {
+                    if (model.commandAt(r).name === "callvote") {
+                        row = r
+                        return true
+                    }
+                }
+                return false
+            }, 5000, "callvote is offered")
+            combo.currentIndex = row
+
+            // One editor per argument, each labelled with the parsed kind. Both the labels
+            // and the checkboxes are matched by their text: Controls' Label and CheckBox
+            // are QML types here, not the QQuick* classes a type check would look for.
+            let labels = []
+            tryVerify(function () {
+                labels = collectItems(contentRoot, function (it) {
+                    return it.text !== undefined && String(it.text).indexOf("param ") === 0
+                }, []).map(function (label) { return label.text })
+                return labels.length === 2
+            }, 5000, "one editor per argument")
+            compare(labels.join(" | "), "param 1 (str) | param 2 (str)",
+                    "each editor is labelled with the parsed kind")
+
+            // The include checkbox belongs to the optional argument and starts unticked:
+            // a mandatory argument is always part of the bind.
+            const includes = collectItems(contentRoot, function (it) {
+                return it.text === "include" && it.checked !== undefined
+            }, [])
+            compare(includes.length, 2, "every argument carries an include checkbox")
+            compare(includes[0].visible, false, "a mandatory argument cannot be dropped")
+            compare(includes[0].checked, true)
+            compare(includes[1].visible, true, "an optional one can")
+            compare(includes[1].checked, false)
+
+            dialog.close()
+            dialog.destroy()
+        }
+
         // -- W2: key caps take focus and activate on Return/Space -------------
 
         function test_keyCapActivatesOnReturnAndSpace() {

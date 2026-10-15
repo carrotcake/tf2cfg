@@ -61,6 +61,8 @@ cd build-qmltest && $env:QT_QPA_PLATFORM = "offscreen"; .\release\tst_app.exe -o
   the other way to trip the warning: qualify it with the owning id (`window.editorActive`,
   `panel.fnGroupX(…)`). Both are enforced by the CI lint step, which lints with
   `-I qmlmodules` (the module directory qmake assembles) and fails on any nonzero count.
+  It lints `tests/qml/` as well as `qml/` - the test tree is QML too, and `qmllint
+  -I build/qmlmodules qml/**/*.qml tests/qml/**/*.qml` is the local equivalent.
   All QML files carry `pragma ComponentBehavior: Bound`; new files must too.
 - Editor completion for `import tf2cfg` (qmlls/Qt Creator) needs a `.qmlls.ini` in the repo
   root, and its `importPaths` must be an **absolute** path: Qt 6.12 ignores relative spellings
