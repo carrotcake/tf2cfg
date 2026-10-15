@@ -31,14 +31,26 @@ Qt at `C:\Qt\6.12.0\mingw_64`, MinGW at `C:\Qt\Tools\mingw1310_64\bin` (prepend 
 ```pwsh
 # App (qmake6.exe both times, per the generated Makefile headers):
 cd build      && qmake6 -o Makefile ..\tf2cfgreal.pro && mingw32-make -j8   # -> release/tf2cfgreal.exe
-# Tests (separate build dir so a failing test never blocks the app):
+# Engine tests (separate build dir so a failing test never blocks the app):
 cd build-test && qmake6 -o Makefile ..\tests\tests.pro && mingw32-make -j8   # -> release/tf2cfg_test.exe
 cd build-test && .\release\tf2cfg_test.exe -o testlog.txt,txt
+# QML tests (Qt Quick Test; headless, drives the real QML):
+cd build-qmltest && qmake6 -o Makefile ..\tests\qml\qmltests.pro && mingw32-make -j8
+cd build-qmltest && $env:QT_QPA_PLATFORM = "offscreen"; .\release\tst_app.exe -o testlog.txt,txt
 ```
 
-- The test suite is the gate: all cases green before every commit. It parses real files
-  offline against temp paths; `QT += concurrent` and `RESOURCES += ../res/res.qrc` are
-  required (tests read the catalog from the same resource the app uses).
+- The test suites are the gate: both green before every commit. The engine suite
+  (`tests/tests.pro`) parses real files offline against temp paths; `QT += concurrent` and
+  `RESOURCES += ../res/res.qrc` are required (the tests read the catalog from the same
+  resource the app uses). The QML suite (`tests/qml/qmltests.pro`) covers what the engine
+  suite cannot: QML that fails to load or import, what a delegate renders, and the
+  focus/keyboard behavior W1-W8 added. It needs `QT += qmltest` at build time and the
+  `QtTest` QML module at run time (`qml6-module-qttest` on Linux CI).
+- Writing a QML test: the file root must be an Item that hosts the `TestCase`, and the
+  item under test is created as its child - Qt 6's `keyClick(key)` takes no item and
+  delivers to the focused item of the test's own window. Test functions are named
+  `test_*` (an underscore; a `testCamel` name is collected as no test at all and passes
+  vacuously).
 - `qmllint` must stay at 0 errors. The unqualified-access bar: the CI lint step prints
   the count every run (`unqualified-access warnings: N`) and it must not grow. It
   measured 28 on 2026-10-13 (context-property `cfg` reads), but the current qmllint
