@@ -138,8 +138,9 @@ The two that are not arguable are `colorRed` (that is error text a user must rea
 
 Parity P21: `File`, `Edit`, `View`, `Help` existed with no actions. The `File` menu now
 carries `Save` and `Save As.` (deviation D20), so three menus remain empty and a screen
-reader announces those as empty. Finishing the job - removing the three stubs or giving
-them content - is a deviation decision, not a bug fix.
+reader announces those as empty. Decided 2026-10-14: the stubs stay - the menus hold
+nothing until something belongs in them, so a reader announcing them as empty is
+accurate. Recorded in `docs/ROADMAP.md` section 2.
 
 ## 3. What the fixes entail
 

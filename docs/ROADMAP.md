@@ -67,9 +67,8 @@ Qt's platform-plugin fatal text (a blocking fatal dialog keeps the process alive
 The gap was real: the app is keyboard-usable up to the keyboard panel, then stops - the
 104 key caps and the three editor tabs are `MouseArea`-only, and nothing carries
 `Accessible.*`. `docs/accessibility.md` holds the findings (A1-A8) and the sized work
-items (W1-W8). W1-W8 are done (2026-10-13); still open: the A8 empty-menus decision
-(D20 in `docs/ARCHITECTURE.md`) and the screen-reader pass (section 4, needs a real
-screen reader).
+items (W1-W8). W1-W8 are done (2026-10-13); still open: the screen-reader pass (section
+4, needs a real screen reader).
 
 | # | Work | Notes |
 |---|------|-------|
@@ -82,9 +81,9 @@ screen reader).
 | W7 | Cap tooltip on focus | DONE 2026-10-13 (with W2). |
 | W8 | Contrast script in `tools/` | DONE 2026-10-13: `tools/contrast_check.py`, run after any `Theme.qml` change. |
 
-- Related finding: the three empty menus (`Edit`/`View`/`Help`, A8) - removing the stubs
-  or filling them is a deviation decision (see D20 in `docs/ARCHITECTURE.md`), not a bug
-  fix.
+- A8 decided 2026-10-14: the three empty menus (`Edit`/`View`/`Help`) stay. D20 in
+  `docs/ARCHITECTURE.md` holds the rule - `File` carries the save actions, the other
+  menus stay empty until something belongs in them. Not a bug and not open work.
 - Verification: none of this is covered by `tests/tst_engine.cpp`; QML would need
   Qt Quick Test (a new dependency and build target - the same decision CI forces).
   Manual pass steps are in `docs/accessibility.md` section 4. Real screen-reader output
