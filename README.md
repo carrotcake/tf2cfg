@@ -4,6 +4,9 @@ A Qt 6 / QML desktop app for reading and editing Team Fortress 2 `.cfg` files - 
 class configs and `autoexec.cfg` under `tf/cfg/` in the game folder. It works on the
 files: it does not launch the game and does not talk to a running server.
 
+![The Overview tab: every parsed line with its catalog input signature, platform,
+context and cheat flag](docs/screenshots/overview.png)
+
 What it does:
 
 - **Parses like the game.** The lexer reproduces TF2's tokenizer, and the file on disk

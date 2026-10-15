@@ -94,11 +94,14 @@ items (W1-W8). W1-W8 are done (2026-10-13); still open: the screen-reader pass (
 
 - ~~Pragma sweep~~ done 2026-10-13 (`68fa1cc`): all QML files carry
   `pragma ComponentBehavior: Bound`; new files must too (AGENTS.md bar).
-- unqualified-access advisories (context-property reads (`cfg.loaded`, `cfg.presets`)
-  and same-component function references (`rowWidth`, `fnGroupX`) qmllint cannot prove
-  statically): the CI lint step prints `unqualified-access warnings: N` every run -
-  the printed count is the authority (0 as of 2026-10-14), never add new ones
-  (AGENTS.md bar). Clearing them needs a structural change, not a pragma.
+- unqualified-access advisories: the CI lint step prints `unqualified-access warnings: N`
+  every run - the printed count is the authority (0 as of 2026-10-14), never add new ones
+  (AGENTS.md bar). The two linters count differently: the local qmllint (Qt 6.12) reports
+  ~48 `Unqualified access [unqualified]` lines across the tree (context-property `cfg`
+  reads it cannot resolve), while CI's `qmllint-qt6` (Qt 6.4) prints 0 for the same tree.
+  The CI number is the bar; locally, keep a file's count at or below what it was. New QML
+  does that by hoisting the context property into a root property
+  (`readonly property var cfgRef: cfg`) and reading the local id from nested delegates.
 
 ## 4. Input ids missing from the Edit Binds model
 
@@ -116,11 +119,17 @@ doc.
 
 ## 5. Feature backlog (extension points from the QML rewrite, section 10)
 
-Where each future feature lands, and what is already in place:
+Where each future feature lands, and what is already in place. Nothing in this section is
+open: both extension points the rewrite left behind have landed, so treat this as the
+record of where a new feature would go.
 
-- **Optional, low value**: surface the newer catalog columns (input type, platform,
-  context, flags) in `CommandOverviewTab` - the one unchecked item in the
-  `allcmds`-v5 migration checklist (`docs/legacy/allcmds-v5-migration.md`).
+- **DONE 2026-10-15**: the newer catalog columns surface on `CommandOverviewTab`'s rows -
+  input signature, non-universal platform, context, and a `cheat` marker, with a header
+  strip naming them - the last unchecked item of the `allcmds`-v5 migration
+  (`docs/legacy/allcmds-v5-migration.md`). Narrowed from the item's wording: the raw FCVAR
+  flag list is not shown (near-identical on most rows, developer detail); its actionable
+  part, `cheat`, is the marker. The columns come from `cfg.consoleModel.findCommand()`
+  per row, the same lookup the Config Editor's guided pane uses.
 - **Config Editor tab** (`docs/DESIGN-config-editor.md`) - **complete** (Chunks A-D,
   2026-10-14): master-detail editor (raw text edit/delete/insert with save anchors,
   search + type filter incl. comments, bind-redirect dialog, replay-order warnings),
