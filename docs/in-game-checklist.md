@@ -125,34 +125,33 @@ Applied 2026-10-15 (details in `docs/argbounds-verification.md`):
   `EngineTest::catalogRowsFixedFromTheInGameRun` (both fail if the data drifts) and by
   `test_tabBarAccessibleRoles` + `test_tabBarFocusFollowsTheCurrentTab`.
 
-Left open: the catalog reconciliation in `docs/ROADMAP.md` section 7, which needs a fresh
-in-game dump rather than the stale one in `data/`.
+Left open: the catalog reconciliation in `docs/ROADMAP.md` section 7 - its dump arrived the
+same day, and what is left of it is the script in section 4 below.
 
-## 4. Next run (queue as of 2026-10-15)
+## 4. Next run (queue as of 2026-10-15, after the dump)
 
-**The dump.** From the in-game console, one line per command:
+**The dump came in.** `data/tf2-cvarlist-10-26-gamedump-w64.txt` (Windows client, one session,
+3656 names) is the current reference; `tools/catalog_diff.py` diffs it against the catalog.
+What it settled - the 58 mistyped rows, five descriptions, 56 rows the client has and the
+catalog lacked - is in `docs/ROADMAP.md` §7 and applied there.
+
+**One script is left: `data/in-game-checks-2026-10-15.cfg`.** Copy it into the game's `cfg`
+folder, then in the console:
 
 ```
-con_logfile cvarlist.txt
-cvarlist
+sv_cheats 0
+con_logfile checks.txt
+exec in-game-checks-2026-10-15.cfg
 con_logfile ""
 ```
 
-Then send `cvarlist.txt` (it lands next to the game's `cfg` folder). It replaces
-`data/cvarlist_linux.txt`, which predates most of the catalog, so it is the only way to see
-which descriptions and rows have drifted (`tools/catalog_diff.py`).
+Send back `checks.txt`. Run it on a listen server (`map itemtest`) so the server cvars answer
+too, and restart the map afterwards - the script changes settings on purpose.
 
-**Five cheat markers.** The catalog tags these cvars `cheat` and the old dump disagrees. A
-cheat cvar refuses to change with `sv_cheats 0` and prints so, which settles each one in a
-few seconds - on a listen server, with `sv_cheats 0` set first.
+| # | Part | What the log answers |
+|---|---|---|
+| 1 | 36 bare names | A name the client no longer has prints **Unknown command**; one it has prints its value. The rows that are really gone leave the catalog, and the ones that answer stay |
+| 2 | 20 bare names | The console prints each new command's usage line (`Usage: ...`), which is the only source for its signature. Today they all say `none` |
+| 3 | 13 cheat cvars, each set away from its dump value | A cheat cvar refuses with *"Can't use cheat cvar ..."*; one that changes plainly is not cheat-tagged. This is the one question the dump, the wiki and CS2's list answer differently |
 
-| # | cvar | How to test | Result |
-|---|---|---|---|
-| 1 | `r_shadows` | `sv_cheats 0`, then `r_shadows 1` - does the console refuse it? | |
-| 2 | `snd_disable_mixer_duck` | same, `snd_disable_mixer_duck 1` | |
-| 3 | `snd_mix_async` | same, `snd_mix_async 1` | |
-| 4 | `snd_showclassname` | same, `snd_showclassname 1` | |
-| 5 | `sv_memlimit` | `sv_memlimit 1000` | |
-
-A refusal means the catalog's `cheat` marker is right and the old dump is wrong; a plain
-change means the marker is wrong and the row loses the tag.
+Nothing else is open in §7 after that: the three parts are the last evidence gaps.

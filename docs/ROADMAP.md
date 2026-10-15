@@ -160,40 +160,46 @@ is a data-edge note only (catalog verified clean, pinned by
 `catalogRowsHaveTenFields`), #6 (`bindtoggle` modelling) is implemented as
 first-class support. Nothing open.
 
-## 7. Catalog fidelity (open, sized 2026-10-15)
+## 7. Catalog fidelity (reconciled against the 2026-10-15 dump; three checks left)
 
 The 2026-10-15 in-game run showed the catalog is not a faithful mirror of the live client:
 `grab_window` answers **Unknown command** although the dump that fed the catalog
-(`data/cvarlist_linux.txt`) lists it, and `sv_pure` carried another command's
-description. Measured offline the same day:
+(`data/cvarlist_linux.txt`) lists it, and `sv_pure` carried another command's description.
+The repo owner then produced a dump from their own client -
+`data/tf2-cvarlist-10-26-gamedump-w64.txt`, 3656 names, Windows, one session - and
+`tools/catalog_diff.py` runs the comparison: type drift, `cheat` drift, description drift,
+dead-row and new-row candidates, one count per category with the full lists. It cannot see
+the input signature, the platform or the context column: no dump carries them, so those stay
+authored (`tools/field_dicts.py`, `res/cfg/schema.md`).
 
-- `res/cfg/allcmds.csv` has 3824 rows, the TF2 dump has 3573 entries, and every dump entry
-  is in the catalog save the one row deliberately removed - so the catalog is a superset and
-  that dump cannot be its only source.
-- 251 catalog names are absent from the TF2 dump. Some are real TF2 cheats the dump omits
-  (`addcond`), others plausibly come from `data/cs2_cvarlist.md`, CS2's list, which sits in
-  the repo. The list is a suspect list, not a defect list; only the live client settles it.
+Applied from the dump:
 
-`tools/catalog_diff.py` runs the comparison and prints one count per category with the full
-lists: type drift, `cheat` drift, description drift, dead-row and new-row candidates. It
-cannot see the input signature, the platform or the context column - no dump carries them.
+- **58 rows whose type field said `cvar`** - `res/cfg/schema.md` allows only `cmd`, `ncmd` or
+  empty, and `cmdLex::Token::isCmd()` asks just whether the field is non-empty, so those 58
+  console variables loaded as *commands*: they sat under the editor's Commands filter and got
+  a command editor in the guided pane. They are variables again (2831 variables / 1015 `cmd`
+  / 34 `ncmd`), pinned by `EngineTest::catalogTypeFieldIsEmptyOrCommand`.
+- **5 descriptions corrected** - four typos (`maxmimum`, `memebers`, a vote quorum minimum of
+  "0.5") and one sentence the client has rewritten (`sv_master_share_game_socket`).
+- **56 rows added** - 36 cvars and 20 commands the client has and the catalog lacked
+  (`tf_voice_command_suspension_*`, `tf_ready_countdown_*`, `vgui_ui_scale_*`, the `snd_*`
+  speaker-positioning commands, ...). Type, default, flags and help text come from the dump;
+  the input type and the context follow `res/cfg/schema.md` (a scale factor or a rate is a
+  float although the client prints it without a decimal point, the call the file already makes
+  for `sensitivity`), and a command whose usage line nobody has seen keeps the signature
+  `none`. Pinned by `EngineTest::catalogRowsAddedFromTheLiveDump`.
 
-What it found against the stale dump, and what was done:
+Explained, not drift: 224 catalog rows are absent from the dump. 138 of them are hidden-flagged
+(104 of the 109) or `ncmd` (34 of 34), and `cvarlist` lists neither. 45 more are tagged `linux`
+- ToGL internals a Windows client does not register, though three `gl_*` names do appear, so the
+platform tags are not perfect either - and 5 are `xbox`. That leaves 36 the client should have
+registered: 34 universal rows and the 2 tagged `windows`. Accepted drift, both settled in-game
+on 2026-10-15: `disguise` keeps the usage string the console printed, and `sv_pure` keeps its
+rule list even though the client's own help for it is another command's ("Show user data.").
 
-- **58 rows whose type field said `cvar`** - fixed 2026-10-15. `res/cfg/schema.md` allows
-  only `cmd`, `ncmd` or empty, and `cmdLex::Token::isCmd()` asks just whether the field is
-  non-empty, so those 58 console variables loaded as *commands*: they sat under the editor's
-  Commands filter and got a command editor in the guided pane. They are variables again
-  (2795 variables / 995 `cmd` / 34 `ncmd`), pinned by
-  `EngineTest::catalogTypeFieldIsEmptyOrCommand`.
-- 2 descriptions differ from the stale dump, and both are the deliberate 2026-10-15 fixes -
-  so that dump cannot show description drift at all. Only a fresh one can.
-- 5 cvars where the catalog says `cheat` and the dump says nothing: `r_shadows`,
-  `snd_disable_mixer_duck`, `snd_mix_async`, `snd_showclassname`, `sv_memlimit`. Queued for
-  the next in-game run (`docs/in-game-checklist.md` §4) rather than guessed at, since a flag
-  is engine behaviour.
-
-Left to do: the fresh dump (`con_logfile cvarlist.txt`, `cvarlist`, `con_logfile ""`), then
-the diff decides the batches - stale descriptions, and which of the 251 absent names the
-client really no longer has. Each fix lands with a test like the four pinned by
-`catalogRowsFixedFromTheInGameRun`.
+Left: one more console session, `data/in-game-checks-2026-10-15.cfg`
+(`docs/in-game-checklist.md` §4) - the 36 rows whose absence hidden/ncmd and the platform tags
+do not explain, the 20 new commands' usage lines, and 13 cheat markers. On those, the catalog
+says `cheat` and the dump is silent (for the five `tf_powerup_mode_*`, it says `sv rep`); the
+wiki agrees with the catalog and CS2's list agrees with the wiki, so only the client can settle
+it - a cheat cvar refuses to change with `sv_cheats 0` and says so.
