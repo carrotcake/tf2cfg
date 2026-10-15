@@ -45,11 +45,18 @@ cd build-test && .\release\tf2cfg_test.exe -o testlog.txt,txt
   reports 0 (verified 2026-10-14); the count is the authority, not the historic number.
   All QML files carry `pragma ComponentBehavior: Bound`; new files must too.
 - `pwsh -File deploy.ps1 [-Config debug] [-QtRoot ...]` packages a self-contained `dist/`.
-- Linux packaging is CI's AppImage job (`.github/workflows/ci.yml`): every push produces
-  a `TF2-Config-Manager-x86_64.AppImage` artifact; a `v*` tag publishes it as a release.
-  The headless smoke test is the only CI step that launches the QML engine, so a QML
-  syntax/import error reaches it, not the lint step - check the run's conclusion
-  explicitly (`gh run view --json conclusion`), never a tail of watch output.
+- Packaging lives in `.github/workflows/release.yml` (tag-only, `v*`): the `appimage` job
+  bundles the AppImage (linuxdeploy + its Qt plugin), the `windows` job builds with MinGW,
+  bakes a build-time `.ico` through `res/icon/tf2cfg.rc` + `win32: RC_FILE`, stages a
+  windeployqt `tf2cfg/` folder and ships it as `TF2-Config-Manager-windows-x64.zip`; both
+  attach to the same GitHub Release. Each artifact is smoke-tested headless (offscreen
+  run, 15 s alive = success); on Windows the install's `QT_PLUGIN_PATH`,
+  `QML2_IMPORT_PATH` and PATH are stripped first, so the bundle is tested, not the
+  runner's Qt. `.github/workflows/ci.yml` keeps build + tests + `qmllint` + the contrast
+  script on push/PR and skips docs-only pushes (`paths-ignore`). The smoke test is the
+  only CI step that launches the QML engine, so a QML syntax/import error reaches it, not
+  the lint step - check the run's conclusion explicitly (`gh run view --json conclusion`),
+  never a tail of watch output.
 - Running the app for manual checks (from `build/release`, stderr is invisible without
   `QT_FORCE_STDERR_LOGGING`):
   ```pwsh
@@ -79,8 +86,9 @@ rules: **the file on disk is the source of truth for lines the app does not own*
 - `docs/ROADMAP.md` - the single list of open work; do not re-raise dismissed items.
 - `docs/AUDIT.md` - the current audit's findings; open ones are mirrored in the roadmap.
   The 2026-10-12 audit is retired to `docs/legacy/`.
-- `docs/accessibility.md` - deferred A1-A8/W1-W8 items; priorities are W1 (Tf2Button
-  focus ring) and W2 (KeyCap focus/keys).
+- `docs/accessibility.md` - the A1-A8 findings and the W1-W8 work items. W1-W8 are done
+  (2026-10-13); open: the screen-reader pass (section 4, needs real assistive tech) and
+  the contrast re-check after any `Theme.qml` change.
 - `docs/legacy/*.md` - dated records (audit, code review, migrations, the original
   QML-rewrite design): historical evidence and verification logs. Do not edit them; the
   live versions of their contracts and open items are in the two files above.
