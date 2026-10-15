@@ -179,15 +179,21 @@ the strip's tab-list/page-tab roles with names and selected state. Add a case th
 UI behavior needs pinning; the tests prove handlers fire and delegates render, not that the
 result looks right.
 
-Screen-reader pass: **ran 2026-10-15 with Microsoft Narrator** (repo owner). Steps 1, 3 and
-5 pass - the start screen announces every control, Tab reaches a cap and Enter opens the
-bind dialog for it, and a bound cap reads its bind as the description after the name.
-Steps 2 and 4 exposed one defect: the reader read the prev/next buttons and every dialog
-control, but never the tab names, in both the editor strip and the dialog's. Cause: each
-tab carried `Accessible.PageTab`, its title and its selected state, but the strip itself had
-no role - and Qt's own TabBar pairs `PageTabList` on the bar with `PageTab` on each button,
-because a page tab is only announced inside a tab list. `Tf2TabBar` now carries the role
-(2026-10-15, pinned by `test_tabBarAccessibleRoles`); a reader re-run confirms it.
+Screen-reader pass: **ran 2026-10-15 with Microsoft Narrator** (repo owner), three rounds in
+the same day. Steps 1, 3 and 5 pass - the start screen announces every control, Tab reaches
+a cap and Enter opens the bind dialog for it, and a bound cap reads its bind as the
+description after the name. Steps 2 and 4 (the two tab strips) took two fixes:
+
+1. Each tab carried `Accessible.PageTab`, its title and its selected state, but the strip
+   itself had no role - and Qt's own TabBar pairs `PageTabList` on the bar with `PageTab` on
+   each button, because a page tab is only announced inside a tab list. With the role the
+   reader reported "Tab contains 3 items": the list was recognised, the names still were not.
+2. The rest was focus. A reader announces whatever holds focus, and the strip itself held
+   it, so there was no focused tab to name. `Tf2TabBar` is now a `FocusScope` whose current
+   tab takes the focus - the structure Qt's TabBar uses (`ItemIsFocusScope` plus a focusable
+   current button) - while the strip stays a single Tab stop and Left/Right still switch.
+   Pinned by `test_tabBarAccessibleRoles` and `test_tabBarFocusFollowsTheCurrentTab`; the
+   third reader run is what confirms it.
 
 What remains is the manual pass below, which is short:
 

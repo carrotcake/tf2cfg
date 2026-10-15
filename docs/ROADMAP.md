@@ -93,11 +93,13 @@ names were never announced) is fixed in `Tf2TabBar`.
   as a tab list with named page tabs (W4). The 2026-10-15 Narrator pass:
   - Step 1 (start screen), 3 (cap focus + bind dialog opens), 5 (bound cap reads its bind
     as the description): pass.
-  - Steps 2 and 4: the reader read the prev/next buttons and every dialog control, but
-    never the tab names. Cause: each tab carried `Accessible.PageTab` + name + selected,
-    but the strip itself had no role, and Qt's own TabBar pairs `PageTabList` on the bar
-    with `PageTab` on each button - a page tab is only announced inside a tab list.
-    Fixed in `Tf2TabBar` 2026-10-15; re-run the pass with a reader to confirm.
+  - Steps 2 and 4 (both tab strips) took two rounds: with `Accessible.PageTabList` on the
+    bar the reader said "Tab contains 3 items" - list recognised, names still missing -
+    because the strip itself held the focus and a reader announces whatever holds it.
+    `Tf2TabBar` is now a `FocusScope` whose current tab takes the focus, which is Qt's own
+    TabBar structure; the strip stays a single Tab stop and Left/Right still switch
+    (pinned by `test_tabBarAccessibleRoles` and `test_tabBarFocusFollowsTheCurrentTab`).
+    A third reader run confirms the names.
   - Manual pass steps stay in `docs/accessibility.md` section 4 - the tests prove the
     handlers fire and the properties are set, not what a reader says.
 

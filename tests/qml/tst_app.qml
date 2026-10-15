@@ -249,8 +249,42 @@ Rectangle {
             verify(tabs[1].Accessible.selected, "the current tab is selected")
 
             bar.currentIndex = 2
-            verify(tabs[2].Accessible.selected, "selection follows currentIndex")
+            tryVerify(function () { return tabs[2].Accessible.selected === true }, 1000,
+                      "selection follows currentIndex")
             verify(!tabs[1].Accessible.selected)
+
+            bar.destroy()
+        }
+
+        function test_tabBarFocusFollowsTheCurrentTab() {
+            // A screen reader announces whatever holds focus. While the strip itself held
+            // it, Narrator reported "Tab contains 3 items" and never a tab name, so focus
+            // now lands on the current tab and follows it.
+            const made = createInStage("qrc:/qml/components/Tf2TabBar.qml",
+                                       { model: ["one", "two", "three"], currentIndex: 0 })
+            compare(made.error, "")
+            const bar = made.item
+            const tabs = []
+            collectItems(bar, function (it) {
+                return it.Accessible && it.Accessible.role === Accessible.PageTab
+            }, tabs)
+            compare(tabs.length, 3)
+
+            focusItem(bar)
+            verify(bar.activeFocus, "the strip reports focus within itself")
+            verify(tabs[0].activeFocus, "the current tab holds the focus")
+            verify(!tabs[1].activeFocus, "the other tabs do not")
+
+            bar.currentIndex = 2
+            tryVerify(function () { return tabs[2].activeFocus === true }, 1000,
+                      "focus follows currentIndex")
+            verify(!tabs[0].activeFocus, "the tab that lost currentIndex gave focus up")
+
+            // The keys still work while a tab, not the strip, holds the focus.
+            const spy = spyOn(bar, "activated")
+            keyClick(Qt.Key_Left)
+            compare(spy.count, 1, "Left still reaches the strip")
+            compare(spy.signalArguments[0][0], 1, "Left reports the previous tab")
 
             bar.destroy()
         }

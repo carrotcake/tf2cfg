@@ -8,7 +8,12 @@ import "../theme"
 // Deliberately not QtQuick.Controls.TabBar: this is a small, fully styled control whose
 // API (model / tabCount / currentIndex / titleAt) covers exactly what the app needs, and
 // it keeps the look identical between the editor tabs and the bind dialog tabs.
-Item {
+//
+// Focus lives on the current tab, not on the strip: a screen reader announces whatever
+// holds focus, and while the strip itself held it Narrator said only "Tab contains 3
+// items" and never a tab name (2026-10-15 pass). Qt's own TabBar has exactly this
+// structure - a focus scope whose current TabButton takes the focus.
+FocusScope {
     id: control
 
     /// Array of tab titles.
@@ -61,10 +66,10 @@ Item {
                 required property var modelData
 
                 readonly property bool isCurrent: control.currentIndex === index
-                /// True when the tab strip holds keyboard focus and this tab would
-                /// activate with Return/Space - the focus ring's condition.
-                readonly property bool isFocus: control.activeFocus
-                                                && control.currentIndex === index
+                /// The current tab is the one that holds focus inside the strip - what a
+                /// screen reader announces, and what draws the ring.
+                focus: tabItem.isCurrent
+                readonly property bool isFocus: tabItem.activeFocus
 
                 implicitWidth: Math.max(Theme.tabMinWidth, tabLabel.implicitWidth + Theme.spacingSection)
                 implicitHeight: Theme.tabHeight
