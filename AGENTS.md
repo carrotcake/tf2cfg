@@ -22,7 +22,9 @@ Assumed load: single user, local, one config at a time, no network.
   bundled cfg presets under `:/`.
 - `tests/tst_engine.cpp` - one QtTest binary covering engine + controller.
 - `docs/` - see "Docs" below. `data/` holds reference dumps (`cvarlist_linux.txt`,
-  `cs2_cvarlist.md`) the catalog was built from, not sample configs.
+  `cs2_cvarlist.md`) the catalog was built from, not sample configs;
+  `tools/catalog_diff.py` diffs a fresh in-game `cvarlist` dump against the catalog
+  (`docs/ROADMAP.md` §7) and only reports - catalog edits still need their evidence.
 
 ## Build, test, lint
 

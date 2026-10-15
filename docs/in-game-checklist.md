@@ -119,11 +119,40 @@ Applied 2026-10-15 (details in `docs/argbounds-verification.md`):
 - `docs/ROADMAP.md` §4 closed (both id groups), §2 records the Narrator pass and the tab
   fix; §7 sizes the catalog-fidelity work the `grab_window` finding exposed.
 - `docs/accessibility.md` §4 records the Narrator results: the tab strips needed two fixes
-  (the `PageTabList` role, then focus moving to the current tab). The next reader run is the
-  only thing that can confirm the second one.
+  (the `PageTabList` role, then focus moving to the current tab). Round 3 the same day
+  confirmed the second one.
 - Pinned by `EngineTest::argBoundsFromTheInGameRun` and
   `EngineTest::catalogRowsFixedFromTheInGameRun` (both fail if the data drifts) and by
   `test_tabBarAccessibleRoles` + `test_tabBarFocusFollowsTheCurrentTab`.
 
 Left open: the catalog reconciliation in `docs/ROADMAP.md` section 7, which needs a fresh
 in-game dump rather than the stale one in `data/`.
+
+## 4. Next run (queue as of 2026-10-15)
+
+**The dump.** From the in-game console, one line per command:
+
+```
+con_logfile cvarlist.txt
+cvarlist
+con_logfile ""
+```
+
+Then send `cvarlist.txt` (it lands next to the game's `cfg` folder). It replaces
+`data/cvarlist_linux.txt`, which predates most of the catalog, so it is the only way to see
+which descriptions and rows have drifted (`tools/catalog_diff.py`).
+
+**Five cheat markers.** The catalog tags these cvars `cheat` and the old dump disagrees. A
+cheat cvar refuses to change with `sv_cheats 0` and prints so, which settles each one in a
+few seconds - on a listen server, with `sv_cheats 0` set first.
+
+| # | cvar | How to test | Result |
+|---|---|---|---|
+| 1 | `r_shadows` | `sv_cheats 0`, then `r_shadows 1` - does the console refuse it? | |
+| 2 | `snd_disable_mixer_duck` | same, `snd_disable_mixer_duck 1` | |
+| 3 | `snd_mix_async` | same, `snd_mix_async 1` | |
+| 4 | `snd_showclassname` | same, `snd_showclassname 1` | |
+| 5 | `sv_memlimit` | `sv_memlimit 1000` | |
+
+A refusal means the catalog's `cheat` marker is right and the old dump is wrong; a plain
+change means the marker is wrong and the row loses the tag.

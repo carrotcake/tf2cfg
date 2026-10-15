@@ -168,12 +168,32 @@ The 2026-10-15 in-game run showed the catalog is not a faithful mirror of the li
 description. Measured offline the same day:
 
 - `res/cfg/allcmds.csv` has 3824 rows, the TF2 dump has 3573 entries, and every dump entry
-  is in the catalog - so the catalog is a superset and that dump cannot be its only source.
-- 252 catalog names are absent from the TF2 dump. Some are real TF2 cheats the dump omits
+  is in the catalog save the one row deliberately removed - so the catalog is a superset and
+  that dump cannot be its only source.
+- 251 catalog names are absent from the TF2 dump. Some are real TF2 cheats the dump omits
   (`addcond`), others plausibly come from `data/cs2_cvarlist.md`, CS2's list, which sits in
-  the repo. The 252 is a suspect list, not a defect list.
+  the repo. The list is a suspect list, not a defect list; only the live client settles it.
 
-Sizing it needs a dump from the live client rather than the stale one: in-game
-`con_logfile cvarlist.txt`, `cvarlist`, `con_logfile ""`. The diff is then mechanical -
-stale descriptions, stale signatures, rows that no longer exist - and each fix lands with
-a test like the four pinned by `catalogRowsFixedFromTheInGameRun`.
+`tools/catalog_diff.py` runs the comparison and prints one count per category with the full
+lists: type drift, `cheat` drift, description drift, dead-row and new-row candidates. It
+cannot see the input signature, the platform or the context column - no dump carries them.
+
+What it found against the stale dump, and what was done:
+
+- **58 rows whose type field said `cvar`** - fixed 2026-10-15. `res/cfg/schema.md` allows
+  only `cmd`, `ncmd` or empty, and `cmdLex::Token::isCmd()` asks just whether the field is
+  non-empty, so those 58 console variables loaded as *commands*: they sat under the editor's
+  Commands filter and got a command editor in the guided pane. They are variables again
+  (2795 variables / 995 `cmd` / 34 `ncmd`), pinned by
+  `EngineTest::catalogTypeFieldIsEmptyOrCommand`.
+- 2 descriptions differ from the stale dump, and both are the deliberate 2026-10-15 fixes -
+  so that dump cannot show description drift at all. Only a fresh one can.
+- 5 cvars where the catalog says `cheat` and the dump says nothing: `r_shadows`,
+  `snd_disable_mixer_duck`, `snd_mix_async`, `snd_showclassname`, `sv_memlimit`. Queued for
+  the next in-game run (`docs/in-game-checklist.md` §4) rather than guessed at, since a flag
+  is engine behaviour.
+
+Left to do: the fresh dump (`con_logfile cvarlist.txt`, `cvarlist`, `con_logfile ""`), then
+the diff decides the batches - stale descriptions, and which of the 251 absent names the
+client really no longer has. Each fix lands with a test like the four pinned by
+`catalogRowsFixedFromTheInGameRun`.
