@@ -21,6 +21,13 @@ Item {
     // W3: the strip joins the tab chain; Left/Right move and activate, and the
     // focused tab shows a ring (a11y step 2 of the manual pass).
     activeFocusOnTab: tabCount > 0
+
+    // W4, fixed 2026-10-15 after the Narrator pass: the tabs below each announce as a
+    // page tab, but a page tab is only announced inside a tab list - Qt's own TabBar
+    // does exactly this pair (QQuickTabBar -> PageTabList, QQuickTabButton -> PageTab).
+    // Without it Narrator read the strip as a nameless pane and skipped the tab names.
+    Accessible.role: Accessible.PageTabList
+
     Keys.onLeftPressed: function (event) { control.moveCurrent(event, -1) }
     Keys.onRightPressed: function (event) { control.moveCurrent(event, 1) }
 

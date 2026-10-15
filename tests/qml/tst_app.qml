@@ -45,6 +45,18 @@ Rectangle {
             return item.toString().indexOf(name) === 0
         }
 
+        /// Every item in the tree that matches, in tree order.
+        function collectItems(root, pred, out) {
+            if (!root)
+                return out
+            if (pred(root))
+                out.push(root)
+            const kids = root.children || []
+            for (let i = 0; i < kids.length; ++i)
+                collectItems(kids[i], pred, out)
+            return out
+        }
+
         /// Instantiate a component from the app's QML into the test window.
         function createInStage(url, props) {
             const component = Qt.createComponent(url)
@@ -207,6 +219,38 @@ Rectangle {
             bar.currentIndex = 0
             keyClick(Qt.Key_Left)
             compare(spy.signalArguments[2][0], 2, "Left wraps to the last tab")
+
+            bar.destroy()
+        }
+
+        // -- W4: the strip is one tab list, its tabs announce themselves ------
+
+        function test_tabBarAccessibleRoles() {
+            const made = createInStage("qrc:/qml/components/Tf2TabBar.qml",
+                                       { model: ["one", "two", "three"], currentIndex: 1 })
+            compare(made.error, "")
+            const bar = made.item
+
+            // Fixed after the Narrator pass: a page tab is only announced inside a tab
+            // list, so the strip carries PageTabList - the same pair Qt's own TabBar
+            // builds in C++ (QQuickTabBar/QQuickTabButton).
+            compare(bar.Accessible.role, Accessible.PageTabList,
+                    "the strip announces as a tab list")
+
+            const tabs = []
+            collectItems(bar, function (it) {
+                return it.Accessible && it.Accessible.role === Accessible.PageTab
+            }, tabs)
+            compare(tabs.length, 3, "every tab announces as a page tab")
+            compare(tabs[0].Accessible.name, "one", "the tab carries its title")
+            compare(tabs[1].Accessible.name, "two")
+            compare(tabs[2].Accessible.name, "three")
+            verify(!tabs[0].Accessible.selected, "a non-current tab is not selected")
+            verify(tabs[1].Accessible.selected, "the current tab is selected")
+
+            bar.currentIndex = 2
+            verify(tabs[2].Accessible.selected, "selection follows currentIndex")
+            verify(!tabs[1].Accessible.selected)
 
             bar.destroy()
         }
