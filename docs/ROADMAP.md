@@ -160,7 +160,7 @@ is a data-edge note only (catalog verified clean, pinned by
 `catalogRowsHaveTenFields`), #6 (`bindtoggle` modelling) is implemented as
 first-class support. Nothing open.
 
-## 7. Catalog fidelity (reconciled against the 2026-10-15 dump; three checks left)
+## 7. Catalog fidelity (closed 2026-10-15)
 
 The 2026-10-15 in-game run showed the catalog is not a faithful mirror of the live client:
 `grab_window` answers **Unknown command** although the dump that fed the catalog
@@ -197,9 +197,22 @@ registered: 34 universal rows and the 2 tagged `windows`. Accepted drift, both s
 on 2026-10-15: `disguise` keeps the usage string the console printed, and `sv_pure` keeps its
 rule list even though the client's own help for it is another command's ("Show user data.").
 
-Left: one more console session, `data/in-game-checks-2026-10-15.cfg`
-(`docs/in-game-checklist.md` §4) - the 36 rows whose absence hidden/ncmd and the platform tags
-do not explain, the 20 new commands' usage lines, and 13 cheat markers. On those, the catalog
-says `cheat` and the dump is silent (for the five `tf_powerup_mode_*`, it says `sv rep`); the
-wiki agrees with the catalog and CS2's list agrees with the wiki, so only the client can settle
-it - a cheat cvar refuses to change with `sv_cheats 0` and says so.
+Closed the same day by one console session: `data/in-game-checks-2026-10-15.cfg`
+(`docs/in-game-checklist.md` §4, log in `data/checks.txt`) answered the 36 rows whose absence
+hidden/ncmd and the platform tags did not explain, the 20 new commands' usage lines, and the
+13 cheat markers. Its answers:
+
+- **35 of the 36 rows are gone** ("Unknown command") and left the catalog; `r_spewleaf`
+  answered with a value although `cvarlist` never lists it, so its row stayed. An absent name
+  is a candidate, never proof - the same reason the 104 hidden rows were not touched.
+- **The 20 commands all ran bare without printing a usage line**, so `none` stands as their
+  signature. The twelve `snd_*` speaker commands report their setting when run bare
+  (`snd_front_headphone_position = 90.000000`), which is why the dump registers them as
+  commands rather than variables.
+- **All 13 `cheat` tags came off.** Each cvar was set away from its dump value with
+  `sv_cheats 0` and none was refused. The wiki and CS2's list carry the tag, but both TF2 dumps
+  and the run agree the client does not enforce it. A `cheat` tag the dump did report stays.
+
+Four of the 35 removed rows (`sdl_double_click_size`, `sdl_double_click_time`,
+`mat_autoload_glshaders`, `mat_autosave_glshaders`) look Linux-only by name - SDL input, ToGL
+shaders - so a `cvarlist` from the Linux build would bring them back with a `linux` tag.

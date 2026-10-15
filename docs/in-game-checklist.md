@@ -117,7 +117,8 @@ Applied 2026-10-15 (details in `docs/argbounds-verification.md`):
 - `res/cfg/allcmds.csv`: `benchframe` signature corrected to `[str] [int] [str]`, `bug`
   reduced to `none`, `sv_pure` description replaced, `grab_window` row removed.
 - `docs/ROADMAP.md` §4 closed (both id groups), §2 records the Narrator pass and the tab
-  fix; §7 sizes the catalog-fidelity work the `grab_window` finding exposed.
+  fix; §7 sized the catalog-fidelity work the `grab_window` finding exposed (closed later the
+  same day, section 4 below).
 - `docs/accessibility.md` §4 records the Narrator results: the tab strips needed two fixes
   (the `PageTabList` role, then focus moving to the current tab). Round 3 the same day
   confirmed the second one.
@@ -125,33 +126,40 @@ Applied 2026-10-15 (details in `docs/argbounds-verification.md`):
   `EngineTest::catalogRowsFixedFromTheInGameRun` (both fail if the data drifts) and by
   `test_tabBarAccessibleRoles` + `test_tabBarFocusFollowsTheCurrentTab`.
 
-Left open: the catalog reconciliation in `docs/ROADMAP.md` section 7 - its dump arrived the
-same day, and what is left of it is the script in section 4 below.
+Closed the same day: the catalog reconciliation in `docs/ROADMAP.md` section 7 - the dump
+arrived, the script in section 4 below answered the rest, and nothing there is open now.
 
-## 4. Next run (queue as of 2026-10-15, after the dump)
+## 4. The dump and the check script (ran 2026-10-15, second session)
 
-**The dump came in.** `data/tf2-cvarlist-10-26-gamedump-w64.txt` (Windows client, one session,
-3656 names) is the current reference; `tools/catalog_diff.py` diffs it against the catalog.
-What it settled - the 58 mistyped rows, five descriptions, 56 rows the client has and the
-catalog lacked - is in `docs/ROADMAP.md` §7 and applied there.
+**The dump:** `data/tf2-cvarlist-10-26-gamedump-w64.txt` (Windows client, one session, 3656
+names) replaced the stale Linux one as the reference; `tools/catalog_diff.py` diffs it against
+the catalog. Applied from it: 58 rows mistyped as commands, 5 descriptions, 56 rows the client
+has and the catalog lacked - all in `docs/ROADMAP.md` §7.
 
-**One script is left: `data/in-game-checks-2026-10-15.cfg`.** Copy it into the game's `cfg`
-folder, then in the console:
+**The script:** `data/in-game-checks-2026-10-15.cfg`, run on a listen server with `sv_cheats 0`
+after `con_logfile checks.txt`; the log is `data/checks.txt`.
 
-```
-sv_cheats 0
-con_logfile checks.txt
-exec in-game-checks-2026-10-15.cfg
-con_logfile ""
-```
-
-Send back `checks.txt`. Run it on a listen server (`map itemtest`) so the server cvars answer
-too, and restart the map afterwards - the script changes settings on purpose.
-
-| # | Part | What the log answers |
+| # | What was asked | Result |
 |---|---|---|
-| 1 | 36 bare names | A name the client no longer has prints **Unknown command**; one it has prints its value. The rows that are really gone leave the catalog, and the ones that answer stay |
-| 2 | 20 bare names | The console prints each new command's usage line (`Usage: ...`), which is the only source for its signature. Today they all say `none` |
-| 3 | 13 cheat cvars, each set away from its dump value | A cheat cvar refuses with *"Can't use cheat cvar ..."*; one that changes plainly is not cheat-tagged. This is the one question the dump, the wiki and CS2's list answer differently |
+| 1 | 36 catalog rows the client might not have | 35 answered **Unknown command** -> their rows left the catalog. `r_spewleaf` answered with a value (`"r_spewleaf" = "0"`) although the dump never lists it -> row kept, and an absent name is on record as a candidate rather than proof |
+| 2 | 20 commands that arrived with the dump | None printed a usage line, so `none` stands as every signature. `print_froggy` / `print_sparkles` / `print_sparklyfroggy` printed a frog, a sparkle and both; `sound_device_list` listed the four audio devices; the twelve `snd_*` speaker commands reported their setting (`snd_front_headphone_position = 90.000000`), which is why the dump registers them as commands and not variables |
+| 3 | 13 cheat markers, each set away from its dump value | Every one went through silently with `sv_cheats 0` - no refusal - so the `cheat` tag came off all 13. The wiki and CS2's list carry it; both TF2 dumps and this run agree the client does not enforce it |
 
-Nothing else is open in §7 after that: the three parts are the last evidence gaps.
+Applied to `res/cfg/allcmds.csv` (3845 rows) and pinned by `EngineTest::catalogRowsCheckedInGame`.
+
+The 35 removed rows: `bench_upload`, `binds_per_command`, `cl_jiggle_bone_debug`,
+`cl_jiggle_bone_debug_pitch_constraints`, `cl_jiggle_bone_debug_yaw_constraints`,
+`cl_playerspraydisable`, `dxa_nullrefresh_capslock`, `heartbeat`, `hud_autoaim_method`,
+`hud_autoaim_scale_icon`, `hud_draw_active_reticle`, `hud_draw_fixed_reticle`, `hud_magnetism`,
+`hud_reticle_alpha_speed`, `hud_reticle_maxalpha`, `hud_reticle_minalpha`, `hud_reticle_scale`,
+`mat_autoload_glshaders`, `mat_autosave_glshaders`, `sdl_double_click_size`,
+`sdl_double_click_time`, `snd_legacy_surround`, `snd_lockpartial`, `tf_player_name_change_time`,
+`video_quicktime_decode_gamma`, `video_quicktime_encode_gamma`, `voice_printtalkers`,
+`vr_debug_nochromatic`, `vr_debug_nodistortion`, `vr_distortion_enable`,
+`vr_refresh_distortion_texture`, `vr_reset_home_pos`, `vr_track_reinit`,
+`vr_use_offscreen_render_target`, `windows_speaker_config`.
+
+Four of them (`sdl_double_click_*`, `mat_*glshaders`) look Linux-only by name, so a `cvarlist`
+from the Linux build may bring them back with a `linux` platform tag.
+
+Nothing is open in §7 after this.
