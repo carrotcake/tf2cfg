@@ -51,9 +51,8 @@ Item {
             }
             BindEditorTab {
                 onKeyActivated: function (keyId, token) {
-                    // Parity P29: the widget build printed the key token, then opened
-                    // a modal dialog prefilled with bind "<token>".
-                    console.log("keybButtonClicked: id=" + keyId + " token=" + token)
+                    // Parity P29: clicking a cap opens the modal dialog prefilled with
+                    // bind "<token>".
                     bindDialog.openForKey(token)
                 }
             }
