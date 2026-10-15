@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Window
 import QtQuick.Controls
 import QtTest
+import tf2cfg
 
 // Root is an Item that hosts the TestCase, the Qt Quick Test pattern: everything a test
 // creates is parented into `stage`, so it lives in the test's own window. That matters
@@ -13,8 +14,9 @@ Rectangle {
     height: 500
     color: "transparent"
 
-    /// Context property hoisted to the root, the house rule for nested components.
-    readonly property var cfgRef: cfg
+    /// The backend singleton, pulled in where the tests need it (the app's QML does the
+    /// same with `import tf2cfg`; the tests used to read a context property named `cfg`).
+    readonly property var cfgRef: Cfg
 
     Item {
         id: stage

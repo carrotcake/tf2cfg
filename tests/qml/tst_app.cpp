@@ -1,9 +1,9 @@
 // Qt Quick Test setup for the app's QML.
 //
-// Mirrors src/main.cpp: the Basic style, the four bundled faces, and the two context
-// properties the QML tree reads (cfg, keyTable). Tests therefore drive the same
-// environment the app does, and a QML file that only loads because of something main.cpp
-// does (a font, a style, a context property) still fails here if that wiring breaks.
+// Mirrors src/main.cpp: the Basic style, the four bundled faces, and the two singletons the
+// QML tree reads (Cfg, KeyTable). Tests therefore drive the same environment the app does,
+// and a QML file that only loads because of something main.cpp does (a font, a style, a
+// singleton registration) still fails here if that wiring breaks.
 #include <QFontDatabase>
 #include <QQmlContext>
 #include <QQmlEngine>
@@ -30,17 +30,14 @@ class AppSetup : public QObject {
     Q_OBJECT
 public slots:
     void qmlEngineAvailable(QQmlEngine *engine) {
+        Q_UNUSED(engine)
         QQuickStyle::setStyle(QStringLiteral("Basic"));
         loadAppFonts();
-        m_cfg = new ConfigController(this);
-        m_keys = new KeyTable(this);
-        engine->rootContext()->setContextProperty(QStringLiteral("cfg"), m_cfg);
-        engine->rootContext()->setContextProperty(QStringLiteral("keyTable"), m_keys);
+        // `Cfg` and `KeyTable` need no wiring here: the qmltypes-enabled build of this
+        // target registers the tf2cfg module (tst_app_qmltyperegistrations.cpp), exactly
+        // as the app's build does, and the engine constructs the singletons on first use.
+        // The tests reach them through `Cfg` in tst_app.qml.
     }
-
-private:
-    ConfigController *m_cfg = nullptr;
-    KeyTable *m_keys = nullptr;
 };
 
 QUICK_TEST_MAIN_WITH_SETUP(appui, AppSetup)

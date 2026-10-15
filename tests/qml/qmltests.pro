@@ -14,6 +14,15 @@ CONFIG -= app_bundle
 TEMPLATE = app
 TARGET = tst_app
 
+# Same QML module configuration as the app (tf2cfgreal.pro): qmltyperegistrar's generated
+# registration is what makes `import tf2cfg` resolve at runtime in the QML under test.
+# Adding it here keeps the tests on the production path instead of a hand-registered
+# parallel one (tst_app.cpp used to construct the two objects itself).
+CONFIG += qmltypes
+QML_IMPORT_NAME = tf2cfg
+QML_IMPORT_MAJOR_VERSION = 1
+INCLUDEPATH += ../../src/ui
+
 INCLUDEPATH += ../../src
 
 SOURCES += \

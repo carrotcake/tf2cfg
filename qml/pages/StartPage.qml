@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
+import tf2cfg
 import "../components"
 import "../theme"
 
@@ -48,22 +49,22 @@ Item {
 
     function loadSelected() {
         page.errorText = ""
-        cfg.loadCfg(page.cfgPath)
+        Cfg.loadCfg(page.cfgPath)
     }
 
     Connections {
-        target: cfg
+        target: Cfg
         function onLoadedChanged() {
-            // A failed load leaves the previously parsed rows in place, so cfg.loaded is
+            // A failed load leaves the previously parsed rows in place, so Cfg.loaded is
             // still true and the success branch would swallow the error.
-            if (cfg.lastError.length > 0)
-                page.errorText = "Could not load " + page.cfgPath + " (" + cfg.lastError + ")"
-            else if (cfg.loaded)
+            if (Cfg.lastError !== "")
+                page.errorText = "Could not load " + page.cfgPath + " (" + Cfg.lastError + ")"
+            else if (Cfg.loaded)
                 page.loaded()
         }
         function onLastErrorChanged() {
-            if (cfg.lastError.length > 0 && !cfg.loaded) {
-                page.errorText = "Could not load " + page.cfgPath + " (" + cfg.lastError + ")"
+            if (Cfg.lastError !== "" && !Cfg.loaded) {
+                page.errorText = "Could not load " + page.cfgPath + " (" + Cfg.lastError + ")"
             }
         }
     }
@@ -146,13 +147,13 @@ Item {
                     Layout.fillWidth: true
                     Layout.maximumWidth: Theme.panelMaxWidth
                     Layout.alignment: Qt.AlignHCenter
-                    model: cfg.presets
+                    model: Cfg.presets
                     textRole: "label"
                     placeholderText: "< Choose a Preset >"
                     currentIndex: page.presetIndex
                     onActivated: function (index) {
                         page.presetIndex = index
-                        page.cfgPath = cfg.presetAt(index)
+                        page.cfgPath = Cfg.presetAt(index)
                         page.errorText = ""
                     }
                 }
@@ -162,7 +163,7 @@ Item {
                     Layout.maximumWidth: Theme.panelMaxWidth
                     Layout.alignment: Qt.AlignHCenter
                     visible: page.presetIndex >= 0
-                    text: cfg.presetNote(page.presetIndex)
+                    text: Cfg.presetNote(page.presetIndex)
                     color: Theme.colorTextMuted
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.WordWrap

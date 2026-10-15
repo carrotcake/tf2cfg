@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
+import tf2cfg
 import "pages"
 import "theme"
 
@@ -57,7 +58,7 @@ ApplicationWindow {
     delegate: MenuBarItem {
         background.implicitHeight: 24
     }
-        visible: editorActive
+        visible: window.editorActive
 
         Menu {
             title: "File"
@@ -65,13 +66,13 @@ ApplicationWindow {
             Action {
                 text: qsTr("Save")
                 shortcut: "Ctrl+S"
-                enabled: cfg.dirty && cfg.canSave() && !cfg.loading
+                enabled: Cfg.dirty && Cfg.canSave() && !Cfg.loading
                 onTriggered: window.save()
             }
             Action {
                 text: qsTr("Save As...")
                 shortcut: "Ctrl+Shift+S"
-                enabled: cfg.loaded && !cfg.loading
+                enabled: Cfg.loaded && !Cfg.loading
                 onTriggered: saveAsDialog.open()
             }
         }
@@ -95,7 +96,7 @@ ApplicationWindow {
             wrapMode: Text.WordWrap
             text: qsTr("%1 was changed by something else since it was loaded.\n\n"
                       + "Saving overwrites that version with this one (a %1.bak copy of "
-                      + "the disk version is kept either way).").arg(cfg.cfgPath)
+                      + "the disk version is kept either way).").arg(Cfg.cfgPath)
         }
         onAccepted: window.saveConfirmed()
     }
@@ -108,8 +109,8 @@ ApplicationWindow {
         defaultSuffix: "cfg"
         onAccepted: {
             const path = window.localPath(selectedFile)
-            if (!cfg.saveCfgAs(path))
-                saveError.show(cfg.lastError, true)
+            if (!Cfg.saveCfgAs(path))
+                saveError.show(Cfg.lastError, true)
         }
     }
 
@@ -130,7 +131,7 @@ ApplicationWindow {
     }
 
     function save() {
-        if (cfg.needsConfirm()) {
+        if (Cfg.needsConfirm()) {
             confirmSaveDialog.open()
             return
         }
@@ -138,8 +139,8 @@ ApplicationWindow {
     }
 
     function saveConfirmed() {
-        if (!cfg.saveCfg()) {
-            saveError.show(cfg.lastError, true)
+        if (!Cfg.saveCfg()) {
+            saveError.show(Cfg.lastError, true)
             return
         }
     }
@@ -147,7 +148,7 @@ ApplicationWindow {
     // Success feedback comes from the controller's saved() signal, so Save and Save As
     // share one path.
     Connections {
-        target: cfg
+        target: Cfg
         function onSaved(path) {
             saveError.show("Saved " + path, false)
         }

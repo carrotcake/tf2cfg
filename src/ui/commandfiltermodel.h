@@ -2,6 +2,7 @@
 #define COMMANDFILTERMODEL_H
 
 #include <QSortFilterProxyModel>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 /**
  * Search + type filter for the Config Editor's row list (docs/DESIGN-config-editor.md
@@ -10,6 +11,8 @@
  */
 class CommandFilterModel : public QSortFilterProxyModel {
     Q_OBJECT
+    /// ConfigController owns it; QML reaches it through Cfg.rowFilter.
+    QML_ANONYMOUS
 
     /// Plain substring match on the row text, case-insensitive; empty matches all.
     Q_PROPERTY(QString filterText READ filterText WRITE setFilterText NOTIFY filterTextChanged)

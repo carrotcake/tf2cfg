@@ -5,6 +5,7 @@
 #include <QHash>
 #include <QVariantMap>
 #include <QVector>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "gamecfg/convars.h"
 
@@ -21,6 +22,9 @@
  */
 class CommandListModel : public QAbstractListModel {
     Q_OBJECT
+    /// ConfigController owns it and QML only reaches it through Cfg.commandModel, so QML
+    /// needs the metadata (member checking), not a way to construct one.
+    QML_ANONYMOUS
 
 public:
     enum Role {

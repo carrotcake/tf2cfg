@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import tf2cfg
 import "../../components"
 import "../../theme"
 
@@ -11,9 +12,6 @@ import "../../theme"
 // Binds redirect to Edit Binds (Chunk A = raw text editing; guided editors are Chunk B).
 Panel {
     id: tab
-
-    /// Context property handle for qualified access (avoids repeated advisories).
-    readonly property var cfgRef: cfg
 
     /// Row the editor pane works on (a source-model row, not the filtered index).
     property int selectedRow: -1
@@ -39,7 +37,7 @@ Panel {
     signal bindActivated(string keyToken)
 
     function refreshSelection() {
-        selectedInfo = selectedRow >= 0 ? cfgRef.rowInfo(selectedRow) : null
+        selectedInfo = selectedRow >= 0 ? Cfg.rowInfo(selectedRow) : null
         // Imperative, not a binding: the user's typing would break a text binding.
         lineEdit.text = addMode ? "" : (selectedInfo === null ? "" : selectedInfo.line)
         rebuildGuided()
@@ -87,12 +85,12 @@ Panel {
         guidedTail = ""
         if (addMode || selectedInfo === null || selectedInfo.boundKey !== "")
             return
-        const parsed = cfgRef.parseCommandLine(text !== undefined ? text
+        const parsed = Cfg.parseCommandLine(text !== undefined ? text
                                                                  : selectedInfo.line)
         if (!parsed.ok)
             return
         const parts = parsed.args
-        const rec = cfgRef.consoleModel.findCommand(parts[0])
+        const rec = Cfg.consoleModel.findCommand(parts[0])
         if (rec.name === undefined)
             return // not in catalog: raw text only (§3)
         guidedRec = rec
@@ -158,7 +156,7 @@ Panel {
         if (addMode || selectedInfo === null || selectedInfo.boundKey !== "")
             return
         const src = text !== undefined ? text : selectedInfo.line
-        const parsed = cfgRef.parseCommandLine(src)
+        const parsed = Cfg.parseCommandLine(src)
         if (!parsed.ok)
             return
         const parts = parsed.args
@@ -166,13 +164,13 @@ Panel {
             // Body mode: the body is one quoted token whose text splits into segments.
             if (parts.length < 2)
                 return
-            chainName = cfgRef.unquoteToken(parts[1])
-            const body = parts.length >= 3 ? cfgRef.unquoteToken(parts[2]) : ""
+            chainName = Cfg.unquoteToken(parts[1])
+            const body = parts.length >= 3 ? Cfg.unquoteToken(parts[2]) : ""
             chainActive = true
-            chainEditor.setSegments(cfgRef.splitSegments(body))
+            chainEditor.setSegments(Cfg.splitSegments(body))
             return
         }
-        const segs = cfgRef.splitSegments(src)
+        const segs = Cfg.splitSegments(src)
         if (segs.length > 1) {
             chainActive = true
             chainEditor.setSegments(segs)
@@ -186,8 +184,8 @@ Panel {
         if (chainName !== "") {
             // Re-quoted canonically (D19): name and body always quoted, escapes kept
             // lexer-correct by quoteToken.
-            lineEdit.text = cfgRef.quoteToken(chainName) + " "
-                            + cfgRef.quoteToken(segs.join("; "))
+            lineEdit.text = Cfg.quoteToken(chainName) + " "
+                            + Cfg.quoteToken(segs.join("; "))
         } else {
             lineEdit.text = segs.join("; ")
         }
@@ -200,7 +198,7 @@ Panel {
 
     // Any row change (Apply, delete, save resync) refreshes the cached selection.
     Connections {
-        target: tab.cfgRef.commandModel
+        target: Cfg.commandModel
         function onDataChanged() { tab.refreshSelection() }
         function onModelReset() { tab.selectedRow = -1 }
         function onRowsRemoved() { tab.refreshSelection() }
@@ -227,7 +225,7 @@ Panel {
                 placeholderText: "< filter rows >"
                 // W4: the field's only visible name is its placeholder.
                 Accessible.name: "Config Editor row filter"
-                onTextChanged: tab.cfgRef.rowFilter.filterText = text
+                onTextChanged: Cfg.rowFilter.filterText = text
             }
 
             Tf2ComboBox {
@@ -236,7 +234,7 @@ Panel {
                 model: ["All types", "Cvars", "Commands", "Aliases", "Not in catalog", "Binds", "Comments"]
                 // Index 0 = all; the proxy's kinds are 0..5, so the mapping is index - 1.
                 onActivated: function (index) {
-                    tab.cfgRef.rowFilter.filterKind = index - 1
+                    Cfg.rowFilter.filterKind = index - 1
                 }
             }
         }
@@ -264,7 +262,7 @@ Panel {
                     anchors.margins: Theme.spacingTight
                     clip: true
                     reuseItems: true
-                    model: tab.cfgRef.rowFilter
+                    model: Cfg.rowFilter
                     ScrollBar.vertical: ScrollBar {
                         id: rowScroll
                         policy: ScrollBar.AsNeeded
@@ -377,7 +375,7 @@ Panel {
                     Tf2Label {
                         anchors.centerIn: parent
                         visible: rowList.count === 0
-                        text: tab.cfgRef.loaded ? "No rows match the filter."
+                        text: Cfg.loaded ? "No rows match the filter."
                                                 : "No config loaded."
                         color: Theme.colorTextMuted
                     }
@@ -746,7 +744,7 @@ Panel {
                             onClicked: {
                                 errorNote.editorError = ""
                                 if (tab.addMode) {
-                                    const row = tab.cfgRef.insertRowAfter(
+                                    const row = Cfg.insertRowAfter(
                                         tab.selectedRow, lineEdit.text)
                                     if (row < 0) {
                                         errorNote.editorError = "not a valid command line"
@@ -756,7 +754,7 @@ Panel {
                                     // text (onSelectedRowChanged -> refreshSelection).
                                     tab.selectedRow = row
                                 } else {
-                                    if (!tab.cfgRef.setRowText(tab.selectedRow,
+                                    if (!Cfg.setRowText(tab.selectedRow,
                                                                lineEdit.text)) {
                                         errorNote.editorError = "not a valid command line"
                                         return
@@ -786,7 +784,7 @@ Panel {
                                 errorNote.editorError = ""
                                 const row = tab.selectedRow
                                 tab.selectedRow = -1 // drop the selection first
-                                tab.cfgRef.deleteRow(row)
+                                Cfg.deleteRow(row)
                             }
                         }
 
@@ -797,7 +795,7 @@ Panel {
                     Tf2Label {
                         Layout.alignment: Qt.AlignHCenter
                         visible: !tab.addMode && tab.selectedInfo === null
-                        text: tab.cfgRef.loaded
+                        text: Cfg.loaded
                               ? "Select a row to edit it, or press + add."
                               : "No config loaded."
                         color: Theme.colorTextMuted

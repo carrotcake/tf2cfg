@@ -4,6 +4,7 @@
 #include <QAbstractListModel>
 #include <QVariantMap>
 #include <QVector>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "gamecfg/convars.h"
 
@@ -18,6 +19,8 @@
  */
 class ConsoleCommandModel : public QAbstractListModel {
     Q_OBJECT
+    /// ConfigController owns it; QML reaches it through Cfg.consoleModel.
+    QML_ANONYMOUS
 
     Q_PROPERTY(QString contextFilter READ contextFilter WRITE setContextFilter NOTIFY filtersChanged)
     Q_PROPERTY(QString platformFilter READ platformFilter WRITE setPlatformFilter NOTIFY filtersChanged)

@@ -12,6 +12,31 @@ INCLUDEPATH += ./src
 QML_IMPORT_PATH += qml
 QML_DESIGNER_IMPORT_PATH += qml
 
+# The C++ backend is a QML module (res/qml style: `import tf2cfg`), so the type
+# metadata qmltyperegistrar writes lets qmllint/qmlls check `Cfg.` and `KeyTable.`
+# accesses instead of treating them as unqualified. Runtime registration is generated
+# too (tf2cfgreal_qmltyperegistrations.cpp), so the app registers nothing by hand.
+CONFIG += qmltypes
+QML_IMPORT_NAME = tf2cfg
+QML_IMPORT_MAJOR_VERSION = 1
+
+# qmltyperegistrar's generated registration includes each type's header by basename
+# (`__has_include(<configcontroller.h>)`), so the directory has to be on the include path.
+INCLUDEPATH += $$PWD/src/ui
+
+# qmllint and qmlls resolve `import tf2cfg` through a module directory. qmltyperegistrar can
+# write its .qmltypes straight into it (QMLTYPES_FILENAME), so the build needs no copy step:
+# qmlmodules/tf2cfg/ ends up holding the qmldir and the file it names. Lint with
+# `-I qmlmodules` (see .github/workflows/ci.yml). The .qmltypes is a byproduct of the
+# registrar, so a build directory from before this setting keeps the old layout until its
+# registrar output (tf2cfgreal_qmltyperegistrations.cpp) is deleted.
+TF2CFG_QML_MODULES = $$OUT_PWD/qmlmodules
+mkpath($$TF2CFG_QML_MODULES/tf2cfg)
+QMLTYPES_FILENAME = $$TF2CFG_QML_MODULES/tf2cfg/tf2cfg.qmltypes
+TF2CFG_QMLDIR = "module tf2cfg"
+TF2CFG_QMLDIR += "typeinfo tf2cfg.qmltypes"
+write_file($$TF2CFG_QML_MODULES/tf2cfg/qmldir, TF2CFG_QMLDIR)
+
 SOURCES += \
     src/main.cpp \
     src/gamecfg/gameconfig.cpp \

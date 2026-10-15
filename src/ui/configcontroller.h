@@ -7,6 +7,7 @@
 #include <QVariantMap>
 #include <QDateTime>
 #include <QFuture>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 #include "gamecfg/gameconfig.h"
 #include "ui/commandfiltermodel.h"
@@ -16,17 +17,20 @@
 /**
  * The C++ face of the UI.
  *
- * Owns the parsing engine and the command model, and exposes them to QML as the context
- * property `cfg`. QML never touches GameCfg directly. See docs/legacy/ui-qml-rewrite.md
- * section 6 for the full contract and section 10 for where future features plug in.
+ * Owns the parsing engine and the command model, and exposes them to QML as the singleton
+ * `Cfg` of the `tf2cfg` module, registered in main.cpp. QML never touches GameCfg directly.
+ * See docs/legacy/ui-qml-rewrite.md section 6 for the full contract and section 10 for where
+ * future features plug in.
  */
 class ConfigController : public QObject {
     Q_OBJECT
+    QML_NAMED_ELEMENT(Cfg)
+    QML_SINGLETON
 
-    Q_PROPERTY(QAbstractItemModel *commandModel READ commandModel CONSTANT)
-    Q_PROPERTY(QAbstractItemModel *consoleModel READ consoleModel CONSTANT)
+    Q_PROPERTY(CommandListModel *commandModel READ commandModel CONSTANT)
+    Q_PROPERTY(ConsoleCommandModel *consoleModel READ consoleModel CONSTANT)
     /// The Config Editor's filtered view of commandModel (docs/DESIGN-config-editor.md §2).
-    Q_PROPERTY(QAbstractItemModel *rowFilter READ rowFilter CONSTANT)
+    Q_PROPERTY(CommandFilterModel *rowFilter READ rowFilter CONSTANT)
     Q_PROPERTY(QVariantList presets READ presets CONSTANT)
     Q_PROPERTY(QString cfgPath READ cfgPath NOTIFY cfgPathChanged)
     Q_PROPERTY(QString lastError READ lastError NOTIFY lastErrorChanged)
@@ -41,10 +45,10 @@ class ConfigController : public QObject {
 public:
     explicit ConfigController(QObject *parent = nullptr);
 
-    QAbstractItemModel *commandModel();
+    CommandListModel *commandModel();
     /// The allcmds.csv catalog (Build-A-Bind source data).
-    QAbstractItemModel *consoleModel() { return &m_console; }
-    QAbstractItemModel *rowFilter() { return &m_rowFilter; }
+    ConsoleCommandModel *consoleModel() { return &m_console; }
+    CommandFilterModel *rowFilter() { return &m_rowFilter; }
 
     /// One row as a QVariantMap for the Config Editor's pane (delegates to the model).
     Q_INVOKABLE QVariantMap rowInfo(int row) const { return m_commands.rowInfo(row); }

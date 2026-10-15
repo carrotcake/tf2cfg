@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import tf2cfg
 import "../components"
 import "../theme"
 import "panels"
@@ -10,8 +11,6 @@ pragma ComponentBehavior: Bound
 Dialog {
     id: dialog
 
-    /// Context property handle for qualified access (avoids repeated advisories).
-    readonly property var cfgRef: cfg
     objectName: "bindEditorDialog"
 
     /// Prefill for the "Existing Bind:" field; set from a key cap click.
@@ -24,16 +23,16 @@ Dialog {
     readonly property string boundCommand: {
         if (dialog.keyToken === "")
             return ""
-        const command = cfg.binds[dialog.keyToken.toLowerCase()]
+        const command = Cfg.binds[dialog.keyToken.toLowerCase()]
         return command === undefined ? "" : command
     }
 
     /// Record of the command picked in the Build-A-Bind tab, from
-    /// cfg.consoleModel.commandAt(). null until a command is selected.
+    /// Cfg.consoleModel.commandAt(). null until a command is selected.
     property var commandInfo: null
 
     /// Live suggestion entries for the typed command text (whole-catalog
-    /// contains-matches from cfg.consoleModel.suggest()).
+    /// contains-matches from Cfg.consoleModel.suggest()).
     property var suggestionList: []
 
     /// Highlighted entry in the suggestion pop-down (-1 = none).
@@ -242,7 +241,7 @@ Dialog {
         if (parts.length === 0)
             return
         const name = parts[0]
-        const rec = dialog.cfgRef.consoleModel.findCommand(name)
+        const rec = Cfg.consoleModel.findCommand(name)
         if (rec.name === undefined)
             return
 
@@ -329,7 +328,7 @@ Dialog {
     /// Rebuild the argument editors from the selected command's signature.
     function rebuildArgs() {
         commandInfo = commandCombo.currentIndex >= 0
-                ? cfg.consoleModel.commandAt(commandCombo.currentIndex) : null
+                ? Cfg.consoleModel.commandAt(commandCombo.currentIndex) : null
         updateCustomPanel()
         argModel.clear()
         if (!commandInfo)
@@ -396,7 +395,7 @@ Dialog {
             return
         }
         commandCombo.popup.close()
-        suggestionList = cfg.consoleModel.suggest(typed)
+        suggestionList = Cfg.consoleModel.suggest(typed)
         if (suggestionList.length > 0)
             suggestionPopup.open()
         else
@@ -437,12 +436,12 @@ Dialog {
     /// Point the filter dropdowns (and the model filters behind them) at one of
     /// their options; "all" clears the corresponding model filter.
     function applyCategoryFilter(context) {
-        cfg.consoleModel.contextFilter = context === "all" ? "" : context
+        Cfg.consoleModel.contextFilter = context === "all" ? "" : context
         categoryCombo.currentIndex = categoryCombo.find(context, Qt.MatchFixedString)
     }
 
     function applyPlatformFilter(platform) {
-        cfg.consoleModel.platformFilter = platform === "all" ? "" : platform
+        Cfg.consoleModel.platformFilter = platform === "all" ? "" : platform
         platformCombo.currentIndex = platformCombo.find(platform, Qt.MatchFixedString)
     }
 
@@ -451,9 +450,9 @@ Dialog {
     /// editable-combo behavior in widgets.
     function settleCommand() {
         const typed = commandCombo.editText.trim()
-        const rec = cfg.consoleModel.findCommand(typed)
+        const rec = Cfg.consoleModel.findCommand(typed)
         if (rec.name === undefined
-                || (!cfg.consoleModel.showCheats && rec.cheat)) {
+                || (!Cfg.consoleModel.showCheats && rec.cheat)) {
             revertEdit()
             return
         }
@@ -501,8 +500,8 @@ Dialog {
     }
 
     /// Push the generated command into the shared Custom Command buffer. The buffer
-    /// holds the bare command - the same thing cfg.binds reports and OK applies -
-    /// because cfg.setBind adds the `bind "<key>"` prefix itself; putting a full bind
+    /// holds the bare command - the same thing Cfg.binds reports and OK applies -
+    /// because Cfg.setBind adds the `bind "<key>"` prefix itself; putting a full bind
     /// line here produced `bind "w" bind "w" +forward` on disk.
     function regen() {
         if (!commandInfo || dialog.customPanelActive)
@@ -518,15 +517,15 @@ Dialog {
     // The combo boxes display "client controls" / "universal" from the start, so the
     // model filters must say the same thing or the pane shows entries the labels hide.
     Component.onCompleted: {
-        cfg.consoleModel.contextFilter = categoryCombo.currentText === "all" ? "" : categoryCombo.currentText
-        cfg.consoleModel.platformFilter = platformCombo.currentText === "all" ? "" : platformCombo.currentText
+        Cfg.consoleModel.contextFilter = categoryCombo.currentText === "all" ? "" : categoryCombo.currentText
+        Cfg.consoleModel.platformFilter = platformCombo.currentText === "all" ? "" : platformCombo.currentText
     }
 
     /// Open the dialog for a TF2 key token: shows the bind the key carries today, if any.
     function openForKey(token) {
         dialog.keyToken = token
         const command = dialog.boundCommand
-        const verb = dialog.cfgRef.bindingKind(token.toLowerCase()) === "bindtoggle"
+        const verb = Cfg.bindingKind(token.toLowerCase()) === "bindtoggle"
                         ? "bindtoggle" : "bind"
         dialog.originalBind = verb + ' "' + token + '"' + (command === "" ? "" : ' "' + command + '"')
         dialog.open()
@@ -535,20 +534,20 @@ Dialog {
     /// Load the body of the named alias into the chain editor, when it is defined
     /// in the loaded config (docs/DESIGN-config-editor.md §5.3).
     function loadAliasBody(name) {
-        const info = dialog.cfgRef.aliasInfo(name)
+        const info = Cfg.aliasInfo(name)
         if (info.found)
-            aliasChain.setSegments(dialog.cfgRef.splitSegments(info.body))
+            aliasChain.setSegments(Cfg.splitSegments(info.body))
     }
 
     /// A key bound to an alias this config defines opens on the Alias tab, name and
     /// body loaded; anything else stays on the tab the user left it on.
     function loadAliasBodyWhenBound() {
-        const info = dialog.cfgRef.aliasInfo(dialog.boundCommand)
+        const info = Cfg.aliasInfo(dialog.boundCommand)
         if (!info.found)
             return
         dialogTabs.currentIndex = 2
         aliasNameField.text = info.name
-        aliasChain.setSegments(dialog.cfgRef.splitSegments(info.body))
+        aliasChain.setSegments(Cfg.splitSegments(info.body))
     }
 
     title: "Dialog"          // parity P30: the widget's dialog title really is "Dialog"
@@ -579,7 +578,7 @@ Dialog {
         customCommand.text = modernizedCommand(dialog.boundCommand)
         // Pre-select the verb from the binding the key carries today.
         bindToggleCheck.checked = dialog.boundCommand !== ""
-                                 && cfg.bindingKind(dialog.keyToken.toLowerCase()) === "bindtoggle"
+                                 && Cfg.bindingKind(dialog.keyToken.toLowerCase()) === "bindtoggle"
         // Start each edit from a clean Build-A-Bind pane; the chosen category and
         // platform filters persist across opens on purpose.
         commandCombo.currentIndex = -1
@@ -592,7 +591,7 @@ Dialog {
         // alias this config defines - that key's edit belongs on the Alias tab.
         aliasNameField.text = ""
         aliasChain.setSegments([])
-        aliasPick.model = dialog.cfgRef.aliasNames()
+        aliasPick.model = Cfg.aliasNames()
         if (dialog.boundCommand !== "")
             dialog.loadAliasBodyWhenBound()
         // Center on the window each time it opens (a plain Dialog sits at 0,0).
@@ -604,7 +603,7 @@ Dialog {
     // Deviation D16: the widget's accept slot was empty (P35), which made the keyboard a
     // viewer. OK now applies the command authored in the Custom Command tab: a non-empty
     // command becomes bind "<key>" "<command>", an empty one removes the key's bind.
-    // Either way the cap repaints, because cfg.binds notifies. Nothing is written to the
+    // Either way the cap repaints, because Cfg.binds notifies. Nothing is written to the
     // .cfg file - the app has no save yet (docs/legacy/ui-qml-rewrite.md section 10).
     onAccepted: {
         // Alias tab (§5.3): OK commits the definition (when the chain has segments)
@@ -612,22 +611,22 @@ Dialog {
         if (dialogTabs.currentIndex === 2) {
             const name = aliasNameField.text.trim()
             if (name === "") {
-                cfg.clearBind(dialog.keyToken)
+                Cfg.clearBind(dialog.keyToken)
                 return
             }
             const segments = aliasChain.segmentList()
             if (segments.length > 0)
-                cfg.setAlias(name, segments.join("; "))
-            cfg.setBind(dialog.keyToken, name)
+                Cfg.setAlias(name, segments.join("; "))
+            Cfg.setBind(dialog.keyToken, name)
             return
         }
         const command = customCommand.text.trim()
         if (command === "")
-            cfg.clearBind(dialog.keyToken)
+            Cfg.clearBind(dialog.keyToken)
         else if (bindToggleCheck.checked)
-            cfg.setBindToggle(dialog.keyToken, command)
+            Cfg.setBindToggle(dialog.keyToken, command)
         else
-            cfg.setBind(dialog.keyToken, command)
+            Cfg.setBind(dialog.keyToken, command)
     }
 
     background: Rectangle {
@@ -752,7 +751,7 @@ Dialog {
                                 "server commands", "server settings", "engine", "all"]
                         currentIndex: 0
                         onActivated: function (index) {
-                            cfg.consoleModel.contextFilter =
+                            Cfg.consoleModel.contextFilter =
                                     currentText === "all" ? "" : currentText
                         }
                     }
@@ -771,7 +770,7 @@ Dialog {
                         model: ["universal", "linux", "windows", "xbox", "all"]
                         currentIndex: 0
                         onActivated: function (index) {
-                            cfg.consoleModel.platformFilter =
+                            Cfg.consoleModel.platformFilter =
                                     currentText === "all" ? "" : currentText
                         }
                     }
@@ -783,7 +782,7 @@ Dialog {
                         objectName: "cheatsCheck"
                         text: "Cheats"
                         checked: true
-                        onToggled: cfg.consoleModel.showCheats = checked
+                        onToggled: Cfg.consoleModel.showCheats = checked
                     }
                 }
 
@@ -803,7 +802,7 @@ Dialog {
                         Layout.fillWidth: true
                         placeholderText: "< choose or type a command >"
                         textRole: "name"
-                        model: cfg.consoleModel
+                        model: Cfg.consoleModel
                         // Grouped popup: headers per catalog context, matching the
                         // model's context-then-name sort order.
                         sectionRole: "context"
@@ -1256,11 +1255,11 @@ Dialog {
                 id: bindToggleCheck
                 text: "Save as bindtoggle (TF2 `bindtoggle` syntax)"
                 checked: dialog.boundCommand !== ""
-                         && dialog.cfgRef.bindingKind(dialog.keyToken.toLowerCase()) === "bindtoggle"
+                         && Cfg.bindingKind(dialog.keyToken.toLowerCase()) === "bindtoggle"
                 enabled: commandInfo !== null
                          ? (commandInfo.isCvar && commandInfo.input === "bool")
                          : (dialog.boundCommand !== ""
-                            && dialog.cfgRef.bindingKind(dialog.keyToken.toLowerCase()) === "bindtoggle")
+                            && Cfg.bindingKind(dialog.keyToken.toLowerCase()) === "bindtoggle")
                 ToolTip.visible: hovered
                 ToolTip.text: enabled ? "Writes `bindtoggle \"key\" \"cvar\"` so TF2 toggles "
                                      + "the boolean cvar each press."

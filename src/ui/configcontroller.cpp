@@ -471,7 +471,7 @@ bool ConfigController::commitWrite(const QString &path, const QByteArray &out,
     return true;
 }
 
-QAbstractItemModel *ConfigController::commandModel() {
+CommandListModel *ConfigController::commandModel() {
     return &m_commands;
 }
 

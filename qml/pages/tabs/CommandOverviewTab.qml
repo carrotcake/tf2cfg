@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import tf2cfg
 import "../../components"
 import "../../theme"
 
@@ -15,10 +16,6 @@ Panel {
     id: tab
 
     title: "Commands"
-
-    /// Context property hoisted to the root, the way ConfigEditorTab does it: nested
-    /// delegates then read a local id instead of the context property.
-    readonly property var cfgRef: cfg
 
     // Column widths, read by both the header strip and the row delegate so the two
     // cannot drift apart. Sized for the longest catalog value each column carries:
@@ -99,7 +96,7 @@ Panel {
                 Layout.fillHeight: true
                 clip: true
                 reuseItems: true
-                model: tab.cfgRef.commandModel
+                model: Cfg.commandModel
                 ScrollBar.vertical: ScrollBar {
                     id: overviewScroll
                     policy: ScrollBar.AsNeeded
@@ -125,7 +122,7 @@ Panel {
                     // lookup the Config Editor's guided pane does. Not every line has
                     // one (session rows, unknown commands), and the columns stay blank
                     // there rather than hiding the line.
-                    readonly property var rec: tab.cfgRef.consoleModel.findCommand(command)
+                    readonly property var rec: Cfg.consoleModel.findCommand(command)
                     readonly property bool known: rec !== undefined && rec.name !== undefined
 
                     width: commandList.width

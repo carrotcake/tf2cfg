@@ -2,13 +2,9 @@
 #include <QGuiApplication>
 #include <QPalette>
 #include <QQmlApplicationEngine>
-#include <QQmlContext>
 #include <QQuickStyle>
 #include <QQuickWindow>
 #include <QScreen>
-
-#include "ui/configcontroller.h"
-#include "ui/keytable.h"
 
 namespace {
 
@@ -66,12 +62,11 @@ int main(int argc, char *argv[]) {
     QFontDatabase::addApplicationFont("://font/LiberationMono-Regular.ttf"); // "Liberation Mono"
     /********************************************************************/   // from res.qrc
 
-    ConfigController cfg;
-    KeyTable keyTable;
-
     QQmlApplicationEngine engine;
-    engine.rootContext()->setContextProperty(QStringLiteral("cfg"), &cfg);
-    engine.rootContext()->setContextProperty(QStringLiteral("keyTable"), &keyTable);
+    // `Cfg` and `KeyTable` are singletons of the tf2cfg module (src/ui/*.h carry the
+    // QML metadata; qmltyperegistrar generates the registration). The engine constructs
+    // them on first use and owns them - this file used to hand them over as context
+    // properties, which no QML tool could see.
 
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &a,
                      []() { QCoreApplication::exit(-1); }, Qt::QueuedConnection);

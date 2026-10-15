@@ -5,13 +5,16 @@
 #include <QObject>
 #include <QVariantList>
 #include <QVariantMap>
+#include <QtQmlIntegration/qqmlintegration.h>
 
 /**
  * The key table, ported from the retired QML singleton `KeyTable.qml`
  * (deviation D9: static UI data belongs in C++, not in a QML singleton).
  *
  * One entry per physical cap, plus the row layout used to draw the keyboard,
- * the mouse block and the controller block.
+ * the mouse block and the controller block. Exposed to QML as the `KeyTable`
+ * singleton of the `tf2cfg` module: D9 keeps the data in C++, and the QML name is
+ * the one the retired QML singleton used.
  *
  * `id` and `token` are a parity contract with the retired widget build
  * (keybform.h KeyId/KEYCODES). Do not renumber and do not "fix" token spellings -
@@ -19,22 +22,24 @@
  */
 class KeyTable : public QObject {
     Q_OBJECT
+    QML_NAMED_ELEMENT(KeyTable)
+    QML_SINGLETON
     /// Layout, mirroring the widget build's frames (keybform.ui). A null entry in
     /// `middleRows` is the blank slot above the arrow keys.
-    Q_PROPERTY(QVariantList fnRowGroups READ fnRowGroups CONSTANT)
-    Q_PROPERTY(QVariantList mainRows READ mainRows CONSTANT)
-    Q_PROPERTY(QVariantList middleRows READ middleRows CONSTANT)
-    Q_PROPERTY(QVariantList numpadMain READ numpadMain CONSTANT)
-    Q_PROPERTY(QVariantList numpadRight READ numpadRight CONSTANT)
+    Q_PROPERTY(QList<QVariant> fnRowGroups READ fnRowGroups CONSTANT)
+    Q_PROPERTY(QList<QVariant> mainRows READ mainRows CONSTANT)
+    Q_PROPERTY(QList<QVariant> middleRows READ middleRows CONSTANT)
+    Q_PROPERTY(QList<QVariant> numpadMain READ numpadMain CONSTANT)
+    Q_PROPERTY(QList<QVariant> numpadRight READ numpadRight CONSTANT)
     /// Mouse buttons/wheel cells (name/x/y/w/h), an over-the-shoulder mouse
     /// rotated 90 degrees counter-clockwise.
-    Q_PROPERTY(QVariantList mouseCells READ mouseCells CONSTANT)
-    Q_PROPERTY(qreal mouseWidth READ mouseWidth CONSTANT)
-    Q_PROPERTY(qreal mouseHeight READ mouseHeight CONSTANT)
+    Q_PROPERTY(QList<QVariant> mouseCells READ mouseCells CONSTANT)
+    Q_PROPERTY(double mouseWidth READ mouseWidth CONSTANT)
+    Q_PROPERTY(double mouseHeight READ mouseHeight CONSTANT)
     /// Controller cells (name/x/y/w/h), an Xbox 360 pad seen from above.
-    Q_PROPERTY(QVariantList controllerCells READ controllerCells CONSTANT)
-    Q_PROPERTY(qreal controllerWidth READ controllerWidth CONSTANT)
-    Q_PROPERTY(qreal controllerHeight READ controllerHeight CONSTANT)
+    Q_PROPERTY(QList<QVariant> controllerCells READ controllerCells CONSTANT)
+    Q_PROPERTY(double controllerWidth READ controllerWidth CONSTANT)
+    Q_PROPERTY(double controllerHeight READ controllerHeight CONSTANT)
 
 public:
     explicit KeyTable(QObject *parent = nullptr);
@@ -68,10 +73,10 @@ public:
     QVariantList numpadRight() const { return m_numpadRight; }
     QVariantList mouseCells() const { return m_mouseCells; }
     QVariantList controllerCells() const { return m_controllerCells; }
-    qreal mouseWidth() const { return m_mouseWidth; }
-    qreal mouseHeight() const { return m_mouseHeight; }
-    qreal controllerWidth() const { return m_controllerWidth; }
-    qreal controllerHeight() const { return m_controllerHeight; }
+    double mouseWidth() const { return m_mouseWidth; }
+    double mouseHeight() const { return m_mouseHeight; }
+    double controllerWidth() const { return m_controllerWidth; }
+    double controllerHeight() const { return m_controllerHeight; }
 
 private:
     void add(const QString &name, int id, const QString &token, const QString &label,
