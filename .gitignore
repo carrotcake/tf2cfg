@@ -5,6 +5,8 @@ build-qmltest/
 dist/
 *.pro.user
 /.qtcreator/
+# qmlls needs an absolute importPaths (AGENTS.md), so this is per-clone machine state
+.qmlls.ini
 
 # Python
 __pycache__/

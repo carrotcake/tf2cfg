@@ -62,6 +62,20 @@ cd build-qmltest && $env:QT_QPA_PLATFORM = "offscreen"; .\release\tst_app.exe -o
   `panel.fnGroupX(…)`). Both are enforced by the CI lint step, which lints with
   `-I qmlmodules` (the module directory qmake assembles) and fails on any nonzero count.
   All QML files carry `pragma ComponentBehavior: Bound`; new files must too.
+- Editor completion for `import tf2cfg` (qmlls/Qt Creator) needs a `.qmlls.ini` in the repo
+  root, and its `importPaths` must be an **absolute** path: Qt 6.12 ignores relative spellings
+  silently (measured against a built tree - `build/…`, `./build/…`, `build\…`, a bare directory
+  name and a `file://` URL all fail) and `buildDir` alone does not resolve the module either.
+  The file is therefore gitignored machine state, like `*.pro.user`; create it per clone with
+  your own path:
+  ```ini
+  [General]
+  buildDir=build
+  importPaths=<absolute path to>/build/qmlmodules
+  no-cmake-calls=true
+  ```
+  Verified by driving qmlls over LSP on `ConfigEditorTab.qml`: 2 import diagnostics without
+  the entry, 0 with it.
 - `pwsh -File deploy.ps1 [-Config debug] [-QtRoot ...]` packages a self-contained `dist/`.
 - Packaging lives in `.github/workflows/release.yml` (tag-only, `v*`): the `appimage` job
   bundles the AppImage (linuxdeploy + its Qt plugin), the `windows` job builds with MinGW,
