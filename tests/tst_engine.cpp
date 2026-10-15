@@ -127,7 +127,8 @@ private slots:
     void saveWritesABakBesideTheFile();
     void failedBackupWriteKeepsTheOldRestorePoint();
 
-    // Key table (deviation D9: the QML singleton is now a C++ context property)
+    // Key table (deviation D9: the QML singleton is now the C++ KeyTable singleton of the
+    // tf2cfg module)
     void keyTableParityInvariants();    void saveRefusesAResourcePath();
     void saveRecreatesAVanishedFile();
     void saveDetectsAnExternallyModifiedFile();
