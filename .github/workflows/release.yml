@@ -173,39 +173,72 @@ jobs:
           qmake -o Makefile tf2cfgreal.pro
           mingw32-make -j8
 
-      - name: Deploy the runtime beside the exe (windeployqt)
+      - name: Stage the deployment in a clean dir (windeployqt)
         shell: cmd
-        run: windeployqt --qmldir qml release\tf2cfgreal.exe
+        run: |
+          mkdir tf2cfg
+          copy release\tf2cfgreal.exe tf2cfg\
+          rem --include-plugins qoffscreen: windeployqt ships only platforms\qwindows.dll,
+          rem and the smoke test runs with QT_QPA_PLATFORM=offscreen. Without it in the
+          rem bundle the test borrowed the install's copy via QT_PLUGIN_PATH and passed.
+          windeployqt --qmldir qml --include-plugins qoffscreen tf2cfg\tf2cfgreal.exe
 
-      - name: Smoke-test the deployed exe (headless run)
+      - name: Smoke-test the staged exe (headless run)
         shell: pwsh
         run: |
           # AppImage smoke-test parity: the app runs its event loop headless
           # (offscreen platform) until killed - a still-running process after 15 s
           # is success (exit 124 semantics). Any earlier exit is a broken
           # deployment (e.g. a missing bundled plugin fails before the first frame).
+          #
+          # Test the BUNDLE, not the runner's Qt install: install-qt-action exports
+          # QT_PLUGIN_PATH / QML2_IMPORT_PATH into the install and puts its bin on
+          # PATH, so a bundle missing a plugin or a DLL still starts.
+          Remove-Item Env:QT_PLUGIN_PATH, Env:QML2_IMPORT_PATH -ErrorAction SilentlyContinue
+          $env:PATH = "C:\Windows\System32"
           $env:QT_QPA_PLATFORM = "offscreen"
-          $p = Start-Process -FilePath "release\tf2cfgreal.exe" -WorkingDirectory (Get-Location) -PassThru -NoNewWindow
+          $env:QT_FORCE_STDERR_LOGGING = "1"
+          $p = Start-Process -FilePath "tf2cfg\tf2cfgreal.exe" -WorkingDirectory (Get-Location) `
+               -PassThru -NoNewWindow -RedirectStandardError smoke-err.txt
           Start-Sleep -Seconds 15
           if ($p.HasExited) {
-            "::error::deployed exe exited early (code $($p.ExitCode))"
+            "::error::staged exe exited early (code $($p.ExitCode))"
+            Get-Content smoke-err.txt
             exit 1
           }
           Stop-Process -Id $p.Id -Force
-          "deployed exe runs headless"
+          # A Qt fatal (e.g. no platform plugin) shows a blocking dialog: the process
+          # stays alive while it is up, so "still alive" alone is not proof the event
+          # loop was reached.
+          if (Select-String -Path smoke-err.txt -Pattern 'no Qt platform plugin could be initialized' -Quiet) {
+            "::error::Qt failed to initialise a platform plugin - the bundle is incomplete"
+            Get-Content smoke-err.txt
+            exit 1
+          }
+          "staged exe runs headless from its own directory"
 
-      - name: Archive the deployed build
+      - name: Archive the deployment
         shell: pwsh
         run: |
-          # Everything the deployed folder needs: exe + DLLs + windeployqt's plugin
-          # dirs. The offscreen platform plugin is part of platforms/, so the
-          # smoke-test configuration is what ships.
-          $items = Get-ChildItem release | Where-Object {
-            $_.Name -match '\.(exe|dll)$' -or
-            $_.PSIsContainer -and $_.Name -in @('platforms','styles','imageformats','iconengines','qml')
-          }
-          Compress-Archive -Path $items.FullName -DestinationPath TF2-Config-Manager-windows-x64.zip -Force
+          # Zip the staged dir itself: extraction makes one tf2cfg/ folder, and
+          # nothing from the build tree (objects, moc .cpp, logs) can leak in.
+          # -Path <dir> keeps the folder as the archive root.
+          Compress-Archive -Path tf2cfg -DestinationPath TF2-Config-Manager-windows-x64.zip -Force
+          # Guard: the first zip shipped without the exe. The step that chose
+          # entries was wrong - PowerShell -or and -and have equal precedence, so
+          # "name is exe|dll -or is a dir -and name is in the list" kept only the
+          # named dirs, dropping every top-level file. Assert the archive carries
+          # the app and its Qt runtime instead of trusting any selection.
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $zip = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path TF2-Config-Manager-windows-x64.zip).Path)
+          $entries = $zip.Entries.FullName
+          $count = $zip.Entries.Count
+          $zip.Dispose()
+          $missing = @('tf2cfg/tf2cfgreal.exe', 'tf2cfg/Qt6Core.dll', 'tf2cfg/Qt6Qml.dll') |
+            Where-Object { $entries -notcontains $_ }
+          if ($missing) { "::error::archive is missing: $($missing -join ', ')"; exit 1 }
           Get-Item TF2-Config-Manager-windows-x64.zip | Select-Object Name, Length
+          "entries: $count"
 
       - uses: actions/upload-artifact@v4
         with:
