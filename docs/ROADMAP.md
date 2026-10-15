@@ -137,9 +137,13 @@ never announced their tab names) took two fixes in `Tf2TabBar`.
   role's old surface check meant (a cvar's signature is a value type, not an argument).
   `BindEditorDialog`'s argument-editor rows are pinned from the outside by
   `test_bindDialogBuildsOneEditorPerSignatureArgument`: it opens the dialog for a key, selects
-  `callvote` ("[str] <str>") in the dropdown the way a user would, and asserts the rendered
-  editors - both labels from the parsed kinds, the include checkbox on the optional argument
-  only. The parse itself is pinned by `EngineTest::signatureParsesIntoEditorArguments`,
+  `callvote` ("[str] <str>") and `bot_hurt` ("[str] <flt>", two different kinds) in the dropdown
+  the way a user would, and asserts the rendered editors - both labels from the parsed kinds,
+  the include checkbox on the optional argument only. Writing it turned the dialog's Category
+  default from "client controls" to "all": a category the user has not picked must not hide
+  commands, and `bot_hurt` (a `server commands` row) was out of the dropdown and the suggestion
+  list until it changed. The parse itself is pinned by
+  `EngineTest::signatureParsesIntoEditorArguments`,
   `EngineTest::argsSpecRoleCarriesPerArgumentBounds` and
   `test_parseSignatureReachesQmlAsAnArgumentList`.
 

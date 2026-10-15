@@ -503,9 +503,13 @@ Dialog {
         function onDataChanged() { regen() }
     }
 
-    // The combo boxes display "client controls" / "universal" from the start, so the
-    // model filters must say the same thing or the pane shows entries the labels hide.
+    // The combo boxes display "all" / "universal" from the start, so the model filters must
+    // say the same thing or the pane shows entries the labels hide.
     Component.onCompleted: {
+        // Category opens on "all": one the user has not picked must not hide commands.
+        // Resolved here rather than in the combo's own declaration because find() needs the
+        // model, which the combo does not have yet while it initialises.
+        categoryCombo.currentIndex = categoryCombo.find("all")
         Cfg.consoleModel.contextFilter = categoryCombo.currentText === "all" ? "" : categoryCombo.currentText
         Cfg.consoleModel.platformFilter = platformCombo.currentText === "all" ? "" : platformCombo.currentText
     }
@@ -738,7 +742,6 @@ Dialog {
                         Layout.preferredWidth: 150
                         model: ["client controls", "client settings", "client render",
                                 "server commands", "server settings", "engine", "all"]
-                        currentIndex: 0
                         onActivated: function (index) {
                             Cfg.consoleModel.contextFilter =
                                     currentText === "all" ? "" : currentText

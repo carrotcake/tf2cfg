@@ -187,50 +187,62 @@ Rectangle {
             const combo = findItem(contentRoot, function (it) { return it.objectName === "commandCombo" })
             verify(combo !== null, "the command dropdown exists")
 
-            // Opening the dialog filters the catalog to its Category/Platform defaults
-            // (client controls + universal), and "callvote" - "[str] <str>", a mandatory
-            // argument then an optional one - is in that view and carries no hand-written
-            // panel, so it renders the generic argument editors. The dropdown indexes the
-            // model it shows, so the row comes from that model.
+            // Opening the dialog shows the whole catalog: Category defaults to "all", so no
+            // category filter reaches the model, while Platform keeps "universal" (a
+            // platform-specific row is not usable here). The dropdown indexes the model it
+            // shows, so a row comes from that model.
+            const categoryCombo = findItem(contentRoot, function (it) { return it.objectName === "categoryCombo" })
+            verify(categoryCombo !== null, "the category dropdown exists")
+            compare(categoryCombo.currentText, "all", "the dialog opens on every category")
+            compare(Cfg.consoleModel.contextFilter, "", "no category filter is applied on open")
+
             const model = Cfg.consoleModel
             tryVerify(function () { return combo.count > 0 }, 5000, "the dropdown shows the catalog")
             compare(combo.count, model.rowCount(), "the dropdown shows the filtered catalog")
 
-            let row = -1
-            tryVerify(function () {
-                for (let r = 0; r < model.rowCount(); ++r) {
-                    if (model.commandAt(r).name === "callvote") {
-                        row = r
-                        return true
-                    }
-                }
-                return false
-            }, 5000, "callvote is offered")
-            combo.currentIndex = row
-
-            // One editor per argument, each labelled with the parsed kind. Both the labels
-            // and the checkboxes are matched by their text: Controls' Label and CheckBox
+            // One editor per argument, each labelled with the parsed kind, and an include
+            // checkbox on the optional argument alone. "bot_hurt" is a `server commands` row -
+            // out of the list while Category defaulted to "client controls" - and its two
+            // arguments differ in kind, so a swapped or defaulted kind shows up. Neither
+            // command has a hand-written panel, so both render the generic editors.
+            // Labels and checkboxes are matched by their text: Controls' Label and CheckBox
             // are QML types here, not the QQuick* classes a type check would look for.
-            let labels = []
-            tryVerify(function () {
-                labels = collectItems(contentRoot, function (it) {
-                    return it.text !== undefined && String(it.text).indexOf("param ") === 0
-                }, []).map(function (label) { return label.text })
-                return labels.length === 2
-            }, 5000, "one editor per argument")
-            compare(labels.join(" | "), "param 1 (str) | param 2 (str)",
-                    "each editor is labelled with the parsed kind")
+            const cases = [
+                { name: "callvote", labels: "param 1 (str) | param 2 (str)" },
+                { name: "bot_hurt", labels: "param 1 (str) | param 2 (flt)" }
+            ]
+            for (let c = 0; c < cases.length; ++c) {
+                const expected = cases[c]
 
-            // The include checkbox belongs to the optional argument and starts unticked:
-            // a mandatory argument is always part of the bind.
-            const includes = collectItems(contentRoot, function (it) {
-                return it.text === "include" && it.checked !== undefined
-            }, [])
-            compare(includes.length, 2, "every argument carries an include checkbox")
-            compare(includes[0].visible, false, "a mandatory argument cannot be dropped")
-            compare(includes[0].checked, true)
-            compare(includes[1].visible, true, "an optional one can")
-            compare(includes[1].checked, false)
+                let row = -1
+                tryVerify(function () {
+                    for (let r = 0; r < model.rowCount(); ++r) {
+                        if (model.commandAt(r).name === expected.name) {
+                            row = r
+                            return true
+                        }
+                    }
+                    return false
+                }, 5000, expected.name + " is offered")
+                combo.currentIndex = row
+
+                let labels = []
+                tryVerify(function () {
+                    labels = collectItems(contentRoot, function (it) {
+                        return it.text !== undefined && String(it.text).indexOf("param ") === 0
+                    }, []).map(function (label) { return label.text })
+                    return labels.join(" | ") === expected.labels
+                }, 5000, expected.name + ": one editor per argument")
+
+                const includes = collectItems(contentRoot, function (it) {
+                    return it.text === "include" && it.checked !== undefined
+                }, [])
+                compare(includes.length, 2, expected.name + ": every argument carries an include checkbox")
+                compare(includes[0].visible, false, expected.name + ": a mandatory argument cannot be dropped")
+                compare(includes[0].checked, true, expected.name + ": a mandatory argument is always in the bind")
+                compare(includes[1].visible, true, expected.name + ": an optional one can be left out")
+                compare(includes[1].checked, false, expected.name + ": and starts out of the bind")
+            }
 
             dialog.close()
             dialog.destroy()
