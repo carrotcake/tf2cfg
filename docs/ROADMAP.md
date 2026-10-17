@@ -347,7 +347,11 @@ after its live readback, and `sv_pure` keeps console wording over the dump's bro
 pass first - anything printed is a discovery, blank confirms empty forever), then
 leave-on behavior probes (`fog_radial{,skybox}` and `sv_viewmodel_lag_do_angles` are
 cheat-tagged, `sv_cheats 1` is in the script; `sv_use_steam_networking` is deliberately
-left untouched). Rows whose effect nobody can point at stay empty - the sdl/vphysics
+left untouched). The restore block is a separate file - `exec` runs a .cfg top to
+bottom with no pauses, so a restore block inside the probe file would fire off
+instantly and undo every probe before anything could be watched
+(`data/blankdesc-checks-restore-2026-10-17.cfg`, `exec` by hand when the looking is
+done). Rows whose effect nobody can point at stay empty - the sdl/vphysics
 precedent. Answers land in `data/` as the next session's log; earned descriptions go
 into the catalog as an authored drift class recorded alongside `disguise`/`sv_pure`,
 and `tools/catalog_diff.py` gains a `KNOWN_DESCRIPTION_DRIFT` list so future dump diffs
