@@ -523,7 +523,7 @@ cl_observercrosshair,,1,,,client archive,Show the crosshair while spectating.,bo
 cl_overdraw_test,,0,,,client cheat numeric,Overdraw visualization test.,bool,universal,client render
 cl_panelanimation,cmd,,,,client,Shows panel animation variables: <panelname | blank for all panels>.,<str>,universal,engine
 cl_particle_batch_mode,,1,,,client,Particle batching mode.,bool,universal,client render
-cl_particle_retire_cost,,0,,,client,Cost threshold for retiring particles.,bool,universal,client render
+cl_particle_retire_cost,,0,,,client cheat,Cost threshold for retiring particles.,bool,universal,client render
 cl_particle_show_bbox,,0,,,client cheat,Show particle system bounding boxes.,bool,universal,client render
 cl_particle_show_bbox_cost,,0,,,client cheat,Show # of particles: green->blue->red. Use a negative number to show ALL particles even cheap ones,bool,universal,client render
 cl_particle_stats_start,cmd,,,,client,Start or restart particle stats - also dumps to particle_stats.csv,none,universal,engine
@@ -650,7 +650,7 @@ condump_on,ncmd,,,,game,"Enable  for the player (if SteamID is whitelisted). If 
 connect,cmd,,,,norecord,Connect to specified server.,[str],universal,engine
 contimes,,8,,,matsysthread,Number of console lines to overlay for debugging.,int,universal,client settings
 coop,,0,,,notify,Cooperative play.,bool,universal,client settings
-cpu_frequency_monitoring,,0,0,10,,Set CPU frequency monitoring interval in seconds. Zero means disabled.,int,universal,client settings
+cpu_frequency_monitoring,,0,0,10,,Set CPU frequency monitoring interval in seconds. Zero means disabled.,int,windows,client settings
 create_flashlight,cmd,,,,game cheat,Create a projected flashlight texture (debugging).,none,universal,server commands
 creditsdone,cmd,,,,game,Signal that the credits finished playing.,none,universal,server commands
 crosshair,,1,,,client archive,Enable the crosshair.,bool,universal,client render
@@ -817,7 +817,7 @@ filesystem_max_stdio_read,,16,,,,Maximum standard I/O read size for the filesyst
 filesystem_native,,1,,,,Use native FS or STDIO,bool,universal,client settings
 filesystem_report_buffered_io,,0,,,,Report buffered I/O operations.,bool,universal,client settings
 filesystem_unbuffered_io,,1,,,,Use unbuffered file I/O.,bool,universal,client settings
-filesystem_use_overlapped_io,,1,,,,Use overlapped (async) file I/O on Windows.,bool,universal,client settings
+filesystem_use_overlapped_io,,1,,,,Use overlapped (async) file I/O on Windows.,bool,windows,client settings
 find,cmd,,,,,Find concommands with the specified string in their name/help text.,[str],universal,engine
 find_ent,cmd,,,,game cheat,Find and list all entities with classnames or targetnames that contain the specified substring. Format: find_ent <substring>,none,universal,server commands
 find_ent_index,cmd,,,,game cheat,Display data for entity matching specified index. Format: find_ent_index <index>,none,universal,server commands
@@ -877,9 +877,9 @@ func_break_reduction_factor,,.5,,,game,Damage reduction applied to breakable gib
 func_breakdmg_bullet,,0.5,,,game,Bullet damage dealt to breakable objects.,flt,universal,server settings
 func_breakdmg_club,,1.5,,,game,Melee damage dealt to breakable objects.,flt,universal,server settings
 func_breakdmg_explosive,,1.25,,,game,Explosive damage dealt to breakable objects.,flt,universal,server settings
-fx_drawimpactdebris,,1,,,,Draw impact debris effects.,bool,universal,client render
-fx_drawimpactdust,,1,,,,Draw impact dust effects.,bool,universal,client render
-fx_drawmetalspark,,1,,,,Draw metal spark effects.,bool,universal,client render
+fx_drawimpactdebris,,1,,,,Draw impact debris effects.,bool,windows,client render
+fx_drawimpactdust,,1,,,,Draw impact dust effects.,bool,windows,client render
+fx_drawmetalspark,,1,,,,Draw metal spark effects.,bool,windows,client render
 g15_dumpplayer,cmd,,,,client,Spew player data.,none,universal,engine
 g15_reload,cmd,,,,client,Reloads the Logitech G-15 Keyboard configs.,none,universal,engine
 g15_update_msec,,250,,,client archive,Logitech G-15 Keyboard update interval.,int,universal,client settings
@@ -915,53 +915,17 @@ ghost_spawn,cmd,,,,game cheat,Spawns a Ghost where the player is looking.,none,u
 give,cmd,,,,game,Give item to player.  Arguments: <item_name>,none,universal,server commands
 givecurrentammo,cmd,,,,game cheat,Give a supply of ammo for current weapon..,none,universal,server commands
 gl_amd_occlusion_workaround,,1,,,matsysthread,Workaround for AMD occlusion query bugs.,bool,linux,client render
-gl_batch_tex_creates,,0,,,,Count of batched texture creations.,bool,linux,client render
-gl_batch_tex_destroys,,0,,,,Count of batched texture destructions.,bool,linux,client render
-gl_batch_vis,,0,,,,Show texture batching visualization.,bool,linux,client render
 gl_blit_halfx,,0,,,,Half-resolution blit offset on X axis.,bool,linux,client render
 gl_blit_halfy,,0,,,,Half-resolution blit offset on Y axis.,bool,linux,client render
-gl_blitmode,,1,,,,Render target blit mode selection.,int,linux,client render
-gl_bufmode,,1,,,,OpenGL buffer mode selection.,int,linux,client render
-gl_can_query_fast,,1,,,,Allow fast occlusion queries.,bool,linux,client render
-gl_can_resolve_flipped,,0,,,,Report flipped resolve support.,bool,linux,client render
-gl_cannot_resolve_flipped,,0,,,,Report missing flipped resolve support.,bool,linux,client render
 gl_clear,,0,,,client,Clear the back buffer each frame (debugging).,bool,linux,client render
 gl_clear_randomcolor,,0,,,client cheat,Clear the back buffer to random colors every frame. Helps spot open seams in geometry.,bool,linux,client render
-gl_debug_output,,1,,,,Enable OpenGL debug output.,bool,linux,client render
 gl_disable_forced_vsync,,0,,,,Disable forced vsync.,bool,linux,client render
-gl_dump_stats,cmd,,,,,Dump OpenGL renderer statistics.,none,linux,engine
-gl_enabletexsubimage,,1,,,,Allow texture sub-image updates.,bool,linux,client render
 gl_finish,,0,,,,Call glFinish each frame (debugging).,bool,linux,client render
-gl_flushpaircache,,0,,,,Flush the shader pair cache.,bool,linux,client render
-gl_magnify_resolve_mode,,2,,,,Resolve mode when magnifying render targets.,int,linux,client render
-gl_minify_resolve_mode,,1,,,,Resolve mode when minifying render targets.,int,linux,client render
-gl_minimize_all_tex,,1,,,,Minimize all textures (memory debugging).,bool,linux,client render
-gl_minimize_rt_tex,,0,,,,Minimize render target textures.,bool,linux,client render
-gl_minimize_tex_log,,0,,,,Log texture minimization.,bool,linux,client render
-gl_mtglflush_at_tof,,0,,,,Flush MTGL commands at top of frame.,bool,linux,client render
-gl_nullqueries,,0,,,,Use null occlusion queries (debugging).,bool,linux,client render
-gl_paircache_rows_lg2,,10,,,,Shader pair cache rows (log2).,int,linux,client render
-gl_paircache_ways_lg2,,5,,,,Shader pair cache associativity (log2).,int,linux,client render
-gl_paircachestats,,0,,,,Show shader pair cache statistics.,bool,linux,client render
-gl_persistent_buffer_max_offset,cmd,,,,,Maximum offset for persistent buffer mapping.,[int],linux,engine
-gl_pow2_tempmem,,0,,,,"If set, use power-of-two allocations for temporary texture memory during uploads. May help with fragmentation on certain systems caused by heavy churn of large allocations.",bool,linux,client render
-gl_radar7954721_workaround_all,,0,,,,Apply GL bug workaround 7954721 to all textures.,bool,linux,client render
-gl_radar7954721_workaround_maskval,,0,,,,Mask value for GL bug workaround 7954721.,bool,linux,client render
-gl_radar7954721_workaround_mixed,,1,,,,Apply GL bug workaround 7954721 to mixed formats.,bool,linux,client render
-gl_rt_forcergba,,1,,,,Force RGBA format for render targets.,bool,linux,client render
-gl_shader_compile_time_dump,cmd,,,,,Dump  stats shader compile time.,none,linux,engine
-gl_shaderpair_cachelog,,0,,,,Log shader pair cache activity.,bool,linux,client render
 gl_swapdebug,,0,,,,Debug buffer swapping.,bool,linux,client render
 gl_swapinterval,,0,,,,Buffer swap interval (vsync) override.,int,linux,client render
 gl_swaplimit,,0,,,,Frame swap limit for throttling.,int,linux,client render
 gl_swaplimit_mt,,3,,,,Multithreaded frame swap limit.,int,linux,client render
 gl_swaptear,,1,,,,Allow buffer swap tearing.,bool,linux,client render
-gl_telemetry_gpu,,0,,,,Collect GPU telemetry.,bool,linux,client render
-gl_telemetry_gpu_pipeline_flushing,,0,,,,Telemetry for GPU pipeline flushing.,bool,linux,client render
-gl_texlayoutstats,,0,,,,Show texture layout statistics.,bool,linux,client render
-gl_texmsaalog,,0,,,,Log MSAA texture allocation.,bool,linux,client render
-glm_literefresh_capslock,,0,,,,Internal GLM debug workaround (caps-lock lite refresh).,bool,linux,client render
-glm_nullrefresh_capslock,,0,,,,Internal GLM debug workaround (caps-lock null refresh).,bool,linux,client render
 global_set,cmd,,,,game cheat,"global_set <globalname> <state>: Sets the state of the given env_global (0 = OFF, 1 = ON, 2 = DEAD).",none,universal,server commands
 glow_outline_effect_enable,,1,,,client archive,Enable entity outline glow effects.,bool,universal,client render
 glow_outline_width,,10.0f,,,client cheat,Width of glow outline effect in screen space.,flt,universal,client render
@@ -969,11 +933,11 @@ god,cmd,,,,game cheat,Toggle. Player becomes invulnerable.,none,universal,server
 groundlist,cmd,,,,game,Display ground entity list <index>,none,universal,server commands
 hammer_update_entity,cmd,,,,game,Updates the entity's position/angles when in edit mode,none,universal,server commands
 hammer_update_safe_entities,cmd,,,,game,Updates entities in the map that can safely be updated (don't have parents or are affected by constraints). Also excludes entities mentioned in any hammer_updateignorelist objects in this map.,none,universal,server commands
-hap_HasDevice,,0,,,client userinfo,falcon is connected,bool,universal,client settings
-hap_damagescale_game,,0.3,,,client,Haptic damage force scale (Novint Falcon).,flt,universal,client settings
-hap_melee_scale,,0.8,,,client numeric,Haptic melee force scale (Novint Falcon).,flt,universal,client settings
-hap_noclip_avatar_scale,,0.10f,,,client numeric,Haptic noclip avatar force scale (Novint Falcon).,flt,universal,client settings
-hap_ui_vehicles,,0,,,client,Haptic feedback for vehicle UI (Novint Falcon).,bool,universal,client settings
+hap_HasDevice,,0,,,client userinfo,falcon is connected,bool,windows,client settings
+hap_damagescale_game,,0.3,,,client,Haptic damage force scale (Novint Falcon).,flt,windows,client settings
+hap_melee_scale,,0.8,,,client numeric,Haptic melee force scale (Novint Falcon).,flt,windows,client settings
+hap_noclip_avatar_scale,,0.10f,,,client numeric,Haptic noclip avatar force scale (Novint Falcon).,flt,windows,client settings
+hap_ui_vehicles,,0,,,client,Haptic feedback for vehicle UI (Novint Falcon).,bool,windows,client settings
 help,cmd,,,,,Find help about a convar/concommand.,<str>,universal,engine
 hide_server,,0,,,game,Whether the server should be hidden from the master server,bool,universal,server settings
 hideconsole,cmd,,,,norecord,Hide the console.,none,universal,engine
@@ -1201,9 +1165,9 @@ mat_debug_postprocessing_effects,,0,,,client,"0 = off, 1 = show post-processing 
 mat_debug_process_halfscreen,,0,,,client cheat,Process only half the screen (post-processing debug).,bool,universal,client render
 mat_debugalttab,,0,,,cheat matsysthread,Debug alt-tab behavior.,bool,universal,client render
 mat_debugdepth,,0,,,,Render the debug depth view.,bool,universal,client render
-mat_debugdepthmode,,0,,,matsysthread,Debug depth rendering mode.,bool,universal,client render
-mat_debugdepthval,,128.0f,,,matsysthread,Debug depth near value.,flt,universal,client render
-mat_debugdepthvalmax,,256.0f,,,matsysthread,Debug depth far value.,flt,universal,client render
+mat_debugdepthmode,,0,,,matsysthread,Debug depth rendering mode.,bool,windows,client render
+mat_debugdepthval,,128.0f,,,matsysthread,Debug depth near value.,flt,windows,client render
+mat_debugdepthvalmax,,256.0f,,,matsysthread,Debug depth far value.,flt,windows,client render
 mat_depthbias_decal,,-262144,,,cheat,Depth bias for decals.,int,universal,client render
 mat_depthbias_normal,,0.0f,,,cheat,Depth bias for normal geometry.,flt,universal,client render
 mat_depthbias_shadowmap,,0.0005,,,cheat matsysthread,Depth bias for shadow maps.,flt,universal,client render
@@ -1260,7 +1224,7 @@ mat_levelflush,,1,,,,Flush level textures between maps.,bool,universal,client re
 mat_lightmap_pfms,,0,,,matsysthread,Outputs .pfm files containing lightmap data for each lightmap page when a level exits.,bool,universal,client render
 mat_loadtextures,,1,,,cheat,Load world textures.,bool,universal,client render
 mat_luxels,,0,,,cheat matsysthread,Show luxels (lightmap texels).,bool,universal,client render
-mat_managedtextures,,1,,,archive,"If set, allows Direct3D to manage texture uploading at the cost of extra system memory",bool,universal,client render
+mat_managedtextures,,1,,,archive,"If set, allows Direct3D to manage texture uploading at the cost of extra system memory",bool,windows,client render
 mat_max_worldmesh_vertices,,65536,,,,Maximum vertices per world mesh.,int,universal,client render
 mat_measurefillrate,,0,,,cheat,Measure GPU fill rate.,bool,universal,client render
 mat_mipmaptextures,,1,,,,Generate mipmaps for textures.,bool,universal,client render
@@ -1343,9 +1307,9 @@ mat_surfacemat,,0,,,cheat,Show surface material names.,bool,universal,client ren
 mat_texture_limit,,-1,,,numeric matsysthread,"If this value is not -1, the material system will limit the amount of texture memory it uses in a frame. Useful for identifying performance cliffs. The value is in kilobytes.",int,universal,client render
 mat_texture_list,,0,,,cheat,"For debugging, show a list of used textures per frame",bool,universal,client render
 mat_texture_list_all,,0,,,cheat numeric,"If this is nonzero, then the texture list panel will show all currently-loaded textures.",bool,universal,client render
-mat_texture_list_content_path,,,,,archive,"The content path to the materialsrc directory. If left unset, it'll assume your content directory is next to the currently running game dir.",str,universal,client render
+mat_texture_list_content_path,,,,,archive,"The content path to the materialsrc directory. If left unset, it'll assume your content directory is next to the currently running game dir.",str,windows,client render
 mat_texture_list_txlod,cmd,,,,norecord,"Adjust LOD of the last viewed texture +1 to inc resolution, -1 to dec resolution",none,universal,engine
-mat_texture_list_txlod_sync,cmd,,,,norecord,"'reset' - resets all run-time changes to LOD overrides, 'save' - saves all changes to material content files",none,universal,engine
+mat_texture_list_txlod_sync,cmd,,,,norecord,"'reset' - resets all run-time changes to LOD overrides, 'save' - saves all changes to material content files",none,windows,engine
 mat_texture_list_view,,1,,,cheat numeric,"If this is nonzero, then the texture list panel will render thumbnails of currently-loaded textures.",bool,universal,client render
 mat_texture_outline_fonts,cmd,,,,,Outline fonts textures.,none,universal,client render
 mat_texture_reload_frame_swap_workaround,,0,,,,Workaround certain GL drivers holding unnecessary amounts of data when loading many materials by forcing synthetic frame swaps,bool,universal,client render
@@ -1419,7 +1383,7 @@ mod_test_not_available,,0,,,cheat,Test behavior when models are unavailable.,boo
 mod_test_verts_not_available,,0,,,cheat,Test behavior when vertices are unavailable.,bool,universal,client settings
 mod_touchalldata,,1,,,,Touch model data during level startup,bool,universal,client settings
 mod_trace_load,,0,,,,Trace model loading.,bool,universal,client settings
-model_list,cmd,,,,cheat norecord,Dump model list to file,[str],universal,engine
+model_list,cmd,,,,cheat norecord,Dump model list to file,[str],windows,engine
 motdfile,,motd.txt,,,game,The MOTD file to load.,str,universal,server settings
 motdfile_text,,motd_text.txt,,,game,The text-only MOTD file to use for clients that have disabled HTML MOTDs.,str,universal,server settings
 movie_fixwave,cmd,,,,,"Fixup corrupted .wav file if engine crashed during startmovie/endmovie, etc.",none,universal,engine
@@ -1942,7 +1906,7 @@ r_colorstaticprops,,0,,,cheat,Color static props for debugging.,bool,universal,c
 r_debugcheapwater,,0,,,client cheat,Debug cheap water boundaries.,bool,universal,client render
 r_debugrandomstaticlighting,,0,,,cheat,Set to 1 to randomize static lighting for debugging.  Must restart for change to take affect.,bool,universal,client render
 r_decal_cover_count,,4,,,,Decals allowed before covering older ones.,int,universal,client render
-r_decal_cullsize,,5,,,,Size below which decals are culled.,int,universal,client render
+r_decal_cullsize,,5,,,,Size below which decals are culled.,int,windows,client render
 r_decal_overlap_area,,0.4,,,,Overlap area threshold for decals.,flt,universal,client render
 r_decal_overlap_count,,3,,,,Overlap count threshold for decals.,int,universal,client render
 r_decals,,2048,,,client,"Maximum number of decals (bullet holes, sprays).",int,universal,client render
@@ -1973,7 +1937,7 @@ r_drawothermodels,,1,,,client cheat,"0=Off, 1=Normal, 2=Wireframe",int,universal
 r_drawparticles,,1,,,client cheat,Enable/disable particle rendering,bool,universal,client render
 r_drawpixelvisibility,,0,,,client,Show the occlusion proxies,bool,universal,client render
 r_drawrenderboxes,,0,,,client cheat,Draw entity render bounds.,bool,universal,client render
-r_drawropes,,1,,,client,Render ropes.,bool,universal,client render
+r_drawropes,,1,,,client cheat,Render ropes.,bool,universal,client render
 r_drawskybox,,1,,,cheat,Render the skybox.,bool,universal,client render
 r_drawsprites,,1,,,client cheat,Render sprites.,bool,universal,client render
 r_drawstaticprops,,1,,,cheat,"0=Off, 1=Normal, 2=Wireframe",int,universal,client render
@@ -2127,7 +2091,7 @@ r_showz_power,,1.0f,,,cheat matsysthread,Power factor for the Z-buffer visualiza
 r_skin,,0,,,cheat,Show model skin numbers.,bool,universal,client render
 r_skybox,,1,,,client cheat,Enable the rendering of sky boxes,bool,universal,client render
 r_snapportal,,-1,,,,Snap portals to specific vertices.,int,universal,client render
-r_spewleaf,,0,,,,Spew leaf rendering info.,bool,universal,client render
+r_spewleaf,,0,,,,Spew leaf rendering info.,bool,windows,client render
 r_spray_lifetime,,2,,,,Number of rounds player sprays are visible,int,universal,client render
 r_sse2,cmd,,,,,Enable/disable SSE2 code,none,universal,engine
 r_sse_s,,1,,,client,sse ins for particle sphere create,bool,universal,client render
@@ -3225,7 +3189,7 @@ tf_hud_target_id_disable_floating_health,,0,,,client archive,Set to disable floa
 tf_hud_target_id_offset,,0,,,client archive,RES file Y offset for target id,bool,universal,client settings
 tf_hud_target_id_show_avatars,,2,,,client archive,"Display Steam avatars on TargetID when using floating health icons.  1 = everyone, 2 = friends only.",int,universal,client settings
 tf_impactwatertime,,1.0f,,,client cheat,Draw impact debris effects.,flt,universal,client render
-tf_impactwatertimeenable,,0,,,client,Draw impact debris effects.,bool,universal,client render
+tf_impactwatertimeenable,,0,,,client cheat,Draw impact debris effects.,bool,universal,client render
 tf_inspect_hint_count,,0,,,client archive,Times the inspect hint has displayed.,bool,universal,client settings
 tf_item_based_forced_holiday,,0,,,game replicated,Holiday forced by equipped items.,bool,universal,server settings
 tf_item_inspect_model_auto_spin,,1,,,client archive,Auto-spin the model while inspecting.,bool,universal,client settings
@@ -3507,9 +3471,9 @@ tf_spectate_pyrovision,,0,,,client archive,"When on, spectator will see the worl
 tf_spectator_target_location,,0,0,3,client archive,Determines the location of the spectator targetID panel.,int,universal,client settings
 tf_spells_enabled,,0,,,game replicated notify,Enable to Allow Halloween Spells to be dropped and used by players,bool,universal,server settings
 tf_stats_nogameplaycheck,,0,,,game,"Disable normal check for valid gameplay, send stats regardless.",bool,universal,server settings
-tf_steam_workshop_import_icon_path,,,,,client archive,Default location to load backpack icons from,str,universal,client settings
-tf_steam_workshop_import_material_path,,,,,client archive,Default location to load materials from,str,universal,client render
-tf_steam_workshop_import_model_path,,,,,client archive,Default location to load models from,str,universal,client settings
+tf_steam_workshop_import_icon_path,,,,,client archive,Default location to load backpack icons from,str,windows,client settings
+tf_steam_workshop_import_material_path,,,,,client archive,Default location to load materials from,str,windows,client render
+tf_steam_workshop_import_model_path,,,,,client archive,Default location to load models from,str,windows,client settings
 tf_steam_workshop_page_skip,,10,1,100,client archive,Number of pages to skip in the Steam Workshop dialog.,int,universal,client settings
 tf_steam_workshop_query_timeout,,10,,,client,Time in seconds to allow communication with the Steam Workshop server.,int,universal,client settings
 tf_store_stamp_donation_add_timestamp,,0,,,client archive norecord hidden,Remember the last time that we offered a stamp donation at checkout.,bool,universal,client settings
@@ -3774,7 +3738,7 @@ vprof_scope_entity_gamephys,,0,,,game,Scope vprof by entity game physics.,bool,u
 vprof_scope_entity_thinks,,0,,,game,Scope vprof by entity thinks.,bool,universal,server settings
 vprof_unaccounted_limit,,0.3,,,archive,number of milliseconds that a node must exceed to turn red in the vprof panel,flt,universal,client settings
 vprof_verbose,,1,,,archive,Set to one to show average and peak times,bool,universal,client settings
-vprof_vtrace,cmd,,,,,Toggle whether vprof data is sent to VTrace,none,universal,engine
+vprof_vtrace,cmd,,,,,Toggle whether vprof data is sent to VTrace,none,windows,engine
 vprof_vtune_group,cmd,,,,,enable vtune for a particular vprof group ('disable' to disable),none,universal,engine
 vprof_warningmsec,,10,,,archive,Above this many milliseconds render the label red to indicate slow code.,int,universal,client settings
 vr_activate,cmd,,,,client,Switch to VR mode,none,universal,engine

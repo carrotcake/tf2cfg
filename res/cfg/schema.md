@@ -44,13 +44,19 @@ against the in-game console before relying on a signature.
 
 ## Platform (field 9)
 
-- `universal` — works on all platforms (3,762 entries)
-- `linux` — ToGL/Linux renderer internals (`gl_*`, `glm_*`; 48 entries)
-- `windows` — D3D9Ex/Windows-specific (`dxa_*`, `windows_speaker_config`)
+- `universal` — works on all platforms (3,761 entries)
+- `linux` — ToGL/Linux internals (`gl_*`, `glm_*`; 15 entries). Was 48 before 2026-10-17:
+  the current Linux client registers only 12 of the gl_* block (checked live,
+  `data/catdiff-linux.txt`), so the 36 the client can no longer name lost their rows;
+  the SDL `sdl_double_click_*` pair and `vphysics_nan_debug` arrived instead.
+- `windows` — registered by the Windows client only (D3D9Ex, Windows filesystem/graph
+  processing, the Novint Falcon SDK; 23 entries, live-confirmed 2026-10-17 on the
+  Linux client)
 - `xbox` — Xbox 360 port only, inert on PC (13 entries)
 
-Peripheral-gated features that ship on PC (`sixense_*` Razer Hydra, `hap_*`
-Novint Falcon, `vr_*`) are `universal` — they register and run everywhere.
+Peripheral-gated features that ship on PC (`sixense_*` Razer Hydra, `vr_*`) are
+`universal` — they register and run everywhere; the `hap_*` Novint Falcon entries are
+Windows-only (its SDK).
 
 ## Context (field 10)
 

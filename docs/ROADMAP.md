@@ -300,10 +300,33 @@ same 10-26 build family as the Windows one, 3647 names, one session - and
 - `mat_autoload_glshaders` / `mat_autosave_glshaders` did **not** come back: the Linux dump
   never lists them either, so the 2026-10-15 removals stand.
 
-## 7c. Open: one more console session on the Linux client
+## 7c. Closed 2026-10-17: the Linux client session
 
-`data/linux-checks-2026-10-17.cfg` (to `exec` with `con_logfile` on) asks the Linux client
-three things: does it refuse the three Linux-registered cheat tags (part 1), which of the 23
-Windows-registered cvars it actually has (part 2), and which of the 36 `linux`-tagged rows it
-registers (part 3). Nothing moves until those answers are in - the Windows check already
-showed an absent name is a candidate, never proof (`r_spewleaf`).
+`data/linux-checks-2026-10-17.cfg` ran with `con_logfile` on the Linux client; the log is
+`data/catdiff-linux.txt`. Every part answered, no silence to sit on, and
+`catalogRowsAnsweredByTheLinuxClient` (tst_engine.cpp) pins all three outcomes.
+
+- **Part 1 - the Linux client refuses all three cheat cvars.** With `sv_cheats 0` each set
+  answers "Can't use cheat cvar ... in multiplayer" live. That is the exact behavior
+  flags.md defines for `cheat` (FCVAR_CHEAT), so the tag now follows the client that
+  enforces: `cl_particle_retire_cost`, `r_drawropes`, `tf_impactwatertimeenable` are
+  `client cheat`. The split stays per-platform - Windows registers them unflagged and
+  refused nothing on 2026-10-15 - and the single flags column cannot express "cheat on
+  Linux only"; the enforcing side won because an untagged row hands a Linux user config
+  lines the console refuses outright. Same dump line, same limitation: the Linux client
+  registers default 0 where Windows says 1. The default column stays 0 (Linux); no live
+  readback exists for it (the set refused).
+- **Part 2 - all 23 Windows-registered rows answered Unknown command.** Windows presence
+  from the w64 dump plus a live Unknown from the Linux client earns the `windows` tag, the
+  same logic that keeps the gl_* rows linux-side. One wrinkle: the catalog spells it
+  `hap_HasDevice` while the check list was lowercase - the tag moved by exact row text.
+  Census after both parts: 3812 rows - 3761 universal, 23 windows, 15 linux, 13 xbox.
+- **Part 3 - all 36 linux-tagged rows answered Unknown command.** The old tags
+  over-claimed: the current Linux client registers 12 of the gl_* block and none of the
+  36 (33 variables + 3 commands). Removed - absence confirmed by the live client, not
+  just an empty dump. The type-class census pins (`gl_blitmode` IVAR /
+  `gl_batch_tex_creates` BVAR) re-pointed to `gl_swapinterval` / `gl_clear`, and the QML
+  overview pin inserts `gl_clear 1` where it used `gl_blitmode 1`.
+- The `r_spewleaf` precedent held to the end: absent-name-only kept it universal on
+  2026-10-15's session; the Linux refusal to name it is the second answer, and it is
+  `windows` now.

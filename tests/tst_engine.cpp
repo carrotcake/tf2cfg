@@ -83,6 +83,7 @@ private slots:
     void catalogTypeFieldIsEmptyOrCommand();
     void catalogRowsAddedFromTheLiveDump();
     void catalogRowsAddedFromTheLinuxDump();
+    void catalogRowsAnsweredByTheLinuxClient();
     void catalogRowsCheckedInGame();
     void catalogRowsFixedFromTheInGameRun();
 
@@ -418,7 +419,7 @@ void EngineTest::catalogRowsHaveTenFields() {
         QCOMPARE(commas + 1, 10);
         ++rows;
     }
-    QCOMPARE(rows, 3848);
+    QCOMPARE(rows, 3812);
 }
 
 void EngineTest::catalogTypeFieldIsEmptyOrCommand() {
@@ -447,20 +448,21 @@ void EngineTest::catalogTypeFieldIsEmptyOrCommand() {
                  qPrintable(QStringLiteral("bad type field \"%1\" in row: %2").arg(type, line)));
         census[type.isEmpty() ? QStringLiteral("variable") : type] += 1;
     }
-    QCOMPARE(census.value(QStringLiteral("variable")), 2805);
-    QCOMPARE(census.value(QStringLiteral("cmd")), 1009);
+    QCOMPARE(census.value(QStringLiteral("variable")), 2772);
+    QCOMPARE(census.value(QStringLiteral("cmd")), 1006);
     QCOMPARE(census.value(QStringLiteral("ncmd")), 34);
 
-    // The app-level effect: two of the retyped rows are variables now, each in the
-    // subclass its input-type column asks for. (Two others, binds_per_command and
-    // cl_playerspraydisable, were retyped the same way and then removed - the 2026-10-15
-    // second run found the client has neither.)
+    // The app-level effect: two variables with the subclass their input-type column
+    // asks for. The pair this pin originally named (gl_blitmode, gl_batch_tex_creates)
+    // left with the 2026-10-17 Linux reconciliation - the current Linux client cannot
+    // even name them - so gl_swapinterval/gl_clear carry the assertion now; both stayed
+    // variables through the same sweep.
     GameCfg cfg;
     QHash<QString, const cmd::ConVar *> byName;
     for (const cmd::ConVar *entry : cfg.allCmds())
         byName.insert(entry->get_name().toLower(), entry);
-    QCOMPARE(byName.value(QStringLiteral("gl_blitmode"))->get_type(), cmd::CMD_IVAR);
-    QCOMPARE(byName.value(QStringLiteral("gl_batch_tex_creates"))->get_type(), cmd::CMD_BVAR);
+    QCOMPARE(byName.value(QStringLiteral("gl_swapinterval"))->get_type(), cmd::CMD_IVAR);
+    QCOMPARE(byName.value(QStringLiteral("gl_clear"))->get_type(), cmd::CMD_BVAR);
 }
 
 void EngineTest::catalogRowsAddedFromTheLiveDump() {
@@ -539,6 +541,46 @@ void EngineTest::catalogRowsAddedFromTheLinuxDump() {
     QVERIFY(!nan->isCheat());
 }
 
+void EngineTest::catalogRowsAnsweredByTheLinuxClient() {
+    // data/catdiff-linux.txt - the 2026-10-17 session running
+    // data/linux-checks-2026-10-17.cfg on the Linux client (docs/ROADMAP.md §7c). Three
+    // answers, one per part of the script:
+    //
+    // 1. The Linux client refuses all three cvars the Linux dumps register as cheat,
+    //    with sv_cheats 0 - so they take the tag (flags.md: FCVAR_CHEAT stands for
+    //    "refused without sv_cheats 1"). The Windows client registers them unflagged and
+    //    refused nothing in 2026-10-15; the split is the per-platform registration the
+    //    single flags column cannot express. Recorded both ways in docs/ROADMAP.md 7c.
+    GameCfg cfg;
+    QHash<QString, const cmd::ConVar *> byName;
+    for (const cmd::ConVar *entry : cfg.allCmds())
+        byName.insert(entry->get_name().toLower(), entry);
+    for (const auto &enforced : {QStringLiteral("cl_particle_retire_cost"),
+                                 QStringLiteral("r_drawropes"),
+                                 QStringLiteral("tf_impactwatertimeenable")})
+        QVERIFY2(byName.value(enforced)->isCheat(),
+                 qPrintable(QStringLiteral("not tagged cheat: ") + enforced));
+
+    // 2. 23 cvars the Windows client registers and the Linux client cannot even name
+    //    (Unknown command, live) take the `windows` platform tag - the same logic that
+    //    kept the gl_* rows linux-side: Windows presence from the w64 dump, plus this
+    //    session's refusal to name them on Linux. Note the catalog's case spelling
+    //    hap_HasDevice (the check list was lowercase; the tag still moved).
+    for (const auto &win : {QStringLiteral("cpu_frequency_monitoring"),
+                            QStringLiteral("hap_hasdevice"), QStringLiteral("r_spewleaf"),
+                            QStringLiteral("vprof_vtrace")})
+        QCOMPARE(byName.value(win)->get_platform(), QStringLiteral("windows"));
+
+    // 3. The 36 rows tagged linux that the Linux client itself answers Unknown command
+    //    for are gone - absence confirmed live, not just by an empty dump.
+    for (const auto &gone : {QStringLiteral("gl_blitmode"), QStringLiteral("gl_batch_vis"),
+                             QStringLiteral("gl_dump_stats"),
+                             QStringLiteral("glm_nullrefresh_capslock"),
+                             QStringLiteral("gl_paircachestats")})
+        QVERIFY2(!byName.contains(gone),
+                 qPrintable(QStringLiteral("row still in the catalog: ") + gone));
+}
+
 void EngineTest::catalogRowsCheckedInGame() {
     // data/checks.txt - the second 2026-10-15 run, on a listen server with sv_cheats 0 - asked
     // the client what `cvarlist` could not answer (docs/in-game-checklist.md §4). Three answers:
@@ -576,11 +618,13 @@ void EngineTest::catalogRowsCheckedInGame() {
     QVERIFY(!byName.value(QStringLiteral("r_shadows"))->isCheat());
     QVERIFY(!byName.value(QStringLiteral("sv_memlimit"))->isCheat());
     QVERIFY(!byName.value(QStringLiteral("tf_powerup_mode_imbalance_delta"))->isCheat());
-    QCOMPARE(byName.value(QStringLiteral("r_drawropes"))->get_flags(), QStringLiteral("client"));
-    // (The Linux dump re-registers cheat for this row - a platform registration
-    // difference, windows never carried it - but the live run's no-refusal answer is the
-    // stronger evidence and stays: docs/argbounds-verification, no tag until the Linux
-    // client itself refuses a set.)
+    // The Linux client now completes the loop this test started: it refuses all three
+    // cheats the Linux dumps register (data/catdiff-linux.txt - "Can't use cheat cvar
+    // ... in multiplayer"), so the tag follows the client that enforces (flags.md:
+    // FCVAR_CHEAT = refused without sv_cheats 1). Windows registers without the flag
+    // and refused nothing in 2026-10-15 - a per-platform split the single flag column
+    // cannot express; the caveat lives in docs/ROADMAP.md 7c.
+    QCOMPARE(byName.value(QStringLiteral("r_drawropes"))->get_flags(), QStringLiteral("client cheat"));
     // A cheat tag the dump did report stays: fog_radial arrived with one.
     QVERIFY(byName.value(QStringLiteral("fog_radial"))->isCheat());
 }

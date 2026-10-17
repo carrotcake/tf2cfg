@@ -147,9 +147,11 @@ Rectangle {
                    "catalog flags feed the marker")
 
             // The platform column names the platform the way the Platform filter does: insert a
-            // linux-only cvar (gl_blitmode, one of the catalog's 48 linux rows) and read the
-            // cell off the delegate that renders it.
-            const inserted = host.cfgRef.insertRowAfter(0, "gl_blitmode 1")
+            // linux-only cvar (gl_clear, one of the gl_* rows the current Linux client still
+            // registers) and read the cell off the delegate that renders it. The row this pin
+            // first used, gl_blitmode, left with the 2026-10-17 Linux reconciliation - the
+            // client can no longer name it (tst_engine.cpp, catalogRowsAnsweredByTheLinuxClient).
+            const inserted = host.cfgRef.insertRowAfter(0, "gl_clear 1")
             verify(inserted > 0, "the linux-only line went in at row " + inserted)
             list.positionViewAtIndex(inserted, ListView.Beginning)
             let cells = []
