@@ -93,8 +93,11 @@ bool ConfigController::saveCfg() {
     }
     setLastError(QString());
     recordFileStamp();
-    emit saved(m_cfgPath);
+    // Resync before the success signal (audit 2026-10-13, info item): the resync can
+    // set an error of its own, and a signal consumer observing that state after the
+    // fact should not be told "saved" with a late-arriving error underneath it.
     resyncAfterSave();
+    emit saved(m_cfgPath);
     return true;
 }
 
@@ -118,8 +121,9 @@ bool ConfigController::saveCfgAs(const QString &path) {
     setCfgPath(path); // a preset saved to a real path becomes that file
     setLastError(QString());
     recordFileStamp();
-    emit saved(path);
+    // Same ordering as saveCfg(): the resync (and any error it sets) settles first.
     resyncAfterSave();
+    emit saved(path);
     return true;
 }
 

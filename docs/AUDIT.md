@@ -79,9 +79,10 @@ the UI as built today.
 
 ### Info
 
-- `saveCfg()` emits `saved(path)` before `resyncAfterSave()`; if the synchronous re-read
-  fails, the user sees the "Saved" strip and then an error strip. Ordering is cosmetic;
-  the rows are kept either way.
+- **Fixed (2026-10-17).** `saveCfg()` emitted `saved(path)` before `resyncAfterSave()`;
+  if the synchronous re-read failed, the success strip went out with its own error state
+  unsettled. Both save paths now resync first and emit after it; success signal order
+  is unobservable to any test (no spy pins it), rows are kept either way.
 
 ## Verdict
 
