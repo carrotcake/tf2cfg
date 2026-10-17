@@ -18,6 +18,24 @@ KNOWN_REMOVALS = {
     'grab_window': 'in-game "Unknown command" (docs/in-game-checklist.md, 2026-10-15)',
 }
 
+# Descriptions the catalog earned from behavior (docs/ROADMAP.md 7d) or repairs to the
+# dump's own broken text, so a dump comparison stays a null finding. Each needs a
+# source: dump text was never ported blindly.
+KNOWN_DESCRIPTION_DRIFT = {
+    'disguise':      'w64 dump carries "Disguises the spy."; the catalog keeps the console usage wording',
+    'sv_pure':       'w64 dump carries "Show user data." (a Valve copy bug); the catalog keeps the modes list',
+    'fog_radial':    'blank in both 10-26 dumps; authored from the 2026-10-17 behavior session',
+    'fog_radialskybox': 'blank in both 10-26 dumps; authored from the 2026-10-17 behavior session',
+    'sdl_double_click_size': 'blank in both 10-26 dumps; authored from the 2026-10-17 behavior session',
+    'sdl_double_click_time': 'blank in both 10-26 dumps; authored from the 2026-10-17 behavior session',
+    'sv_wallbug':    'blank in both 10-26 dumps; authored from Valve\'s changelog for the re-added cvar',
+    'tf_voice_command_suspension_rate_limit_bucket_count':
+        'blank in both 10-26 dumps; authored from the 2026-10-17 behavior session',
+    'tf_voice_command_suspension_rate_limit_bucket_refill_rate':
+        'blank in both 10-26 dumps; authored from the 2026-10-17 behavior session',
+    'vgui_ui_scale_factor': 'blank in both 10-26 dumps; authored from the 2026-10-17 behavior session',
+}
+
 NAMES = collections.OrderedDict([
     ('type_variable_as_command', 'dump says cvar, catalog row reads as a command'),
     ('type_command_as_variable', 'dump says command, catalog row reads as a cvar'),
@@ -78,6 +96,8 @@ def main():
             key = 'type_variable_as_command' if value != 'cmd' else 'type_command_as_variable'
             found[key].append(f'{name}: catalog type="{r[1]}" dump value="{value}"')
         if desc and norm(desc) != norm(r[6]):
+            if name in KNOWN_DESCRIPTION_DRIFT:
+                continue  # accepted drift, recorded in the map with its source
             found['description_differs'].append(f'{name}\n  catalog: {r[6]}\n  dump   : {desc}')
         # The dump records no flags for commands (res/cfg/flags.md), so only cvars can
         # contradict the cheat marker the UI shows.
@@ -115,6 +135,9 @@ def main():
             f.write('\n'.join(hits) + ('\n' if hits else ''))
     if KNOWN_REMOVALS:
         print('known removals (not reported): ' + ', '.join(sorted(KNOWN_REMOVALS)))
+    if KNOWN_DESCRIPTION_DRIFT:
+        print('accepted description drift (not reported): ' +
+              ', '.join(sorted(KNOWN_DESCRIPTION_DRIFT)))
     print(f'full lists in {out_dir}')
 
 

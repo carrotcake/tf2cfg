@@ -857,8 +857,8 @@ fog_endskybox,,-1,,,client cheat,Override 3D skybox fog end distance.,int,univer
 fog_maxdensity,,-1,,,client cheat,Override maximum fog density.,int,universal,client render
 fog_maxdensityskybox,,-1,,,client cheat,Override maximum 3D skybox fog density.,int,universal,client render
 fog_override,,0,,,client cheat,Enable fog value overrides.,bool,universal,client render
-fog_radial,,-1,,,client cheat,,int,universal,client render
-fog_radialskybox,,-1,,,client cheat,,int,universal,client render
+fog_radial,,-1,,,client cheat,Draws radial fog in the world.,int,universal,client render
+fog_radialskybox,,-1,,,client cheat,Draws radial fog in the 3D skybox.,int,universal,client render
 fog_start,,-1,,,client cheat,Override fog start distance.,int,universal,client render
 fog_startskybox,,-1,,,client cheat,Override 3D skybox fog start distance.,int,universal,client render
 fogui,cmd,,,,norecord,Show/hide fog control UI.,none,universal,engine
@@ -2329,8 +2329,8 @@ script_trace_disable_key,cmd,,,,game cheat,Turn off a particular trace output by
 script_trace_enable,cmd,,,,game cheat,Turn on a particular trace output by file or function name,[str],universal,server commands
 script_trace_enable_all,cmd,,,,game cheat,Turn on all trace output,none,universal,server commands
 script_trace_enable_key,cmd,,,,game cheat,Turn on a particular trace output by table/instance,[str],universal,server commands
-sdl_double_click_size,,2,,,,,int,linux,client settings
-sdl_double_click_time,,400,,,,,int,linux,client settings
+sdl_double_click_size,,2,,,,Pixel tolerance for the second click of a double-click.,int,linux,client settings
+sdl_double_click_time,,400,,,,Milliseconds between clicks that count as a double-click.,int,linux,client settings
 sdr,cmd,,,,,View/edit SteamNetworkingSockets configuration variables,<str>,universal,engine
 sdr_spew_level,,4,,,,"Verbosity level for SteamNetworkingSockets spew.  4=warning, 5=msg, 6=verbose, 7=debug",int,universal,client settings
 sensitivity,,3,0.0001,10000000,client archive,Mouse sensitivity.,flt,universal,client settings
@@ -2792,7 +2792,7 @@ sv_vote_quorum_ratio,,0.6,0.1,1,game notify,"The minimum ratio of eligible playe
 sv_vote_timer_allow_early_finish,,1,,,game,"If all votes are in, whether to end the vote (for debugging)",bool,universal,server settings
 sv_vote_timer_duration,,15,,,game,How long to allow voting on an issue,int,universal,server settings
 sv_vote_ui_hide_disabled_issues,,1,,,game,Suppress listing of disabled issues in the vote setup screen.,bool,universal,server settings
-sv_wallbug,,0,,,game replicated,,bool,universal,server settings
+sv_wallbug,,0,,,game replicated,Restores the previous movement behavior where players may get stuck in oblique wall and prop angles.,bool,universal,server settings
 sv_wateraccelerate,,10,,,game replicated notify,Acceleration while in water.,int,universal,server settings
 sv_waterdist,,12,,,game replicated,Vertical view fixup when eyes are near water plane.,int,universal,server settings
 sv_waterfriction,,1,,,game replicated notify,Friction while in water.,bool,universal,server settings
@@ -3511,8 +3511,8 @@ tf_use_match_hud,,1,,,client archive,Use the match status HUD.,bool,universal,cl
 tf_use_min_viewmodels,,0,,,client archive,Use minimized viewmodels.,bool,universal,client render
 tf_viewmodels_offset_override,,0,,,client cheat,"If set, this will override the position of all viewmodels. Usage 'x y z'",bool,universal,client render
 tf_voice_command_suspension_mode,,2,,,game replicated,0 = None | 1 = No Voice Commands | 2 = Rate Limited,int,universal,server settings
-tf_voice_command_suspension_rate_limit_bucket_count,,5,,,game,,int,universal,server settings
-tf_voice_command_suspension_rate_limit_bucket_refill_rate,,6,,,game,,flt,universal,server settings
+tf_voice_command_suspension_rate_limit_bucket_count,,5,,,game,Voice command rate limiter bucket size. Voice commands are suspended once it runs dry.,int,universal,server settings
+tf_voice_command_suspension_rate_limit_bucket_refill_rate,,6,,,game,How fast the voice command limiter's bucket refills.,flt,universal,server settings
 tf_warpaint_explanation_viewed,,0,,,client archive,Whether the war paint explanation was viewed.,bool,universal,client settings
 tf_water_resolution,,1024,,,client,Needs to be set at game launch time to override.,int,universal,client render
 tf_weapon_criticals,,1,,,game replicated notify,Whether or not random crits are enabled,bool,universal,server settings
@@ -3636,7 +3636,7 @@ vgui_font_reload,cmd,,,,,,none,universal,engine
 vgui_message_dialog_modal,,1,,,client archive,Make VGUI message dialogs modal.,bool,universal,client settings
 vgui_spew_fonts,cmd,,,,,Spew loaded font information.,none,universal,engine
 vgui_togglepanel,cmd,,,,,show/hide vgui panel by name.,[str],universal,engine
-vgui_ui_scale_factor,,1,,,,,flt,universal,client settings
+vgui_ui_scale_factor,,1,,,,Overall scale multiplier for the menu and HUD UI.,flt,universal,client settings
 vgui_ui_scale_factor_deck_additional,,1,,,,,flt,universal,client settings
 vgui_ui_scale_height,,1080,,,,,int,universal,client settings
 vgui_ui_scale_width,,1920,,,,,int,universal,client settings

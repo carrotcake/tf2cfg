@@ -333,26 +333,31 @@ same 10-26 build family as the Windows one, 3647 names, one session - and
   2026-10-15's session; the Linux refusal to name it is the second answer, and it is
   `windows` now.
 
-## 7d. Open: one more console session - the 23 blank descriptions
+## 7d. Closed 2026-10-17: the blank-description session
 
-23 rows carry no description (21 cvars + the commands `vgui_font_reload` /
-`vmodule_resetparents`). Their text cannot come from a dump: both 10-26 dumps register
-them with a blank doc string (cvarlist prints the game's embedded help, so blank is the
-game's own answer), and none of the names exist in `data/cs2_cvarlist.md`. The catalog
-has a third evidence class instead: behavior, the way `r_spewleaf`'s text was authored
-after its live readback, and `sv_pure` keeps console wording over the dump's broken
-"Show user data." line.
+`data/blankdesc-checks.txt` answers. One hard fact from the log (a `con_logfile` logs
+refusals and readbacks, not successful sets - the leave-on probes' effects live only in
+what the owner watched and reported):
 
-`data/blankdesc-checks-2026-10-17.cfg` probes all of them on a listen server (`help`
-pass first - anything printed is a discovery, blank confirms empty forever), then
-leave-on behavior probes (`fog_radial{,skybox}` and `sv_viewmodel_lag_do_angles` are
-cheat-tagged, `sv_cheats 1` is in the script; `sv_use_steam_networking` is deliberately
-left untouched). The restore block is a separate file - `exec` runs a .cfg top to
-bottom with no pauses, so a restore block inside the probe file would fire off
-instantly and undo every probe before anything could be watched
-(`data/blankdesc-checks-restore-2026-10-17.cfg`, `exec` by hand when the looking is
-done). Rows whose effect nobody can point at stay empty - the sdl/vphysics
-precedent. Answers land in `data/` as the next session's log; earned descriptions go
-into the catalog as an authored drift class recorded alongside `disguise`/`sv_pure`,
-and `tools/catalog_diff.py` gains a `KNOWN_DESCRIPTION_DRIFT` list so future dump diffs
-report clean signals again.
+- **All 23 cvars print no embedded help text** - the `help` pass echoes value + flags
+  and nothing else. No dump will ever carry text for them.
+- **3797 of 3812 rows carry text; 8 earned theirs here**: `fog_radial`,
+  `fog_radialskybox`, `sdl_double_click_size`, `sdl_double_click_time`, the
+  voice-command suspension pair and `vgui_ui_scale_factor` from the owner's named
+  observations, and `sv_wallbug` from Valve's changelog for the re-added cvar ("allow
+  previous movement behavior on community servers ... players could have a chance to get
+  stuck in certain oblique angles of walls and props").
+- **15 stay empty on purpose** - the honest unobservable set: `cl_movehelper_process{,_imp,_vel}`,
+  `cl_pred_doresetlatch`, `sv_viewmodel_lag_do_angles`, `vphysics_nan_debug`,
+  `snd_ducking_off`, `tf_hide_custom_decals`, `sv_allow_server_adverisement_to_master_server`
+  (their own caveat: messages only on configured servers), `sv_use_steam_networking`
+  (deliberately untouched - the transport only moves at server startup), the
+  `vgui_ui_scale_{width,height}` pair and `factor_deck_additional` (set alongside the
+  factor - no separable effect), `vgui_font_reload` and `vmodule_resetparents` (silent
+  runs). `catalogDescriptionsEarnedFromBehavior` pins both directions.
+- The two `windows`-tagged commands refused again live ("Unknown command"), a second
+  confirmation of the tag - and a note they were never part of the blank question: they
+  carry the w64 dump's text already.
+- `tools/catalog_diff.py` gained `KNOWN_DESCRIPTION_DRIFT` (each entry with its
+  source; `disguise` and `sv_pure` joined it), so dump diffs report zero description
+  findings again.

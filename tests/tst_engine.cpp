@@ -95,6 +95,7 @@ private slots:
     void signatureParsesIntoEditorArguments();
     void argsSpecRoleCarriesPerArgumentBounds();
     void platformVocabularyNamesTheFilterMenu();
+    void catalogDescriptionsEarnedFromBehavior();
 
     // CommandListModel
     void appendCfgReportsAnUnreadableFile();
@@ -527,7 +528,9 @@ void EngineTest::catalogRowsAddedFromTheLinuxDump() {
     QCOMPARE(size->get_type(), cmd::CMD_IVAR);
     QCOMPARE(size->defaultStr(), QStringLiteral("2"));
     QCOMPARE(size->get_platform(), QStringLiteral("linux"));
-    QVERIFY(size->get_docs().isEmpty());
+    // The sdl rows shipped with empty descriptions (the Linux dump gave no help text);
+    // the 2026-10-17 blank-desc session earned them behavior-derived text since.
+    QCOMPARE(size->get_docs(), QStringLiteral("Pixel tolerance for the second click of a double-click."));
 
     const auto time = byName.value(QStringLiteral("sdl_double_click_time"));
     QCOMPARE(time->get_type(), cmd::CMD_IVAR);
@@ -943,6 +946,50 @@ void EngineTest::platformVocabularyNamesTheFilterMenu() {
     QCOMPARE(model.platformLabel(QStringLiteral("windows")), QStringLiteral("Windows-only"));
     // A platform the vocabulary has never seen names itself rather than rendering blank.
     QCOMPARE(model.platformLabel(QStringLiteral("plan9")), QStringLiteral("plan9"));
+}
+
+void EngineTest::catalogDescriptionsEarnedFromBehavior() {
+    // docs/ROADMAP.md 7d - the 2026-10-17 blank-desc session (data/blankdesc-checks.txt):
+    // all 23 cvars print no embedded help text, so the catalog's own text can only be
+    // authored from what the client does. Eight rows earned one: the fog pair, the SDL
+    // double-click pair and the voice-command suspension pair from the owner's named
+    // observations, sv_wallbug from Valve's changelog for the re-added cvar. The rest of
+    // the 23 stay empty honestly - observations that produced nothing stay blank (the
+    // sdl/vphysics precedent). These rows land in tools/catalog_diff.py's
+    // KNOWN_DESCRIPTION_DRIFT, since the entries replaced empty dump text.
+    GameCfg cfg;
+    QHash<QString, const cmd::ConVar *> byName;
+    for (const cmd::ConVar *entry : cfg.allCmds())
+        byName.insert(entry->get_name().toLower(), entry);
+    for (const auto &earned : {QStringLiteral("fog_radial"),
+                               QStringLiteral("fog_radialskybox"),
+                               QStringLiteral("sdl_double_click_size"),
+                               QStringLiteral("sdl_double_click_time"),
+                               QStringLiteral("sv_wallbug"),
+                               QStringLiteral("tf_voice_command_suspension_rate_limit_bucket_count"),
+                               QStringLiteral("tf_voice_command_suspension_rate_limit_bucket_refill_rate"),
+                               QStringLiteral("vgui_ui_scale_factor")}) {
+        const auto *row = byName.value(earned);
+        QVERIFY2(row && !row->get_docs().isEmpty(),
+                 qPrintable(QStringLiteral("no description where evidence earned one: ") + earned));
+    }
+    // The unobservable trio plus one, on record so the empty stays deliberate.
+    for (const auto &blank : {QStringLiteral("cl_movehelper_process"),
+                              QStringLiteral("cl_pred_doresetlatch"),
+                              QStringLiteral("sv_viewmodel_lag_do_angles"),
+                              QStringLiteral("snd_ducking_off"),
+                              QStringLiteral("vphysics_nan_debug"),
+                              QStringLiteral("vgui_font_reload")})
+        QVERIFY2(byName.value(blank) && byName.value(blank)->get_docs().isEmpty(),
+                 qPrintable(QStringLiteral("description without an observation behind it: ") + blank));
+    // The session's two bare commands printed nothing noticeable either (their glyph /
+    // module work stayed silent), so their slots stay blank like the cvars'.
+    QVERIFY(byName.value(QStringLiteral("vgui_font_reload"))->get_docs().isEmpty());
+    QVERIFY(byName.value(QStringLiteral("vmodule_resetparents"))->get_docs().isEmpty());
+    // The windows-tagged rows this session re-confirmed refusing on Linux carry the w64
+    // dump's text already; the blank-desc question never applied to them.
+    QVERIFY(!byName.value(QStringLiteral("vprof_vtrace"))->get_docs().isEmpty());
+    QVERIFY(!byName.value(QStringLiteral("mat_texture_list_txlod_sync"))->get_docs().isEmpty());
 }
 
 // --- CommandListModel ---
