@@ -1,25 +1,25 @@
 # TF2 Config Manager
 
-A desktop app for reading and editing Team Fortress 2 config files - your `config.cfg`,
-`autoexec.cfg` and friends from `tf/cfg/` in the game folder. It works on the files
+A desktop app for reading and editing Team Fortress 2 config files: your `config.cfg`,
+`autoexec.cfg` and others in `tf/cfg/`. It works on the files
 directly; it does not launch the game or talk to a running server.
 
 ![The Overview tab: every parsed line with its catalog input signature, platform,
 context and cheat flag](docs/screenshots/overview.png)
 
-What it does:
+Features:
 
 - **Reads and writes configs the way the game does.** Same syntax rules as TF2's own
   config reader, and anything the app doesn't understand is saved back byte-for-byte,
   untouched.
 - **Explains the commands.** A built-in catalog of ~3800 game commands and console
-  variables with documented argument types, allowed values and ranges.
-- **Builds binds.** Click a key on the visual keyboard, then pick a command and fill in
-  its arguments. Aliases too.
+  variables with documented argument types, allowed values, platform/game usage context, argument ranges
+  and usage information.
+- **Builds binds.** Click a key on the visual keyboard/mouse/controller, then pick a command and fill in
+  its arguments. You can also create and edit aliases and alias chains.
 - **Edits safely.** Insert, change or delete commands, comments and multi-command
   (`;`-separated) lines. Changes are anchored back into the original file, and a backup
   is written before every save.
-- **Works without a mouse** and with a screen reader.
 
 ## Download
 
@@ -35,7 +35,7 @@ recent Linux distribution.
 
 ## Building it yourself
 
-Needs Qt 6.12 (newer or older versions are not supported) and its qmake tool. From the
+Needs Qt 6.12 LTS (newer or older versions are not supported) and its qmake tool. From the
 repo root:
 
 ```sh
@@ -44,8 +44,8 @@ cd build-test && qmake6 -o Makefile ../tests/tests.pro && make -j8   # -> tf2cfg
 cd build-test && ./tf2cfg_test   # run the test suite
 ```
 
-On Windows use `mingw32-make` and find the binaries under `release/` - and see
-`AGENTS.md` for the full build, test and lint workflow either way.
+On Windows use `mingw32-make` and find the binaries under `release/` - see
+`AGENTS.md` for the full build, test and lint workflow for both platforms.
 
 ## Docs
 
