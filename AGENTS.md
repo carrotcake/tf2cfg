@@ -1,9 +1,13 @@
 # AGENTS.md - tf2cfg
 
-Qt 6.12 / QML desktop app (Windows, MinGW) for viewing and editing Team Fortress 2
+Qt 6.12 / QML desktop app for viewing and editing Team Fortress 2
 `.cfg` files. Load a config or bundled preset, browse parsed commands, click a key on a
 visual keyboard, build a `bind` line in a dialog, save surgically back to disk.
 Assumed load: single user, local, one config at a time, no network.
+Note on toolchains: development happens on two boxes - Windows 10 (MinGW, the
+release/reference toolchain) and a Linux box (system Qt 6.12). Both are first-class;
+keep the Qt version at 6.12 on every one of them (that version skew shipped the
+"[object Object]" AppImage - see the headers of release.yml/ci.yml).
 
 ## Layout
 
@@ -41,13 +45,48 @@ cd build-qmltest && qmake6 -o Makefile ..\tests\qml\qmltests.pro && mingw32-make
 cd build-qmltest && $env:QT_QPA_PLATFORM = "offscreen"; .\release\tst_app.exe -o testlog.txt,txt
 ```
 
+Linux (system Qt; here Qt 6.12 from the distro, `qmake6`/`qmllint` on PATH - no PATH
+setup needed, unlike Windows):
+
+```sh
+# App and tests build the same three trees; the only Windows/Linux difference is
+# make vs mingw32-make and that qmake on Linux puts binaries in the BUILD DIR ROOT,
+# not a release/ subdirectory:
+cd build       && qmake6 -o Makefile ../tf2cfgreal.pro && make -j8   # -> tf2cfgreal
+cd build-test  && qmake6 -o Makefile ../tests/tests.pro && make -j8   # -> tf2cfg_test
+cd build-test  && QT_QPA_PLATFORM=offscreen ./tf2cfg_test -o testlog.txt,txt
+cd build-qmltest && qmake6 -o Makefile ../tests/qml/qmltests.pro && make -j8
+cd build-qmltest && QT_QPA_PLATFORM=offscreen ./tst_app -o testlog.txt,txt
+# Local lint (CI-equivalent; on Linux the binary is plain `qmllint`, apt's
+# qt6-tools-dev-tools wrapper called it qmllint-qt6, the aqtinstall package does not):
+qmllint -I qmlmodules $(find qml tests/qml -name '*.qml')
+```
+
+Differences worth knowing on the Linux box:
+
+- `make` in `build/` links to `build/tf2cfgreal` directly (no `release/`) and it is
+  not locked while running - no `Stop-Process` needed before relinking (that is a
+  Windows/MinGW-only quirk).
+- stderr from the app is visible in the terminal as-is; `QT_FORCE_STDERR_LOGGING`
+  is only needed on Windows.
+- Headless runs still go through `QT_QPA_PLATFORM=offscreen`; the QML suite also gets
+  `QT_LOGGING_RULES=tf2cfg.config.debug=false` (keeps per-command qCDebug out of the
+  log), same as `.github/workflows/ci.yml`.
+- `deploy.ps1` is Windows-only; Linux artifacts are the CI AppImage (release.yml,
+  tag-only). CI pins Qt 6.12 via `install-qt-action` - runner-apt Qt (6.4.2) is NOT
+  maintained as a supported target for anything.
+- The engine tokenizer/parser is platform-independent - tests pass identically on
+  both boxes; a "passes on Windows, fails on Linux (or reverse)" is almost surely
+  Qt/QML version skew, not platform code.
+
 - The test suites are the gate: both green before every commit. The engine suite
   (`tests/tests.pro`) parses real files offline against temp paths; `QT += concurrent` and
   `RESOURCES += ../res/res.qrc` are required (the tests read the catalog from the same
   resource the app uses). The QML suite (`tests/qml/qmltests.pro`) covers what the engine
   suite cannot: QML that fails to load or import, what a delegate renders, and the
   focus/keyboard behavior W1-W8 added. It needs `QT += qmltest` at build time and the
-  `QtTest` QML module at run time (`qml6-module-qttest` on Linux CI).
+  `QtTest` QML module at run time (ships with the full Qt install - apt's separate
+  `qml6-module-qttest` package was for the abandoned apt-Qt CI job).
 - Writing a QML test: the file root must be an Item that hosts the `TestCase`, and the
   item under test is created as its child - Qt 6's `keyClick(key)` takes no item and
   delivers to the focused item of the test's own window. Test functions are named
@@ -91,14 +130,19 @@ cd build-qmltest && $env:QT_QPA_PLATFORM = "offscreen"; .\release\tst_app.exe -o
   only CI step that launches the QML engine, so a QML syntax/import error reaches it, not
   the lint step - check the run's conclusion explicitly (`gh run view --json conclusion`),
   never a tail of watch output.
-- Running the app for manual checks (from `build/release`, stderr is invisible without
-  `QT_FORCE_STDERR_LOGGING`):
+- Running the app for manual checks. Windows (from `build/release`, stderr is invisible
+  without `QT_FORCE_STDERR_LOGGING`):
   ```pwsh
   $env:PATH = "C:\Qt\6.12.0\mingw_64\bin;C:\Qt\Tools\mingw1310_64\bin;" + $env:PATH
   $env:QT_FORCE_STDERR_LOGGING = "1"; .\tf2cfgreal.exe 2>err.txt
   ```
+  Linux (from `build/`, PATH is already right and stderr shows as-is):
+  ```sh
+  ./tf2cfgreal   # add QT_QPA_PLATFORM=offscreen for headless experimentation
+  ```
 - **Kill a running `tf2cfgreal.exe` before linking** (`Stop-Process -Name tf2cfgreal`):
-  the exe is locked while running and the link fails with "Permission denied". QML
+  the exe is locked while running and the link fails with "Permission denied". Windows
+  only - on Linux the running binary is not locked and may be relinked. QML
   edits require a rebuild either way - they are qrc-embedded, not read from disk.
 
 ## Contracts (see docs/ARCHITECTURE.md)

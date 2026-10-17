@@ -45,14 +45,20 @@ cd build-test && qmake6 -o Makefile ..\tests\tests.pro && mingw32-make -j8  # ->
 cd build-test && .\release\tf2cfg_test.exe -o testlog.txt,txt
 ```
 
-Linux - `qt6-base-dev qt6-declarative-dev qmake6 qt6-tools-dev-tools` plus the
-`qml6-module-*` runtime modules (exact list in `.github/workflows/ci.yml`):
+Linux (system Qt; the repo is developed on two boxes, whichever Qt is installed must be
+6.12 - see AGENTS.md "Build, test, lint"):
 
 ```sh
-qmake6 -o Makefile tf2cfgreal.pro && make -j"$(nproc)"
-cd build-test && qmake6 -o Makefile ../tests/tests.pro && make -j"$(nproc)"
-QT_QPA_PLATFORM=offscreen ./release/tf2cfg_test -o testlog.txt,txt
+cd build       && qmake6 -o Makefile ../tf2cfgreal.pro && make -j8   # -> build/tf2cfgreal
+cd build-test  && qmake6 -o Makefile ../tests/tests.pro && make -j8   # -> build-test/tf2cfg_test
+cd build-test  && QT_QPA_PLATFORM=offscreen ./tf2cfg_test -o testlog.txt,txt
+cd build-qmltest && qmake6 -o Makefile ../tests/qml/qmltests.pro && make -j8
+cd build-qmltest && QT_QPA_PLATFORM=offscreen ./tst_app -o testlog.txt,txt
 ```
+
+Notes: no `release/` subdir on Linux - qmake puts the binary in the build dir root
+(Windows/MinGW differs); local lint via `qmllint -I qmlmodules` over
+`qml tests/qml`.
 
 The bars, checked before every commit: the engine suite green, `qmllint` at 0 errors, and
 `python3 tools/contrast_check.py` after any `Theme.qml` change.
