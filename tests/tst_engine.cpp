@@ -82,6 +82,7 @@ private slots:
     void catalogRowsHaveTenFields();
     void catalogTypeFieldIsEmptyOrCommand();
     void catalogRowsAddedFromTheLiveDump();
+    void catalogRowsAddedFromTheLinuxDump();
     void catalogRowsCheckedInGame();
     void catalogRowsFixedFromTheInGameRun();
 
@@ -417,7 +418,7 @@ void EngineTest::catalogRowsHaveTenFields() {
         QCOMPARE(commas + 1, 10);
         ++rows;
     }
-    QCOMPARE(rows, 3845);
+    QCOMPARE(rows, 3848);
 }
 
 void EngineTest::catalogTypeFieldIsEmptyOrCommand() {
@@ -446,7 +447,7 @@ void EngineTest::catalogTypeFieldIsEmptyOrCommand() {
                  qPrintable(QStringLiteral("bad type field \"%1\" in row: %2").arg(type, line)));
         census[type.isEmpty() ? QStringLiteral("variable") : type] += 1;
     }
-    QCOMPARE(census.value(QStringLiteral("variable")), 2802);
+    QCOMPARE(census.value(QStringLiteral("variable")), 2805);
     QCOMPARE(census.value(QStringLiteral("cmd")), 1009);
     QCOMPARE(census.value(QStringLiteral("ncmd")), 34);
 
@@ -505,16 +506,52 @@ void EngineTest::catalogRowsAddedFromTheLiveDump() {
     QVERIFY(byName.value(QStringLiteral("disguise"))->get_docs().contains(QStringLiteral("Usage: disguise")));
 }
 
+void EngineTest::catalogRowsAddedFromTheLinuxDump() {
+    // The 2026-10-26 Linux dump (data/tf2-cvarlist-10-26-gamedump-linux.txt, one session,
+    // 3647 names) registers three cvars no Windows dump ever showed - the mirror image of
+    // the gl_* block, which only the Linux side ever carried fully. The Windows client
+    // answers Unknown command for the sdl_double_click_* pair (data/checks.txt, the
+    // 2026-10-15 second run), so the rows take the `linux` tag the gl_* rows already
+    // carry. vphysics_nan_debug is typed bool on the r_spewleaf precedent (an unhelped
+    // debug toggle whose value reads 0 and never leaves 0/1); a latency in milliseconds
+    // and a size in pixels are ints. All three dump without help text, so the catalog
+    // description stays empty.
+    GameCfg cfg;
+    QHash<QString, const cmd::ConVar *> byName;
+    for (const cmd::ConVar *entry : cfg.allCmds())
+        byName.insert(entry->get_name().toLower(), entry);
+
+    const auto size = byName.value(QStringLiteral("sdl_double_click_size"));
+    QCOMPARE(size->get_type(), cmd::CMD_IVAR);
+    QCOMPARE(size->defaultStr(), QStringLiteral("2"));
+    QCOMPARE(size->get_platform(), QStringLiteral("linux"));
+    QVERIFY(size->get_docs().isEmpty());
+
+    const auto time = byName.value(QStringLiteral("sdl_double_click_time"));
+    QCOMPARE(time->get_type(), cmd::CMD_IVAR);
+    QCOMPARE(time->defaultStr(), QStringLiteral("400"));
+    QCOMPARE(time->get_platform(), QStringLiteral("linux"));
+
+    const auto nan = byName.value(QStringLiteral("vphysics_nan_debug"));
+    QCOMPARE(nan->get_type(), cmd::CMD_BVAR);
+    QCOMPARE(nan->defaultStr(), QStringLiteral("0"));
+    QCOMPARE(nan->get_platform(), QStringLiteral("linux"));
+    QVERIFY(!nan->isCheat());
+}
+
 void EngineTest::catalogRowsCheckedInGame() {
     // data/checks.txt - the second 2026-10-15 run, on a listen server with sv_cheats 0 - asked
     // the client what `cvarlist` could not answer (docs/in-game-checklist.md §4). Three answers:
     //
     // 1. 35 names printed "Unknown command" and lost their rows. But r_spewleaf answered with a
     //    value although cvarlist never lists it, so an absent name is a candidate, never proof.
+    //    Two of the 35 (the sdl_double_click_* pair) are back since 2026-10-17: the Linux dump
+    //    registers them, the Windows checks prove the Windows client has neither -
+    //    catalogRowsAddedFromTheLinuxDump pins them in with a linux tag.
     for (const auto &gone : {QStringLiteral("bench_upload"), QStringLiteral("binds_per_command"),
                              QStringLiteral("cl_playerspraydisable"),
                              QStringLiteral("dxa_nullrefresh_capslock"),
-                             QStringLiteral("hud_magnetism"), QStringLiteral("sdl_double_click_time"),
+                             QStringLiteral("hud_magnetism"),
                              QStringLiteral("snd_lockpartial"),
                              QStringLiteral("video_quicktime_encode_gamma"),
                              QStringLiteral("vr_track_reinit"),
@@ -540,6 +577,10 @@ void EngineTest::catalogRowsCheckedInGame() {
     QVERIFY(!byName.value(QStringLiteral("sv_memlimit"))->isCheat());
     QVERIFY(!byName.value(QStringLiteral("tf_powerup_mode_imbalance_delta"))->isCheat());
     QCOMPARE(byName.value(QStringLiteral("r_drawropes"))->get_flags(), QStringLiteral("client"));
+    // (The Linux dump re-registers cheat for this row - a platform registration
+    // difference, windows never carried it - but the live run's no-refusal answer is the
+    // stronger evidence and stays: docs/argbounds-verification, no tag until the Linux
+    // client itself refuses a set.)
     // A cheat tag the dump did report stays: fog_radial arrived with one.
     QVERIFY(byName.value(QStringLiteral("fog_radial"))->isCheat());
 }

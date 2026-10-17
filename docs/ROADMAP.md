@@ -266,3 +266,44 @@ hidden/ncmd and the platform tags did not explain, the 20 new commands' usage li
 Four of the 35 removed rows (`sdl_double_click_size`, `sdl_double_click_time`,
 `mat_autoload_glshaders`, `mat_autosave_glshaders`) look Linux-only by name - SDL input, ToGL
 shaders - so a `cvarlist` from the Linux build would bring them back with a `linux` tag.
+
+## 7b. The Linux dump (applied 2026-10-17)
+
+The repo owner then produced a Linux client dump - `data/tf2-cvarlist-10-26-gamedump-linux.txt`,
+same 10-26 build family as the Windows one, 3647 names, one session - and
+`tools/catalog_diff.py data/tf2-cvarlist-10-26-gamedump-linux.txt` ran against it. Result:
+`catalogRowsAddedFromTheLinuxDump` pins the additions.
+
+- **Zero type drift** and no dead universal rows beyond candidates (see below): the 58-row
+  type fix of §7 held.
+- **3 rows added** - the SDL pair and `vphysics_nan_debug`, the mirror image of the gl_* block
+  (Linux client only; the Windows client answered Unknown command for the sdl_dark pair in
+  `data/checks.txt`, so all three carry the `linux` tag). Types come from the dump values
+  (2/400 int, 0 bool on the `r_spewleaf` precedent); the dump gives no help text, so the
+  descriptions stay empty. Catalog now 3848 rows.
+- **3 cheat registrations differ - recorded, not applied.** `cl_particle_retire_cost`,
+  `r_drawropes` and `tf_impactwatertimeenable` carry a `cheat` flag in both Linux dumps but
+  never on Windows. The 2026-10-15 live run is the stronger evidence for the flag column
+  (registered tags got removed when `sv_cheats 0` refused nothing), so the catalog keeps no
+  tag. The three cvars open the Linux check script (§7c) to see whether the Linux client
+  enforces differently.
+- **2 description diffs are the accepted drift** - `disguise` and `sv_pure` keep their
+  console-usage wording, settled 2026-10-15.
+- **23 universal rows absent from the Linux dump, all present in the Windows one** - new
+  dead-row candidates in the other direction (registered on Windows; does the Linux client
+  have them?). Names in `data/linux-checks-2026-10-17.cfg` part 2; until the Linux client
+  answers, they stay `universal`.
+- **36 `linux`-tagged rows the Linux dump itself never listed** - the tags may over-claim
+  (the old note about 3 stray `gl_*` names on Windows cut both ways). Part 3 of the check
+  script asks the Linux client; only its answers (or the Windows precedent, which keeps
+  `hap_*`/`vr_*` universal per res/cfg/schema.md) can retag.
+- `mat_autoload_glshaders` / `mat_autosave_glshaders` did **not** come back: the Linux dump
+  never lists them either, so the 2026-10-15 removals stand.
+
+## 7c. Open: one more console session on the Linux client
+
+`data/linux-checks-2026-10-17.cfg` (to `exec` with `con_logfile` on) asks the Linux client
+three things: does it refuse the three Linux-registered cheat tags (part 1), which of the 23
+Windows-registered cvars it actually has (part 2), and which of the 36 `linux`-tagged rows it
+registers (part 3). Nothing moves until those answers are in - the Windows check already
+showed an absent name is a candidate, never proof (`r_spewleaf`).

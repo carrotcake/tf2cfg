@@ -2365,6 +2365,8 @@ script_trace_disable_key,cmd,,,,game cheat,Turn off a particular trace output by
 script_trace_enable,cmd,,,,game cheat,Turn on a particular trace output by file or function name,[str],universal,server commands
 script_trace_enable_all,cmd,,,,game cheat,Turn on all trace output,none,universal,server commands
 script_trace_enable_key,cmd,,,,game cheat,Turn on a particular trace output by table/instance,[str],universal,server commands
+sdl_double_click_size,,2,,,,,int,linux,client settings
+sdl_double_click_time,,400,,,,,int,linux,client settings
 sdr,cmd,,,,,View/edit SteamNetworkingSockets configuration variables,<str>,universal,engine
 sdr_spew_level,,4,,,,"Verbosity level for SteamNetworkingSockets spew.  4=warning, 5=msg, 6=verbose, 7=debug",int,universal,client settings
 sensitivity,,3,0.0001,10000000,client archive,Mouse sensitivity.,flt,universal,client settings
@@ -3725,6 +3727,7 @@ voxeltree_box,cmd,,,,game cheat,"View entities in the voxel-tree inside box <Vec
 voxeltree_playerview,cmd,,,,game cheat,View entities in the voxel-tree at the player position.,none,universal,server commands
 voxeltree_sphere,cmd,,,,game cheat,"View entities in the voxel-tree inside sphere <Vector(center), float(radius)>.",none,universal,server commands
 voxeltree_view,cmd,,,,game cheat,View entities in the voxel-tree.,none,universal,server commands
+vphysics_nan_debug,,0,,,,,bool,linux,engine
 vprof,cmd,,,,,Toggle VProf profiler,none,universal,engine
 vprof_adddebuggroup1,cmd,,,,,add a new budget group dynamically for debugging,none,universal,engine
 vprof_cachemiss,cmd,,,,,Toggle VProf cache miss checking,none,universal,engine
