@@ -16,30 +16,55 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Qt 6
+      # Qt 6.12: the same toolchain the dev box, the tests, qmllint and the Windows
+      # job use. Do NOT reach for the runner's apt Qt (6.4.2 on ubuntu-24.04): the
+      # first AppImage shipped "[object Object]" combo entries from exactly that
+      # skew - Tf2ComboBox's popup delegate resolves text via model[textRole]
+      # (Tf2ComboBox.qml), a lookup the 6.4-era engine does not perform for C++
+      # QVariantList-of-QVariantMap models, so every entry fell through to
+      # String(modelData) and printed the map object.
+      - name: Install Qt 6.12
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.12.*'
+          # Qt 6.11+ splits the desktop package folders per architecture; the latest
+          # released aqtinstall (3.3.0, this action's default backend) still asks for
+          # the pre-split layout and 6.12 dies with "Failed to locate XML data". Pin
+          # the same upstream commit fix the Windows job explains in full
+          # (miurahr/aqtinstall#1000 via jurplel/install-qt-action#374); the package
+          # layout change is platform-independent, so linux needs this pin too.
+          # Revisit when aqtinstall cuts a release with the fix.
+          aqtsource: 'git+https://github.com/miurahr/aqtinstall.git@076e1659807d0b362a3ed684d54c2e9c7'
+          # The official Qt binaries bundle no system dependencies (apt's Qt pulled
+          # libGL, fontconfig, xkbcommon etc. as package deps). The smoke test
+          # actually runs the QML engine headless, so install the runtime deps.
+          install-deps: true
+
+      - name: Verify the Qt toolchain is really 6.12
         run: |
-          sudo apt-get update
-          sudo apt-get install -y qt6-base-dev qt6-declarative-dev libgl1-mesa-dev \
-                                  qmake6 qt6-tools-dev-tools \
-                                  qml6-module-qtquick qml6-module-qtquick-controls \
-                                  qml6-module-qtquick-dialogs qml6-module-qtquick-layouts \
-                                  qml6-module-qtquick-templates qml6-module-qtquick-window \
-                                  qml6-module-qtqml-workerscript
+          # Parity with the windows job's gcc guard: make version drift loud here,
+          # because "Install Qt" is exactly the step a runner migration silently
+          # reverts to `sudo apt-get install qt6-base-dev`.
+          case "$(qmake -query QT_VERSION)" in
+            6.12.*) ;;
+            *) echo "::error::expected Qt 6.12, got $(qmake -query QT_VERSION)"; exit 1 ;;
+          esac
 
       - name: Build app (qmake + make)
         run: |
-          qmake6 -o Makefile tf2cfgreal.pro
+          qmake -o Makefile tf2cfgreal.pro
           make -j"$(nproc)"
 
       # -- AppImage packaging ------------------------------------------------
-      # Builds on ubuntu-latest's Qt 6.4.2 / glibc 2.39; the result targets current
-      # distros by design (docs/ROADMAP.md). Attached to the GitHub Release and
-      # uploaded as an artifact of this run.
+      # Builds on the pinned Qt 6.12 above / the runner's glibc; the result targets
+      # current distros by design (docs/ROADMAP.md). Attached to the GitHub Release
+      # and uploaded as an artifact of this run.
       - name: Install AppImage tooling
         run: |
           sudo apt-get install -y imagemagick
-          # linuxdeployqt invokes `qmake`; apt installs it as `qmake6`.
-          sudo ln -s "$(command -v qmake6)" /usr/local/bin/qmake
+          # linuxdeploy's qt plugin locates the toolchain via `qmake -query`: the
+          # install-qt-action Qt above is on PATH as `qmake`, so it deploys that
+          # 6.12 bundle (not any runner Qt).
           curl -sL -o linuxdeploy.AppImage \
               https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
           # The qt plugin is discovered by filename next to linuxdeploy.
@@ -85,8 +110,15 @@ jobs:
           # shot: the app runs its event loop headless (offscreen platform) until
           # timeout kills it (exit 124). Any other nonzero exit is a real failure -
           # e.g. a missing bundled plugin fails before the app shows anything.
+          #
+          # Test the BUNDLE, not the host Qt: install-qt-action exports
+          # QT_PLUGIN_PATH / QML2_IMPORT_PATH (see the windows job's smoke test),
+          # and a leaked env lets a bundle missing a plugin or lib start anyway.
+          # Also note: headless = startup proof only. No popup or dialog ever opens
+          # here, so rendering regressions ([object Object] shipped in v0.x combo
+          # entries via that gap) must be verified by hand against the artifact.
           set +e
-          QT_QPA_PLATFORM=offscreen timeout 15s \
+          env -u QT_PLUGIN_PATH -u QML2_IMPORT_PATH QT_QPA_PLATFORM=offscreen timeout 15s \
               ./TF2-Config-Manager-x86_64.AppImage --appimage-extract-and-run > smoke.log 2>&1
           rc=$?
           set -e

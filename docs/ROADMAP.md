@@ -19,16 +19,27 @@ compiled, never launched (no display); the test binary runs headless via
 verification.
 
 DONE 2026-10-14, same workflow: AppImage packaging. `linuxdeploy` + `linuxdeploy-plugin-qt`
-bundle the built binary with Qt 6.4.2 libs/plugins (QML modules come from the
-`qml6-module-*` runtime packages); the icon is rendered at build time with ImageMagick
-from the repo's TF2 font (`res/icon/tf2cfg.svg` is the mockup, `tf2cfg.desktop` the
-menu entry). The AppImage is smoke-tested headless (offscreen run for 15 s, exit 124 =
-success). 2026-10-14, later: packaging moved to `release.yml` (tag-only `v*` trigger,
-attaches the AppImage to a GitHub Release via `softprops/action-gh-release@v3`) because
-`paths` filters are unreliable on tag pushes; ci.yml keeps build + tests + lint +
-contrast and skips entirely on docs-only pushes (`paths-ignore: ["docs/**", "**.md"]`,
-plus `workflow_dispatch` for manual runs). Compatibility note: the AppImage
-targets current distros (glibc 2.39 / Qt 6.4.2 floor) — accepted, per project decision.
+bundle the built binary with Qt libs/plugins; the icon is rendered at build time with
+ImageMagick from the repo's TF2 font (`res/icon/tf2cfg.svg` is the mockup,
+`tf2cfg.desktop` the menu entry). The AppImage is smoke-tested headless (offscreen run
+for 15 s, exit 124 = success). 2026-10-14, later: packaging moved to `release.yml`
+(tag-only `v*` trigger, attaches the AppImage to a GitHub Release via
+`softprops/action-gh-release@v3`) because `paths` filters are unreliable on tag pushes;
+ci.yml keeps build + tests + lint + contrast and skips entirely on docs-only pushes
+(`paths-ignore: ["docs/**", "**.md"]`, plus `workflow_dispatch` for manual runs).
+Compatibility note: the AppImage targets current distros — accepted, per project
+decision.
+
+DONE 2026-10-17: CI + the AppImage release pinned to Qt 6.12 via
+`jurplel/install-qt-action@v4` (both workflows, with the Windows job's aqtinstall
+layout-fix commit pinned as `aqtsource`). Reason: the workflows had apt-built the
+runner's Qt 6.4.2, so CI gated a tree and shipped an artifact on a Qt that was not the
+one in use anywhere else - the first AppImage rendered every `textRole` combo popup
+(preset box, platform box) as "[object Object]" because the 6.4 engine does not do
+`model[role]` lookups for `QVariantList`-of-map models (Tf2ComboBox.qml delegate).
+Headless smoke tests cannot catch that class of bug (startup only, popups never open);
+artifact-vs-toolchain parity is the fix. Note: Qt official linux binaries bundle no
+system runtime deps (`install-deps: true` covers what apt Qt used to pull).
 
 DONE 2026-10-14, later: `release.yml` gained a parallel `windows` job (MinGW, the dev
 box's toolchain): the exe icon is rendered at build time with the same ImageMagick

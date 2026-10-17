@@ -18,25 +18,44 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Qt 6
+      # Qt 6.12, matching the dev box and release.yml's appimage job - NOT the
+      # runner's apt Qt (6.4.2 on ubuntu-24.04). Testing against a different Qt
+      # means the gate green-lights behavior the shipped artifact never has
+      # ([object Object] combo entries shipped because of that exact skew).
+      - name: Install Qt 6.12
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.12.*'
+          # Qt 6.11+ splits the desktop package folders per architecture; the
+          # released aqtinstall (3.3.0, this action's default backend) still opens
+          # the pre-split layout and 6.12 dies with "Failed to locate XML data".
+          # Same upstream pin release.yml's windows job explains in full
+          # (miurahr/aqtinstall#1000 via jurplel/install-qt-action#374) -
+          # platform-independent, applies to linux installs too. Revisit when
+          # aqtinstall cuts a release with the fix.
+          aqtsource: 'git+https://github.com/miurahr/aqtinstall.git@076e1659807d0b362a3ed684d54c2e9c7'
+          # The official Qt binaries bundle no system dependencies (apt's Qt pulled
+          # libGL, fontconfig, xkbcommon etc. as package deps); the test binaries
+          # run the Qt engines headless, so install the runtime deps.
+          install-deps: true
+
+      - name: Verify the Qt toolchain is really 6.12
         run: |
-          sudo apt-get update
-          sudo apt-get install -y qt6-base-dev qt6-declarative-dev libgl1-mesa-dev \
-                                  qmake6 qt6-tools-dev-tools \
-                                  qml6-module-qtquick qml6-module-qtquick-controls \
-                                  qml6-module-qtquick-dialogs qml6-module-qtquick-layouts \
-                                  qml6-module-qtquick-templates qml6-module-qtquick-window \
-                                  qml6-module-qtqml-workerscript qml6-module-qttest
+          case "$(qmake -query QT_VERSION)" in
+            6.12.*) ;;
+            *) echo "::error::expected Qt 6.12, got $(qmake -query QT_VERSION)"; exit 1 ;;
+          esac
+          qmake --version
 
       - name: Build app (qmake + make)
         run: |
-          qmake6 -o Makefile tf2cfgreal.pro
+          qmake -o Makefile tf2cfgreal.pro
           make -j"$(nproc)"
 
       - name: Build and run engine tests
         run: |
           mkdir build-test && cd build-test
-          qmake6 -o Makefile ../tests/tests.pro
+          qmake -o Makefile ../tests/tests.pro
           make -j"$(nproc)"
           QT_QPA_PLATFORM=offscreen ./tf2cfg_test -o testlog.txt,txt
           grep -q "FAIL" testlog.txt && { cat testlog.txt; exit 1; }
@@ -45,7 +64,7 @@ jobs:
       - name: Build and run QML tests (Qt Quick Test, offscreen)
         run: |
           mkdir build-qmltest && cd build-qmltest
-          qmake6 -o Makefile ../tests/qml/qmltests.pro
+          qmake -o Makefile ../tests/qml/qmltests.pro
           make -j"$(nproc)"
           # Offscreen like the engine tests: the shell, a rendered delegate and the
           # key handling are all exercised without a display. tf2cfg.config.debug=false
@@ -62,7 +81,9 @@ jobs:
           # build above - without the path every `Cfg.`/`KeyTable.` read reads as unqualified
           # access again (which is exactly the drift this gate is for). tests/qml is QML too:
           # it carried missing-property warnings nobody saw while only qml/ was linted.
-          find qml tests/qml -name '*.qml' | xargs qmllint-qt6 -I qmlmodules 2>lint.txt || true
+          # qmllint ships in the desktop package (install-qt-action Qt) - on PATH as
+          # plain `qmllint` (apt's qt6-tools-dev-tools wrapper called it qmllint-qt6).
+          find qml tests/qml -name '*.qml' | xargs qmllint -I qmlmodules 2>lint.txt || true
           if grep -q "Error:" lint.txt; then
             echo "::error::qmllint reported errors"; cat lint.txt; exit 1
           fi
