@@ -321,6 +321,8 @@ same 10-26 build family as the Windows one, 3647 names, one session - and
   same logic that keeps the gl_* rows linux-side. One wrinkle: the catalog spells it
   `hap_HasDevice` while the check list was lowercase - the tag moved by exact row text.
   Census after both parts: 3812 rows - 3761 universal, 23 windows, 15 linux, 13 xbox.
+  The console's platform menu offers Windows-only again now that a filter over it would
+  find rows (src/ui/consolecommandmodel.cpp, `kPlatformOptions`).
 - **Part 3 - all 36 linux-tagged rows answered Unknown command.** The old tags
   over-claimed: the current Linux client registers 12 of the gl_* block and none of the
   36 (33 variables + 3 commands). Removed - absence confirmed by the live client, not

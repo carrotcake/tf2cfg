@@ -12,9 +12,9 @@ uint qHash(const ConsoleCommandModel::FilterKey &key, uint seed = 0) noexcept {
 
 /// The platform vocabulary of allcmds field 9, in the order the filter menu lists it: the
 /// value the catalog writes and the words the UI shows for it. `offered` marks the entries the
-/// menu carries - the catalog has 48 linux rows and 13 xbox rows (2026-10-15), everything else
-/// universal, so Windows is not offered; its label stays here so a windows row would still read
-/// as words if one ever appears, and the filter itself takes any value either way.
+/// menu carries. Windows was kept out of the menu while the catalog had no windows row
+/// (2026-10-15); the Linux client session tagged the first 23 (ROADMAP §7c), so it is
+/// offered now. The filter itself takes any value either way.
 struct PlatformOption {
     const char *value;
     const char *label;
@@ -24,7 +24,7 @@ struct PlatformOption {
 const PlatformOption kPlatformOptions[] = {
     { "universal", "Universal", true },
     { "linux", "Linux-only", true },
-    { "windows", "Windows-only", false },
+    { "windows", "Windows-only", true },
     { "xbox", "Xbox-only", true },
     { "all", "All", true },
 };

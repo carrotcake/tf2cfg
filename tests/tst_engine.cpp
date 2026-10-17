@@ -923,12 +923,16 @@ void EngineTest::platformVocabularyNamesTheFilterMenu() {
         values << option.toMap().value(QStringLiteral("value")).toString();
         labels << option.toMap().value(QStringLiteral("label")).toString();
     }
-    // Windows is deliberately not offered: the catalog has 48 linux and 13 xbox rows and no
-    // windows row at all (2026-10-15), so the menu does not promise a filter that finds none.
+    // Windows was deliberately not offered until 2026-10-17: the catalog then had no windows
+    // row at all (2026-10-15 census), so the menu would have promised a filter that matches
+    // none. The Linux client session tagged the first 23 (ROADMAP §7c part 2) and the menu
+    // offers all five platforms now.
     QCOMPARE(values, QStringList({ QStringLiteral("universal"), QStringLiteral("linux"),
-                                   QStringLiteral("xbox"), QStringLiteral("all") }));
+                                   QStringLiteral("windows"), QStringLiteral("xbox"),
+                                   QStringLiteral("all") }));
     QCOMPARE(labels, QStringList({ QStringLiteral("Universal"), QStringLiteral("Linux-only"),
-                                   QStringLiteral("Xbox-only"), QStringLiteral("All") }));
+                                   QStringLiteral("Windows-only"), QStringLiteral("Xbox-only"),
+                                   QStringLiteral("All") }));
 
     // The words a row's platform renders as, and what the dropdown prefills from a command's
     // own platform. The label survives for windows so such a row would still read as words;
