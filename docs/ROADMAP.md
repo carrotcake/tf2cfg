@@ -332,3 +332,23 @@ same 10-26 build family as the Windows one, 3647 names, one session - and
 - The `r_spewleaf` precedent held to the end: absent-name-only kept it universal on
   2026-10-15's session; the Linux refusal to name it is the second answer, and it is
   `windows` now.
+
+## 7d. Open: one more console session - the 23 blank descriptions
+
+23 rows carry no description (21 cvars + the commands `vgui_font_reload` /
+`vmodule_resetparents`). Their text cannot come from a dump: both 10-26 dumps register
+them with a blank doc string (cvarlist prints the game's embedded help, so blank is the
+game's own answer), and none of the names exist in `data/cs2_cvarlist.md`. The catalog
+has a third evidence class instead: behavior, the way `r_spewleaf`'s text was authored
+after its live readback, and `sv_pure` keeps console wording over the dump's broken
+"Show user data." line.
+
+`data/blankdesc-checks-2026-10-17.cfg` probes all of them on a listen server (`help`
+pass first - anything printed is a discovery, blank confirms empty forever), then
+leave-on behavior probes (`fog_radial{,skybox}` and `sv_viewmodel_lag_do_angles` are
+cheat-tagged, `sv_cheats 1` is in the script; `sv_use_steam_networking` is deliberately
+left untouched). Rows whose effect nobody can point at stay empty - the sdl/vphysics
+precedent. Answers land in `data/` as the next session's log; earned descriptions go
+into the catalog as an authored drift class recorded alongside `disguise`/`sv_pure`,
+and `tools/catalog_diff.py` gains a `KNOWN_DESCRIPTION_DRIFT` list so future dump diffs
+report clean signals again.
