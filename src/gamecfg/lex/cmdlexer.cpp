@@ -2,57 +2,49 @@
 
 using namespace Lexers;
 
-cmdLex::Token const cmdLex::nextToken() {
+cmdLex::Token cmdLex::nextToken() {
     if (line >= arr.size()) {
         return Token(Token::TOK_EOF);
     }
     const QString str = arr.at(line);
-    QStringList arr;
-    QString temp("");
-    LexState state = STATE_START;
-    while (state != STATE_ERR) {
-        const QChar c = col < str.size() ? str.at(col) : '\n';
-        const LexInput input = charToInput(c);
-        if (state == STATE_START && input == IN_EOL) {
-            // nextlineplease
-            advanceOneChar();
-            continue;
-        }
-        const LexState next = STATE[state][input];
-        switch (next) {
-        case STATE_VAL:
-            if (input != IN_QUOT) {
+
+    // Plain CSV field scan: fields are quoted when they contain commas, quotes or
+    // newlines; "" inside a quoted field is an escaped quote. Trailing empty fields
+    // are tolerated so hand-edited rows do not kill the load.
+    QStringList fields;
+    QString temp;
+    bool inQuotes = false;
+    for (int i = 0; i <= str.size(); ++i) {
+        // sentinel comma one past the end closes the final field
+        const QChar c = i < str.size() ? str.at(i) : QChar(',');
+        if (inQuotes) {
+            if (c == '"') {
+                if (i + 1 < str.size() && str.at(i + 1) == '"') {
+                    temp.append('"');
+                    i++;
+                } else {
+                    inQuotes = false;
+                }
+            } else {
                 temp.append(c);
             }
-            break;
-        case STATE_COMMA:
-            arr.push_back(temp);
+        } else if (c == '"') {
+            inQuotes = true;
+        } else if (c == ',') {
+            fields.push_back(temp);
             temp.clear();
-            break;
-        case STATE_END:
-            if (line > 2099) {
-                int a = 2 + 3;
-            }
-            advanceOneChar();
-            return Token(arr[0], arr[1], arr[2], arr[3], arr[4], temp);
-        default:
-            break;
+        } else {
+            temp.append(c);
         }
-        advanceOneChar();
-        state = next;
     }
-    return Token(Token::TOK_ERR);
-}
 
-inline cmdLex::LexInput cmdLex::charToInput(const QChar c) const {
-    if (c == '\n') {
-        return IN_EOL;
+    // One token per line: skip past it in the shared cursor (advanceOneChar would
+    // only step col by one and re-scan this line on the next call).
+    col = 0;
+    line++;
+    while (fields.size() < 10) {
+        fields.push_back(QString());
     }
-    if (c == '"') {
-        return IN_QUOT;
-    }
-    if (c == ',') {
-        return IN_COMMA;
-    }
-    return IN_CHAR;
+    return Token(fields[0], fields[1], fields[2], fields[3], fields[4], fields[5], fields[6],
+                 fields[7], fields[8], fields[9]);
 }

@@ -1,0 +1,169 @@
+"cl_movehelper_process" = "1"
+ client
+"cl_movehelper_process_imp" = "1"
+ client
+"cl_movehelper_process_vel" = "1"
+ client
+"cl_pred_doresetlatch" = "1"
+ client
+"fog_radial" = "-1"
+ client cheat
+"fog_radialskybox" = "-1"
+ client cheat
+"sdl_double_click_size" = "2"
+"sdl_double_click_time" = "400"
+"snd_ducking_off" = "1"
+ archive
+"sv_allow_server_adverisement_to_master_server" = "1"
+"sv_use_steam_networking" = "0"
+"sv_viewmodel_lag_do_angles" = "1"
+ game cheat replicated
+"sv_wallbug" = "0"
+ game replicated
+"tf_hide_custom_decals" = "0"
+ client archive
+"tf_voice_command_suspension_rate_limit_bucket_count" = "5"
+ game
+"tf_voice_command_suspension_rate_limit_bucket_refill_rate" = "6"
+ game
+"vgui_font_reload"
+"vgui_ui_scale_factor" = "1"
+"vgui_ui_scale_factor_deck_additional" = "1.5"
+"vgui_ui_scale_height" = "1080"
+"vgui_ui_scale_width" = "1920"
+"vmodule_resetparents"
+ client
+"vphysics_nan_debug" = "0"
+help:  no cvar or command named vprof_vtrace
+help:  no cvar or command named mat_texture_list_txlod_sync
+"cl_movehelper_process" = "1"
+ client
+"cl_movehelper_process_imp" = "1"
+ client
+"cl_movehelper_process_vel" = "1"
+ client
+"cl_pred_doresetlatch" = "1"
+ client
+"fog_radial" = "-1"
+ client cheat
+"fog_radialskybox" = "-1"
+ client cheat
+"sdl_double_click_size" = "2"
+"sdl_double_click_time" = "400"
+"snd_ducking_off" = "1"
+ archive
+"sv_allow_server_adverisement_to_master_server" = "1"
+"sv_use_steam_networking" = "0"
+"sv_viewmodel_lag_do_angles" = "1"
+ game cheat replicated
+"sv_wallbug" = "0"
+ game replicated
+"tf_hide_custom_decals" = "0"
+ client archive
+"tf_voice_command_suspension_rate_limit_bucket_count" = "5"
+ game
+"tf_voice_command_suspension_rate_limit_bucket_refill_rate" = "6"
+ game
+"vgui_ui_scale_factor" = "1"
+"vgui_ui_scale_factor_deck_additional" = "1.5"
+"vgui_ui_scale_height" = "1080"
+"vgui_ui_scale_width" = "1920"
+"vphysics_nan_debug" = "0"
+Unknown command "vprof_vtrace"
+Unknown command "mat_texture_list_txlod_sync"
+GetCharRGBA - nSkipRows(58) > rgbaTall(56) ch:43
+Network: IP 127.0.1.1, mode MP, dedicated No, ports 27015 SV / 27005 CL
+Error: Material "___fillrate_0" uses unknown shader "FillRate"
+Error: Material "___debugnormalmap_1" uses unknown shader "DebugNormalMap"
+Error: Material "___debugdrawenvmapmask_2" uses unknown shader "DebugDrawEnvmapMask"
+Error: Material "___debugdepth_3" uses unknown shader "DebugDepth"
+Error: Material "___debugdepth_4" uses unknown shader "DebugDepth"
+Error: Material "debug/debugluxels" uses unknown shader "DebugLuxels"
+
+ ##### CTexture::LoadTextureBitsFromFile couldn't find materials/vgui/replay/thumbnails/menu/loading_bg.vtf
+
+ ##### CTexture::LoadTextureBitsFromFile couldn't find materials/vgui/replay/thumbnails/menu/loading_bg.vtf
+Using map cycle file 'cfg/mapcycle_default.txt'.  ('cfg/mapcycle.txt' was not found.)
+Shader 'shaders\fxc\vertexlit_and_unlit_generic_bump_ps20b.vcs' - Couldn't load combo 849480 of shader (dyn=60)
+material models/weapons/c_items/c_ubersaw_xms has a normal map and $basealphaenvmapmask.  Must use $normalmapalphaenvmapmask to get specular.
+
+material models/weapons/c_items/c_frontierjustice_xmas has a normal map and $basealphaenvmapmask.  Must use $normalmapalphaenvmapmask to get specular.
+
+material models/player/items/all_class/all_class_ring_setting has a normal map and $basealphaenvmapmask.  Must use $normalmapalphaenvmapmask to get specular.
+
+material models/player/items/crafting/coin_invasion has a normal map and $basealphaenvmapmask.  Must use $normalmapalphaenvmapmask to get specular.
+
+VSCRIPT: Started VScript virtual machine using script language 'Squirrel'
+Script not found (scripts/vscripts/mapspawn.nut) 
+
+ ##### CTexture::LoadTextureBitsFromFile couldn't find materials/models/player/items/taunts/mug001_exp.vtf
+Set motd from file 'cfg/motd_default.txt'.  ('cfg/motd.txt' was not found.)
+Set motd_text from file 'cfg/motd_text_default.txt'.  ('cfg/motd_text.txt' was not found.)
+SV_ActivateServer: setting tickrate to 66.7
+Connection to game coordinator established.
+Current item schema is up-to-date with version 1C65BF3D.
+'overrides/listenserver.cfg' not present; not executing.
+'cp_gorge.cfg' not present; not executing.
+
+Team Fortress
+Map: cp_gorge
+Players: 1 / 24
+Build: 11138802
+Server Number: 1
+
+The server is using sv_pure 0.  (Enforcing consistency for select files only)
+Cannot figure out which search path sound/physics/metal/metal_grenade_roll_loop1.wav came from. Not playing.
+Cannot figure out which search path sound/weapons/timer.wav came from. Not playing.
+Cannot figure out which search path sound/items/pyro_guitar_solo_with_verb.wav came from. Not playing.
+Cannot figure out which search path sound/player/sniper_taunt_hawk.wav came from. Not playing.
+Cannot figure out which search path sound/player/taunt_pyro_twirl.wav came from. Not playing.
+Cannot figure out which search path sound/player/taunt_yeti_standee_spy_swing1.wav came from. Not playing.
+Cannot figure out which search path sound/player/taunt_yeti_standee_spy_swing2.wav came from. Not playing.
+Cannot figure out which search path sound/player/cyoa_pda_dial1.wav came from. Not playing.
+Cannot figure out which search path sound/player/cyoa_pda_dial2.wav came from. Not playing.
+Cannot figure out which search path sound/player/cyoa_pda_dial3.wav came from. Not playing.
+Cannot figure out which search path sound/player/cyoa_pda_dial4.wav came from. Not playing.
+Cannot figure out which search path sound/player/cyoa_pda_dial5.wav came from. Not playing.
+Cannot figure out which search path sound/ui/quest_status_complete.wav came from. Not playing.
+Cannot figure out which search path sound/vo/halloween_eyeball/eyeball_biglaugh02.mp3 came from. Not playing.
+MP3 is completely missing, sound system will be upset to learn of this [ vo/halloween_eyeball/eyeball_biglaugh02.mp3 ]
+Cannot figure out which search path sound/weapons/shotgun_cock.wav came from. Not playing.
+Cannot figure out which search path sound/weapons/airstrike_fail.wav came from. Not playing.
+Requesting texture value from var "$basetexture" which is not a texture value (material: skybox/sky_trainyard_01rt)
+Requesting texture value from var "$basetexture" which is not a texture value (material: skybox/sky_trainyard_01bk)
+Requesting texture value from var "$basetexture" which is not a texture value (material: skybox/sky_trainyard_01lf)
+Requesting texture value from var "$basetexture" which is not a texture value (material: skybox/sky_trainyard_01ft)
+Requesting texture value from var "$basetexture" which is not a texture value (material: skybox/sky_trainyard_01up)
+Requesting texture value from var "$basetexture" which is not a texture value (material: skybox/sky_trainyard_01dn)
+Voice_Init: Using Steam voice optimal sample rate 24000
+Requesting texture value from var "$basetexture" which is not a texture value (material: dev/bloomadd)
+Requesting texture value from var "$basetexture" which is not a texture value (material: dev/no_pixel_write)
+Requesting texture value from var "$basetexture" which is not a texture value (material: dev/lumcompare)
+Requesting texture value from var "$basetexture" which is not a texture value (material: dev/halo_add_to_screen)
+carrotcake connected
+Using joystick 'Xbox360 controller' configuration
+JOY_AXIS_X:  mapped to Side (absolute)
+JOY_AXIS_Y:  mapped to Forward (absolute)
+JOY_AXIS_Z:  unmapped
+JOY_AXIS_R:  mapped to Look (absolute)
+JOY_AXIS_U:  mapped to Turn (absolute)
+JOY_AXIS_V:  unmapped
+Advanced Joystick settings initialized
+Redownloading all lightmaps
+'overrides/game_overrides.cfg' not present; not executing.
+'app/game_overrides.cfg' not present; not executing.
+'app/game_overrides.cfg' not present; not executing.
+'overrides/scout.cfg' not present; not executing.
+'app/scout.cfg' not present; not executing.
+'app/scout.cfg' not present; not executing.
+Achievements disabled: cheats turned on in this app session.
+No caption found for 'scout.battlecry05'
+No caption found for 'scout.battlecry03'
+No caption found for 'scout.cloakedspy03'
+No caption found for 'scout.cloakedspy02'
+No caption found for 'scout.cloakedspy04'
+No caption found for 'scout.cloakedspy01'
+No caption found for 'scout.cloakedspy02'
+GetCharRGBA - nSkipRows(58) > rgbaTall(56) ch:43
+"con_logfile" = "blankdesc-checks.txt" ( def. "" )
+ - Console output gets written to this file

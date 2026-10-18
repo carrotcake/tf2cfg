@@ -1,2 +1,20 @@
-/build/
-/tf2cfgreal.pro.user
+# Qt build output and Creator state
+build/
+build-test/
+build-qmltest/
+dist/
+*.pro.user
+/.qtcreator/
+# qmlls needs an absolute importPaths (AGENTS.md), so this is per-clone machine state
+.qmlls.ini
+
+# Python
+__pycache__/
+*.py[cod]
+
+# aqtinstall's debug log (written by aqt on any command)
+aqtinstall.log
+
+# local backup made by tools/csvio.py on rewrite
+allcmds_bak.csv
+res/icon/tf2cfg.ico

@@ -1,0 +1,106 @@
+name: CI
+
+# Docs-only pushes skip the whole workflow (paths-ignore); any commit in the push
+# touching code, QML, tests or this workflow runs it. Tag releases live in
+# release.yml - paths filters are unreliable on tag pushes, so packaging is split
+# out and tag pushes bypass this gate entirely.
+on:
+  push:
+    branches: [qml-rewrite, master]
+    paths-ignore: ["docs/**", "**.md"]
+  pull_request:
+    paths-ignore: ["docs/**", "**.md"]
+  workflow_dispatch: # manual re-run (gh workflow run) when a docs-only push needs CI
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Qt 6.12, matching the dev box and release.yml's appimage job - NOT the
+      # runner's apt Qt (6.4.2 on ubuntu-24.04). Testing against a different Qt
+      # means the gate green-lights behavior the shipped artifact never has
+      # ([object Object] combo entries shipped because of that exact skew).
+      - name: Install Qt 6.12
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.12.*'
+          # Qt 6.11+ splits the desktop package folders per architecture; the
+          # released aqtinstall (3.3.0, this action's default backend) still opens
+          # the pre-split layout and 6.12 dies with "Failed to locate XML data".
+          # Same upstream pin release.yml's windows job explains in full
+          # (miurahr/aqtinstall#1000 via jurplel/install-qt-action#374) -
+          # platform-independent, applies to linux installs too. Revisit when
+          # aqtinstall cuts a release with the fix.
+          aqtsource: 'git+https://github.com/miurahr/aqtinstall.git@076e1659807d0b362a3ed684d54c2e9c7'
+          # The official Qt binaries bundle no system dependencies (apt's Qt pulled
+          # libGL, fontconfig, xkbcommon etc. as package deps); the test binaries
+          # run the Qt engines headless, so install the runtime deps.
+          install-deps: true
+
+      - name: Verify the Qt toolchain is really 6.12
+        run: |
+          case "$(qmake -query QT_VERSION)" in
+            6.12.*) ;;
+            *) echo "::error::expected Qt 6.12, got $(qmake -query QT_VERSION)"; exit 1 ;;
+          esac
+          qmake --version
+
+      - name: Build app (qmake + make)
+        run: |
+          qmake -o Makefile tf2cfgreal.pro
+          make -j"$(nproc)"
+
+      - name: Build and run engine tests
+        run: |
+          mkdir build-test && cd build-test
+          qmake -o Makefile ../tests/tests.pro
+          make -j"$(nproc)"
+          QT_QPA_PLATFORM=offscreen ./tf2cfg_test -o testlog.txt,txt
+          grep -q "FAIL" testlog.txt && { cat testlog.txt; exit 1; }
+          grep "Totals" testlog.txt
+
+      - name: Build and run QML tests (Qt Quick Test, offscreen)
+        run: |
+          mkdir build-qmltest && cd build-qmltest
+          qmake -o Makefile ../tests/qml/qmltests.pro
+          make -j"$(nproc)"
+          # Offscreen like the engine tests: the shell, a rendered delegate and the
+          # key handling are all exercised without a display. tf2cfg.config.debug=false
+          # keeps the parser's per-command qCDebug lines out of the log.
+          QT_QPA_PLATFORM=offscreen QT_LOGGING_RULES=tf2cfg.config.debug=false \
+            ./tst_app -o testlog.txt,txt
+          grep -q "FAIL" testlog.txt && { cat testlog.txt; exit 1; }
+          grep "Totals" testlog.txt
+
+      - name: qmllint (0 errors, 0 unqualified accesses)
+        run: |
+          # -I qmlmodules is the C++ backend module: `import tf2cfg` in qml/. qmake assembles
+          # that directory when it builds the app (tf2cfgreal.pro), so this step needs the
+          # build above - without the path every `Cfg.`/`KeyTable.` read reads as unqualified
+          # access again (which is exactly the drift this gate is for). tests/qml is QML too:
+          # it carried missing-property warnings nobody saw while only qml/ was linted.
+          # qmllint ships in the desktop package (install-qt-action Qt) - on PATH as
+          # plain `qmllint` (apt's qt6-tools-dev-tools wrapper called it qmllint-qt6).
+          find qml tests/qml -name '*.qml' | xargs qmllint -I qmlmodules 2>lint.txt || true
+          if grep -q "Error:" lint.txt; then
+            echo "::error::qmllint reported errors"; cat lint.txt; exit 1
+          fi
+          unqualified=$(grep -c 'Warning: unqualified access' lint.txt || true)
+          echo "unqualified-access warnings: $unqualified"
+          if [ "$unqualified" != "0" ]; then
+            echo "::error::unqualified access in QML (AGENTS.md: import tf2cfg, use Cfg./KeyTable., or qualify with the owning id)"
+            cat lint.txt
+            exit 1
+          fi
+          if grep -q "Failed to import tf2cfg" lint.txt; then
+            echo "::error::the tf2cfg module did not resolve - is qmlmodules/ assembled?"
+            cat lint.txt
+            exit 1
+          fi
+          echo "qmllint: 0 errors"
+
+      - name: Contrast gate (W8)
+        run: python3 tools/contrast_check.py
+

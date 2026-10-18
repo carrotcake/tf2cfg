@@ -1,0 +1,192 @@
+# AGENTS.md - tf2cfg
+
+Qt 6.12 / QML desktop app for viewing and editing Team Fortress 2
+`.cfg` files. Load a config or bundled preset, browse parsed commands, click a key on a
+visual keyboard, build a `bind` line in a dialog, save surgically back to disk.
+Assumed load: single user, local, one config at a time, no network.
+Note on toolchains: development happens on two boxes - Windows 10 (MinGW, the
+release/reference toolchain) and a Linux box (system Qt 6.12). Both are first-class;
+keep the Qt version at 6.12 on every one of them (that version skew shipped the
+"[object Object]" AppImage - see the headers of release.yml/ci.yml).
+
+## Layout
+
+- `src/gamecfg/` - engine: config parser (`lex/`), `GameCfg`, `convars.h` (`cmd::Entry`).
+  Deliberately UI-free. Parse output must match the game's tokenizer.
+- `src/ui/` - Qt objects: `ConfigController` (load/save state machine), `CommandListModel`
+  (parsed rows as a QAbstractListModel), `ConsoleCommandModel` (search).
+- `qml/` - the whole UI: `Main.qml` (shell, menus, save dialogs), `pages/`, `dialogs/`,
+  `keyboard/`, `theme/`, `components/`. Registered in `qml.qrc`. Custom Build-A-Bind
+  panels live in `dialogs/panels/` and are chosen by a per-command registry
+  (`customPanels` in `dialogs/BindEditorDialog.qml`); a new panel = one component file,
+  one qrc entry, one registry entry (contract in each panel's header comment).
+- `res/res.qrc` - resources incl. the command catalog `allcmds.csv` (~3800 rows), the
+  companion bounds file `cfg/argbounds.csv` (`command,argIndex,type,min,max`; loaded by
+  `gameconfig.cpp: loadArgBounds()`, consumed via the `argsSpec` model role), and
+  bundled cfg presets under `:/`.
+- `tests/tst_engine.cpp` - one QtTest binary covering engine + controller.
+- `docs/` - see "Docs" below. `data/` holds reference dumps (`cvarlist_linux.txt`,
+  `cs2_cvarlist.md`) the catalog was built from, not sample configs;
+  `tools/catalog_diff.py` diffs a fresh in-game `cvarlist` dump against the catalog
+  (`docs/ROADMAP.md` §7) and only reports - catalog edits still need their evidence.
+
+## Build, test, lint
+
+Qt at `C:\Qt\6.12.0\mingw_64`, MinGW at `C:\Qt\Tools\mingw1310_64\bin` (prepend both to PATH).
+
+```pwsh
+# App (qmake6.exe both times, per the generated Makefile headers):
+cd build      && qmake6 -o Makefile ..\tf2cfgreal.pro && mingw32-make -j8   # -> release/tf2cfgreal.exe
+# Engine tests (separate build dir so a failing test never blocks the app):
+cd build-test && qmake6 -o Makefile ..\tests\tests.pro && mingw32-make -j8   # -> release/tf2cfg_test.exe
+cd build-test && .\release\tf2cfg_test.exe -o testlog.txt,txt
+# QML tests (Qt Quick Test; headless, drives the real QML):
+cd build-qmltest && qmake6 -o Makefile ..\tests\qml\qmltests.pro && mingw32-make -j8
+cd build-qmltest && $env:QT_QPA_PLATFORM = "offscreen"; .\release\tst_app.exe -o testlog.txt,txt
+```
+
+Linux (system Qt; here Qt 6.12 from the distro, `qmake6`/`qmllint` on PATH - no PATH
+setup needed, unlike Windows):
+
+```sh
+# App and tests build the same three trees; the only Windows/Linux difference is
+# make vs mingw32-make and that qmake on Linux puts binaries in the BUILD DIR ROOT,
+# not a release/ subdirectory:
+cd build       && qmake6 -o Makefile ../tf2cfgreal.pro && make -j8   # -> tf2cfgreal
+cd build-test  && qmake6 -o Makefile ../tests/tests.pro && make -j8   # -> tf2cfg_test
+cd build-test  && QT_QPA_PLATFORM=offscreen ./tf2cfg_test -o testlog.txt,txt
+cd build-qmltest && qmake6 -o Makefile ../tests/qml/qmltests.pro && make -j8
+cd build-qmltest && QT_QPA_PLATFORM=offscreen ./tst_app -o testlog.txt,txt
+# Local lint (CI-equivalent; on Linux the binary is plain `qmllint`, apt's
+# qt6-tools-dev-tools wrapper called it qmllint-qt6, the aqtinstall package does not):
+qmllint -I qmlmodules $(find qml tests/qml -name '*.qml')
+```
+
+Differences worth knowing on the Linux box:
+
+- `make` in `build/` links to `build/tf2cfgreal` directly (no `release/`) and it is
+  not locked while running - no `Stop-Process` needed before relinking (that is a
+  Windows/MinGW-only quirk).
+- stderr from the app is visible in the terminal as-is; `QT_FORCE_STDERR_LOGGING`
+  is only needed on Windows.
+- Headless runs still go through `QT_QPA_PLATFORM=offscreen`; the QML suite also gets
+  `QT_LOGGING_RULES=tf2cfg.config.debug=false` (keeps per-command qCDebug out of the
+  log), same as `.github/workflows/ci.yml`.
+- `deploy.ps1` is Windows-only; Linux artifacts are the CI AppImage (release.yml,
+  tag-only). CI pins Qt 6.12 via `install-qt-action` - runner-apt Qt (6.4.2) is NOT
+  maintained as a supported target for anything.
+- The engine tokenizer/parser is platform-independent - tests pass identically on
+  both boxes; a "passes on Windows, fails on Linux (or reverse)" is almost surely
+  Qt/QML version skew, not platform code.
+
+- The test suites are the gate: both green before every commit. The engine suite
+  (`tests/tests.pro`) parses real files offline against temp paths; `QT += concurrent` and
+  `RESOURCES += ../res/res.qrc` are required (the tests read the catalog from the same
+  resource the app uses). The QML suite (`tests/qml/qmltests.pro`) covers what the engine
+  suite cannot: QML that fails to load or import, what a delegate renders, and the
+  focus/keyboard behavior W1-W8 added. It needs `QT += qmltest` at build time and the
+  `QtTest` QML module at run time (ships with the full Qt install - apt's separate
+  `qml6-module-qttest` package was for the abandoned apt-Qt CI job).
+- Writing a QML test: the file root must be an Item that hosts the `TestCase`, and the
+  item under test is created as its child - Qt 6's `keyClick(key)` takes no item and
+  delivers to the focused item of the test's own window. Test functions are named
+  `test_*` (an underscore; a `testCamel` name is collected as no test at all and passes
+  vacuously).
+- `qmllint` must stay at 0 errors and **0 unqualified-access warnings**. The backend lives
+  in the `tf2cfg` QML module (`import tf2cfg`, then `Cfg.` and `KeyTable.`), registered from
+  `src/ui/*.h` by qmltyperegistrar; the app used to hand them over as context properties,
+  which no QML tool could resolve - every read was an unqualified access (47 of them on Qt
+  6.12). Reading a parent element's property or calling its function from a nested item is
+  the other way to trip the warning: qualify it with the owning id (`window.editorActive`,
+  `panel.fnGroupX(…)`). Both are enforced by the CI lint step, which lints with
+  `-I qmlmodules` (the module directory qmake assembles) and fails on any nonzero count.
+  It lints `tests/qml/` as well as `qml/` - the test tree is QML too, and `qmllint
+  -I build/qmlmodules qml/**/*.qml tests/qml/**/*.qml` is the local equivalent.
+  All QML files carry `pragma ComponentBehavior: Bound`; new files must too.
+- Editor completion for `import tf2cfg` (qmlls/Qt Creator) needs a `.qmlls.ini` in the repo
+  root, and its `importPaths` must be an **absolute** path: Qt 6.12 ignores relative spellings
+  silently (measured against a built tree - `build/…`, `./build/…`, `build\…`, a bare directory
+  name and a `file://` URL all fail) and `buildDir` alone does not resolve the module either.
+  The file is therefore gitignored machine state, like `*.pro.user`; create it per clone with
+  your own path:
+  ```ini
+  [General]
+  buildDir=build
+  importPaths=<absolute path to>/build/qmlmodules
+  no-cmake-calls=true
+  ```
+  Verified by driving qmlls over LSP on `ConfigEditorTab.qml`: 2 import diagnostics without
+  the entry, 0 with it.
+- `pwsh -File deploy.ps1 [-Config debug] [-QtRoot ...]` packages a self-contained `dist/`.
+- Packaging lives in `.github/workflows/release.yml` (tag-only, `v*`): the `appimage` job
+  bundles the AppImage (linuxdeploy + its Qt plugin), the `windows` job builds with MinGW,
+  bakes a build-time `.ico` through `res/icon/tf2cfg.rc` + `win32: RC_FILE`, stages a
+  windeployqt `tf2cfg/` folder and ships it as `TF2-Config-Manager-windows-x64.zip`; both
+  attach to the same GitHub Release. Each artifact is smoke-tested headless (offscreen
+  run, 15 s alive = success); on Windows the install's `QT_PLUGIN_PATH`,
+  `QML2_IMPORT_PATH` and PATH are stripped first, so the bundle is tested, not the
+  runner's Qt. `.github/workflows/ci.yml` keeps build + tests + `qmllint` + the contrast
+  script on push/PR and skips docs-only pushes (`paths-ignore`). The smoke test is the
+  only CI step that launches the QML engine, so a QML syntax/import error reaches it, not
+  the lint step - check the run's conclusion explicitly (`gh run view --json conclusion`),
+  never a tail of watch output.
+- Running the app for manual checks. Windows (from `build/release`, stderr is invisible
+  without `QT_FORCE_STDERR_LOGGING`):
+  ```pwsh
+  $env:PATH = "C:\Qt\6.12.0\mingw_64\bin;C:\Qt\Tools\mingw1310_64\bin;" + $env:PATH
+  $env:QT_FORCE_STDERR_LOGGING = "1"; .\tf2cfgreal.exe 2>err.txt
+  ```
+  Linux (from `build/`, PATH is already right and stderr shows as-is):
+  ```sh
+  ./tf2cfgreal   # add QT_QPA_PLATFORM=offscreen for headless experimentation
+  ```
+- **Kill a running `tf2cfgreal.exe` before linking** (`Stop-Process -Name tf2cfgreal`):
+  the exe is locked while running and the link fails with "Permission denied". Windows
+  only - on Linux the running binary is not locked and may be relinked. QML
+  edits require a rebuild either way - they are qrc-embedded, not read from disk.
+
+## Contracts (see docs/ARCHITECTURE.md)
+
+`docs/ARCHITECTURE.md` is the single source for the live contracts: parser semantics
+(the game's tokenizer is the acceptance bar), surgical save + post-save resync, model
+contracts (`CommandListModel`, `ConsoleCommandModel`, `ConfigController`), QML rules,
+and the numbered deviations **D1..D20** (cite these when deviating). The two hardest
+rules: **the file on disk is the source of truth for lines the app does not own**, and
+**lexer changes must reproduce the game's tokenizer** and keep the test suite green.
+
+## Docs
+
+- `docs/ARCHITECTURE.md` - read before changing behavior (see above).
+- `docs/DESIGN-*.md` - designs for shipped features (save-backup, custom panels, enum
+  panels, arg bounds); `docs/argbounds-verification.md` is the ledger of applied and
+  still-unverified argument bounds. Update them when the feature changes, don't start
+  new ones for small work.
+- `docs/ROADMAP.md` - the single list of open work; do not re-raise dismissed items.
+- `docs/AUDIT.md` - the current audit's findings; open ones are mirrored in the roadmap.
+  The 2026-10-12 audit is retired to `docs/legacy/`.
+- `docs/accessibility.md` - the A1-A8 findings and the W1-W8 work items. W1-W8 are done
+  (2026-10-13) and the screen-reader pass ran 2026-10-15 (Microsoft Narrator, three rounds);
+  its one defect - the tab strips never announced tab names - is fixed in `Tf2TabBar` and
+  reader-confirmed. Re-run that pass after any change to `Accessible.*`, focus or tab order,
+  and re-check contrast after any `Theme.qml` change.
+- `docs/in-game-checklist.md` - the list the repo owner takes into the game (argument
+  bounds, bind ids, screen-reader pass). Filled in for the 2026-10-15 run and now the
+  record of it; outcomes were applied to `res/cfg/argbounds.csv`, `allcmds.csv` and
+  `docs/argbounds-verification.md` the same day. Only in-game evidence moves a row into
+  `argbounds.csv` or an id into `src/ui/keytable.cpp`.
+- `docs/legacy/*.md` - dated records (audit, code review, migrations, the original
+  QML-rewrite design): historical evidence and verification logs. Do not edit them; the
+  live versions of their contracts and open items are in the two files above.
+
+## Workflow
+
+- Branch `qml-rewrite` is the working branch (`master` predates the rewrite).
+- **Commit after each change** (Conventional Commits style); **push only when the user
+  says "push"**.
+- Never use PowerShell `Set-Content`/`(Get-Content) | Set-Content` on tracked files - it
+  rewrites LF to CRLF. Use the edit tools, or `.Replace()` + `[IO.File]::WriteAllText`
+  to strip CR if you must round-trip.
+- The parser is the acceptance bar: lexer changes must reproduce the game's tokenizer
+  (see `docs/ARCHITECTURE.md` section 2, verified in `docs/legacy/CODE_REVIEW.md` #1)
+  and keep the test suite green. UI behavior is verified by the user manually; lint +
+  build + tests are your gate.

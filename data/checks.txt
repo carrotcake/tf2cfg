@@ -1,0 +1,56 @@
+"r_spewleaf" = "0"
+🐸
+✨
+🐸✨
+snd_front_headphone_position = 90.000000
+snd_front_stereo_speaker_position = 90.000000
+snd_front_surround_speaker_position = 45.000000
+snd_headphone_pan_exponent = 1.000000
+snd_headphone_pan_radial_weight = 1.000000
+snd_rear_headphone_position = 90.000000
+snd_rear_stereo_speaker_position = 90.000000
+snd_rear_surround_speaker_position = 135.000000
+snd_stereo_speaker_pan_exponent = 1.500000
+snd_stereo_speaker_pan_radial_weight = 0.000000
+snd_surround_speaker_pan_exponent = 1.500000
+snd_surround_speaker_pan_radial_weight = 0.000000
+Found 4 available audio devices
+1) Headphones (USB-C to 3.5mm Headphone Jack Adapter) (2 output channels) [{0.0.0.00000000}.{63a1cf09-eb1b-4666-b105-54110b1ac472}] ** DEFAULT DEVICE **
+2) LG ULTRAGEAR+ (NVIDIA High Definition Audio) (2 output channels) [{0.0.0.00000000}.{24a873ba-4b02-4207-bc93-01247ee7d1d0}]
+3) MX279 (NVIDIA High Definition Audio) (2 output channels) [{0.0.0.00000000}.{126d1a8a-db66-4ff8-a98e-5b97806e3379}]
+4) Digital Audio (S/PDIF) (High Definition Audio Device) (2 output channels) [{0.0.0.00000000}.{a5b80db4-55a3-491b-b887-83dd44fbd482}]
+Unknown command: bench_upload
+Unknown command: binds_per_command
+Unknown command: cl_jiggle_bone_debug
+Unknown command: cl_jiggle_bone_debug_pitch_constraints
+Unknown command: cl_jiggle_bone_debug_yaw_constraints
+Unknown command: cl_playerspraydisable
+Unknown command: dxa_nullrefresh_capslock
+Unknown command: heartbeat
+Unknown command: hud_autoaim_method
+Unknown command: hud_autoaim_scale_icon
+Unknown command: hud_draw_active_reticle
+Unknown command: hud_draw_fixed_reticle
+Unknown command: hud_magnetism
+Unknown command: hud_reticle_alpha_speed
+Unknown command: hud_reticle_maxalpha
+Unknown command: hud_reticle_minalpha
+Unknown command: hud_reticle_scale
+Unknown command: mat_autoload_glshaders
+Unknown command: mat_autosave_glshaders
+Unknown command: sdl_double_click_size
+Unknown command: sdl_double_click_time
+Unknown command: snd_legacy_surround
+Unknown command: snd_lockpartial
+Unknown command: tf_player_name_change_time
+Unknown command: video_quicktime_decode_gamma
+Unknown command: video_quicktime_encode_gamma
+Unknown command: voice_printtalkers
+Unknown command: vr_debug_nochromatic
+Unknown command: vr_debug_nodistortion
+Unknown command: vr_distortion_enable
+Unknown command: vr_refresh_distortion_texture
+Unknown command: vr_reset_home_pos
+Unknown command: vr_track_reinit
+Unknown command: vr_use_offscreen_render_target
+Unknown command: windows_speaker_config
